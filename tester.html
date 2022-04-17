@@ -5,33 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
-    <script src='./index.js'></script>
+    <script src="Engine/GameObject.js"></script>
+    <script src="Engine/Classes.js"></script>
+    <script src="Engine/GraphicElement.js"></script>
+    <script src="Engine/Input.js"></script>
+    <script src="Engine/Engine.js"></script>
+    <script src="Engine/Animator.js"></script>
+
+
+    <script src="man.js"></script>
+    <script src="man2.js"></script>
+    <script src="index.js"></script>
 </head>
 <body>
-
-    <div id="testDiv" style="display: block; width: 100vw; height: 100vh;">
-
-    </div>
-
-    <script>
-        let drawer;
-        (function(){
-            drawer = new DrawEngine();
-            (() => {                
-                drawer.createCanvas('#testDiv', {width: 1200, height: 1200, color: 'black', resolution: 10, debug: true});
-                drawer.circle(2, 2, 1, 'stroke', 'red');
-                
-                drawer.circle(4,4,2, 'fill','blue');
-                drawer.circle(3, 3, 2, 'stroke', 'green');
-                const violetRect = drawer.rect(3.5, 3.5, 6, 6, 'fill', 'violet');
-                console.log(violetRect);
-                let initW = 6;
-                setInterval(function() {
-                    violetRect.moveRelative(1, 1);
-                    violetRect.setSize(initW--, 6);
-                }, 100);
-            })();
-        })();
-    </script>
+    <div id="root" style="display: block; width: 100vw; height: 100vh;"> </div>
 </body>
 </html>
