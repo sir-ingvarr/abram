@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
     engine.AppendGameObject(gameObject);
 
     const gameObject2 = new ManTwo({
-        position: new Vector(10, 50)
+        position: new Vector(30, 30)
     });
     engine.AppendGameObject(gameObject2);
 
