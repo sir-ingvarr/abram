@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="../../Engine/Classes.js"></script>
+    <script src="index.js"></script>
+    <style>
+        canvas {
+            display: block;
+            padding: 20px;
+            border-radius: 50px;
+        }
+    </style>
+</head>
+<body>
+    <h2>DEMO RGBAColor Class</h2>
+    <div style="display: inline-block">
+        <div style="float: left">
+            <p>Color display</p>
+            <canvas width="200" height="200" id="color-display"></canvas>
+            <p id="color-text"></p>
+            <div>
+                <input type="range" id="red" name="red"
+                       min="0" max="255">
+                <label for="red">Red</label>
+            </div>
+            <div>
+                <input type="range" id="green" name="green"
+                       min="0" max="255">
+                <label for="green">Green</label>
+            </div>
+            <div>
+                <input type="range" id="blue" name="blue"
+                       min="0" max="255">
+                <label for="blue">Blue</label>
+            </div>
+            <div>
+                <input type="range" id="alpha" name="alpha"
+                       min="0" max="255">
+                <label for="alpha">Alpha</label>
+            </div>
+        </div>
+        <div style="float: left">
+            <p>Glory to Ukraine!</p>
+            <canvas width="300" height="200" id="ukraine-flag-display"></canvas>
+        </div>
+        <div style="float: left">
+            <p>Lerp To Color</p>
+            <canvas width="200" height="200" id="rainbow-display"></canvas>
+        </div>
+    </div>
+</body>
+</html>

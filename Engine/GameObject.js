@@ -32,7 +32,7 @@ class GameObject {
         return this.graphic;
     }
 
-    SetGraphicsContent(graphics, ctx) {
+    SetGraphicsContent(graphics) {
         if(typeof graphics === 'string') {
             this.graphic = new GraphicElement({ url: graphics, resolution: this.resolution });
             return;

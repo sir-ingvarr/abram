@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const root = document.getElementById('root');
 
     engine.CreateCanvas(root);
-    const bgColor = new RGBAColor(0,0,0, 150);
+    const bgColor = new RGBAColor(150,0,0, 150);
     engine.SetBackgroundColor(bgColor);
 
     const gameObject = new Man({

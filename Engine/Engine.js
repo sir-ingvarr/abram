@@ -17,7 +17,6 @@ class Engine {
 
   ClearCanvas () {
     this._context.clearRect(0, 0, this._bgWidth, this._bgHeight);
-    if(this._debug) this.DrawDebugGrid(this._resolution);
   }
 
   DrawDebugGrid () {
@@ -36,6 +35,8 @@ class Engine {
   SetBackgroundColor(rgbaColor) {
     if(!(rgbaColor instanceof RGBAColor)) throw 'color should be an instance of RGBAColor class';
     this._bgColor = rgbaColor;
+    if(!this._debug) return;
+    console.log('bg color changed', rgbaColor);
   }
 
   RenderBackground() {
@@ -45,6 +46,8 @@ class Engine {
     this._context.rect(0, 0, this._bgWidth, this._bgHeight);
     this._context.fill();
     this._context.closePath();
+    if(!this._debug) return;
+    this.DrawDebugGrid(this._resolution);
   }
 
   CreateCanvas (parent = null) {
@@ -64,7 +67,7 @@ class Engine {
   }
 
   Start (fps = 60) {
-    InputSystem.SetEventListeners();
+    if(typeof InputSystem !== 'undefined') InputSystem.SetEventListeners();
     setInterval(this.Render.bind(this), 1000/fps);
   }
 
