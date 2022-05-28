@@ -1,0 +1,246 @@
+import {ICoordinates} from "../types/common";
+
+export class Point implements ICoordinates {
+    public x: number;
+    public y: number;
+
+    constructor(x = 0, y = x) {
+        this.Set(x, y);
+    }
+
+    protected NormalizeCoord(coordinate: number): number {
+        return coordinate < 0 ? -1 : coordinate === 0 ? 0 : 1;
+    }
+
+    protected NormalizeCoords(): [number, number] {
+        return [this.NormalizeCoord(this.x), this.NormalizeCoord(this.y)];
+    }
+
+    Set(x: number, y = x) {
+        this.x = x;
+        this.y = y;
+    }
+
+    Copy(): Point {
+        return new Point(this.x, this.y);
+    }
+
+    get Normalized(): Point {
+        const [x, y] = this.NormalizeCoords();
+        return new Point(x, y);
+    }
+
+    ToVector(): Vector {
+        return new Vector(this.x, this.y);
+    }
+}
+
+export class Vector extends Point {
+    private _resolution: number;
+
+    constructor(x = 0, y = 0, resolution = 1) {
+        super(x, y);
+        this._resolution = resolution;
+    }
+
+    static Add(base: ICoordinates, other: ICoordinates): Vector {
+        return new Vector(base.x + other.x, base.y + other.y);
+    }
+
+    static MultiplyCoordinates(base: ICoordinates | number, other: ICoordinates): Vector {
+        if(typeof base === 'number') return new Vector(base * other.x, base * other.y);
+        return new Vector(base.x * other.x, base.y * other.y);
+    }
+
+    get Magnitude(): number {
+        return Math.sqrt(this.x * this.x + this.y * this.y);
+    }
+
+    Translate (x = 0, y = 0) {
+        this.x += x * this._resolution;
+        this.y += y * this._resolution;
+    }
+
+    MoveTo (newX: number, newY: number) {
+        this.x = newX * this._resolution;
+        this.y = newY * this._resolution;
+    }
+
+    Multiply(multiplier: number ): Vector {
+        this.x *= multiplier;
+        this.y *= multiplier;
+        return this;
+    }
+
+    get Normalized(): Vector {
+        const [x, y] = this.NormalizeCoords();
+        return new Vector(x, y);
+    }
+
+    Add(other: ICoordinates): Vector {
+        this.x += other.x;
+        this.y += other.y;
+        return this;
+    }
+
+    ApplyResolution(newResolution: number = this._resolution): Vector {
+        this._resolution = newResolution;
+        this.MoveTo(this.x, this.y);
+        return this;
+    }
+
+    Rotate (deg: number) {
+
+    }
+
+    ToPoint(): Point {
+        return new Point(this.x, this.y);
+    }
+
+    Copy(): Vector {
+        return new Vector(this.x, this.y);
+    }
+}
+
+export class Segment {
+    constructor(public from: ICoordinates, public to: ICoordinates) {}
+}
+
+export class Maths {
+    /**
+     * Ensures value falls into the range
+     *
+     * @param val value to put into borders
+     * @param min lower range of the value
+     * @param max upper range of the value
+     */
+    static Clamp(val: number, min: number, max: number): number {
+        if(val < min) return min;
+        else if(val > max) return max;
+        return val;
+    }
+
+    /**
+     * Interpolates between to values depending on the factor
+     *
+     * @param from beginning of the interpolation
+     * @param to end of the interpolation
+     * @param factor midrange value
+     */
+    static LinearLerp(from: number, to: number, factor = 0): number {
+        return from + (to - from) * factor;
+    }
+
+
+    /**
+     * Returns a random value in the specified range
+     *
+     * @param {number} from range border
+     * @param {number} to range border
+     * @return {number}
+     */
+    static RandomRange(from: number, to: number) {
+        return this.LinearLerp(from, to, Math.random());
+    }
+}
+
+export class RGBAColor {
+    public OnUpdated: Function;
+    private red: number;
+    private green: number;
+    private blue: number;
+    private alpha: number;
+    private colorHex: string;
+
+    constructor(r = 0, g = 0, b = 0, a = 255, onUpdated = () => {}) {
+        this.OnUpdated = onUpdated;
+        this.setColor({r,g,b,a});
+    }
+
+    setColor ({r = this.red, g = this.green, b = this.blue, a = this.alpha}) {
+        this.red = this.Clamp(r);
+        this.green = this.Clamp(g);
+        this.blue = this.Clamp(b);
+        this.alpha = this.Clamp(a);
+        this.updateHex();
+    }
+
+    static FromHex(hex: string) {
+        if(!/[0-9A-F]{6}/i.test(hex)) throw 'invalid hex format';
+        try {
+            const red = parseInt(hex.slice(1, 3), 16);
+            const green = parseInt(hex.slice(3, 5), 16);
+            const blue = parseInt(hex.slice(5, 7), 16);
+            const alpha = parseInt(hex.slice(7, 9), 16);
+            return new RGBAColor(
+                red, green, blue,
+                Number.isNaN(alpha) ? 255 : alpha
+            )
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    Clamp (val: number) {
+        return Maths.Clamp(val, 0, 255);
+    }
+
+    set Red (val: number) {
+        this.red = this.Clamp(val);
+        this.updateHex();
+    }
+
+    set Green (val: number) {
+        this.green = this.Clamp(val);
+        this.updateHex();
+    }
+
+    set Blue (val: number) {
+        this.blue = this.Clamp(val);
+        this.updateHex();
+    }
+
+    set Alpha (val: number) {
+        this.alpha = this.Clamp(val);
+        this.updateHex();
+    }
+
+    updateHex () {
+        this.colorHex = this.RgbToHex();
+        this.OnUpdated(this);
+    }
+
+    valueOf() {
+        return this.colorHex;
+    }
+
+    toString() {
+        return this.colorHex;
+    }
+
+    ComponentToHex(c: number) {
+        const hex = c.toString(16);
+        return hex.length === 1 ? `0${hex}` : hex;
+    }
+
+    RgbToHex() {
+        return `#${this.ComponentToHex(this.red)}${this.ComponentToHex(this.green)}${this.ComponentToHex(this.blue)}${this.ComponentToHex(this.alpha)}`;
+    }
+
+    /**
+     * Calculate a gradient between this and the specified colors
+     *
+     * @param {RGBAColor} color which color smoothly transform to
+     * @param {number} factor interpolation factor
+     * @return {RGBAColor}
+     */
+    LerpTo(color: RGBAColor, factor: number) {
+        if(!(color instanceof RGBAColor)) throw 'should be an instance of RGBAColor class';
+        return new RGBAColor(
+            Math.round(Maths.LinearLerp(this.red, color.red, factor)),
+            Math.round(Maths.LinearLerp(this.green, color.green, factor)),
+            Math.round(Maths.LinearLerp(this.blue, color.blue, factor)),
+            Math.round(Maths.LinearLerp(this.alpha, color.alpha, factor)),
+        );
+    }
+}

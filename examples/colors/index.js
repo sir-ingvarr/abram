@@ -1,5 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
     // COLOR DISPLAY
+
+    const { Classes: { RGBAColor } } = window.Abram;
+
     const canvas1 = document.getElementById('color-display');
     const ctx1 = canvas1.getContext('2d');
     const colorText = document.getElementById('color-text');

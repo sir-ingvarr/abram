@@ -1,0 +1,30 @@
+{
+  "name": "abram",
+  "version": "0.0.1",
+  "description": "advanced browser rendering abstraction module (js game engine)",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "test",
+    "build": "tsc",
+    "bundle": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sir-ingvarr/canvas-engine.git"
+  },
+  "author": "Igor Berezin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sir-ingvarr/canvas-engine/issues"
+  },
+  "homepage": "https://github.com/sir-ingvarr/canvas-engine#readme",
+  "devDependencies": {
+    "ts-loader": "^9.3.0",
+    "typescript": "^4.6.4",
+    "webpack": "^5.72.0",
+    "webpack-cli": "^4.9.2"
+  }
+}

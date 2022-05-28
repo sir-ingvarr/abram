@@ -1,19 +1,43 @@
-class Animator {
-    constructor({
-        frameDelay = 50, stateMap = { idle: [] },
-        state = 'idle', graphicElement, playing = true
-    }) {
+import Module from "../Module";
+import GraphicElement from "./GraphicElement";
+import {Maths} from "../Classes";
+import {IGameObject} from "../../types/GameObject";
+
+interface AnimatorOptions {
+    frameDelay: number;
+    stateMap: Map<string, Array<string>>;
+    state: string;
+    graphicElement: GraphicElement;
+    playing?: boolean;
+}
+
+class Animator extends Module {
+    public frameDelay: number;
+    private state: string;
+    private playing: boolean;
+    private stateMap: Map<string, { images: Array<HTMLImageElement>, max: number, count: number }>;
+    private availableStates: Array<string>;
+    private currentFrame: number;
+    private interval: NodeJS.Timer;
+    private controlledGraphic: GraphicElement;
+    private currentStateData?: { images: Array<HTMLImageElement>, max: number, count: number };
+
+    constructor(options: AnimatorOptions) {
+        super();
+        const {
+            frameDelay = 50, stateMap = new Map([['idle', []]]),
+                state = 'idle', graphicElement, playing = true
+        } = options;
         if(!graphicElement) throw 'animator requires a graphic element';
         if(!(graphicElement instanceof GraphicElement)) throw 'graphicElement should be an instance of GraphicElement class';
         this.frameDelay = frameDelay;
         this.state = state;
         this.playing = playing;
-        this.availableStates = Object.keys(stateMap);
+        this.availableStates = Array.from(stateMap.keys());
         this.currentFrame = 0;
-        this.interval = null;
         this.controlledGraphic = graphicElement;
         this.SetStateMap(stateMap)
-        this.currentStateData = this.stateMap[state];
+        this.currentStateData = this.stateMap.get(state);
         if(!this.playing) return;
         this.SetFrameInterval();
     }
@@ -28,11 +52,11 @@ class Animator {
         this.SetFrameInterval();
     }
 
-    SetState(newState) {
+    SetState(newState: string) {
         if(newState === this.state) return;
         if(!this.availableStates.includes(newState)) throw 'invalid state';
         this.state = newState;
-        this.currentStateData = this.stateMap[this.state];
+        this.currentStateData = this.stateMap.get(newState);
         this.currentFrame = 0;
         this.UpdateFrame();
     }
@@ -43,6 +67,7 @@ class Animator {
     }
 
     UpdateFrame() {
+        if(!this.currentStateData) return;
         const { max, images, count } = this.currentStateData;
         if(!count) return;
         this.currentFrame = Maths.Clamp(++this.currentFrame, 0, count);
@@ -50,17 +75,17 @@ class Animator {
         this.controlledGraphic.SetImageContent(images[this.currentFrame]);
     }
 
-    SetStateMap(stateMap) {
+    SetStateMap(stateMap: Map<string, Array<string>>) {
         const { availableStates } = this;
-        const stateWithImages = {};
+        const stateWithImages = new Map();
         for(let state of availableStates) {
-            const images = this.LoadStateImages(stateMap[state]);
-            stateWithImages[state] = { images, max: images.length - 1, count: images.length };
+            const images = this.LoadStateImages(stateMap.get(state) || []);
+            stateWithImages.set(state, { images, max: images.length - 1, count: images.length });
         }
         this.stateMap = stateWithImages;
     }
 
-    LoadStateImages(urlArr) {
+    LoadStateImages(urlArr: Array<string>) {
         return urlArr.map(url => {
             const img = new Image();
             img.src = url;
@@ -68,3 +93,5 @@ class Animator {
         })
     }
 }
+
+export default Animator;
