@@ -36,15 +36,34 @@ export class Point implements ICoordinates {
 }
 
 export class Vector extends Point {
-    private _resolution: number;
-
-    constructor(x = 0, y = 0, resolution = 1) {
+    constructor(x = 0, y = 0) {
         super(x, y);
-        this._resolution = resolution;
     }
 
-    static Add(base: ICoordinates, other: ICoordinates): Vector {
-        return new Vector(base.x + other.x, base.y + other.y);
+    static get Up() {
+        return new Vector(0, 1);
+    }
+
+    static get Down() {
+        return new Vector(0, -1);
+    }
+
+    static get Left() {
+        return new Vector(-1, 0);
+    }
+
+    static get Right() {
+        return new Vector(1, 0);
+    }
+
+    static get Zero() {
+        return new Vector();
+    }
+
+    static Add(...args: Array<ICoordinates>): Vector {
+        return args.reduce((acc: Vector, val) => {
+            return acc.Add(val);
+        }, new Vector())
     }
 
     static MultiplyCoordinates(base: ICoordinates | number, other: ICoordinates): Vector {
@@ -56,14 +75,16 @@ export class Vector extends Point {
         return Math.sqrt(this.x * this.x + this.y * this.y);
     }
 
-    Translate (x = 0, y = 0) {
-        this.x += x * this._resolution;
-        this.y += y * this._resolution;
+    Translate (x = 0, y = 0): Vector {
+        this.x += x;
+        this.y += y;
+        return this;
     }
 
-    MoveTo (newX: number, newY: number) {
-        this.x = newX * this._resolution;
-        this.y = newY * this._resolution;
+    MoveTo (newX: number, newY: number): Vector {
+        this.x = newX;
+        this.y = newY;
+        return this;
     }
 
     Multiply(multiplier: number ): Vector {
@@ -83,9 +104,10 @@ export class Vector extends Point {
         return this;
     }
 
-    ApplyResolution(newResolution: number = this._resolution): Vector {
-        this._resolution = newResolution;
-        this.MoveTo(this.x, this.y);
+    Clamp(x?: [number, number], y?: [number, number]) {
+        if(x) this.x = Maths.Clamp(this.x, x[0], x[1]);
+        if(!y) return this
+        this.y = Maths.Clamp(this.y, y[0], y[1]);
         return this;
     }
 

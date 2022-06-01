@@ -11,16 +11,16 @@ interface IWithLifeCycle {
 interface IWithContext {
     context: CanvasContext2D;
     set Context(ctx: CanvasContext2D);
-    SetResolution(resolution: number): void;
 }
 
 interface IScalable {
     scale: ICoordinates;
     localScale: ICoordinates;
 
-    SetScale(x: number, y?: number): void;
+    SetScale(x?: number, y?: number): void;
     ReplaceScale(scale: ICoordinates): void;
-    GetScale(): ICoordinates;
+    get Scale(): ICoordinates;
+    get LocalScale(): ICoordinates;
 }
 
 export interface IExecutable extends IWithLifeCycle {
@@ -41,7 +41,6 @@ export interface IGameObject extends IExecutable, IWithContext, IScalable {
     worldPosition: Vector;
     parent: Nullable<IGameObject>;
     needDestroy: boolean;
-    resolution: number;
 
     SetParent(gameObject: IGameObject): void;
     GenerateId(name: string): string;
@@ -49,4 +48,5 @@ export interface IGameObject extends IExecutable, IWithContext, IScalable {
     RegisterModule(module: IModule): void;
     GetModuleByName(name: string): Nullable<IModule>;
     GetChildById(id: string): Nullable<IGameObject>;
+    SetParentRespectivePosition(): void;
 }

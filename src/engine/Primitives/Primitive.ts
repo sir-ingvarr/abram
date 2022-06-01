@@ -39,7 +39,7 @@ export class LinesShape extends Primitive<Array<Segment>, CtxOptions>{
 }
 
 export class Rect extends Primitive<Segment, CtxOptions>{
-    constructor(public segment: Segment, options: CtxOptions = {}, shadow: ShadowOptions) {
+    constructor(public segment: Segment, options: CtxOptions = {}, shadow: ShadowOptions = {}) {
         super(segment, options, shadow);
     }
 }

@@ -16,6 +16,12 @@ class ManTwo extends Man {
         return 0;
     }
 
+    Jump(shouldStand) {
+        if(InputSystem.KeyPressed('Ctrl') && shouldStand) {
+            this.rigidBody.AddForce(Vector.MultiplyCoordinates(100, Vector.Down));
+        }
+    }
+
     Update() {
         super.Update();
     }

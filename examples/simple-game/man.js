@@ -1,5 +1,4 @@
-
-const { GameObject, Graphic, Animator, InputSystem, Classes: {Vector} } = window.Abram;
+const { GameObject, Graphic, Animator, InputSystem, Time, Classes: {Vector}, RigidBody } = window.Abram;
 
 class Man extends GameObject {
     constructor(params, cam) {
@@ -12,9 +11,11 @@ class Man extends GameObject {
     }
 
     Start() {
+        this.ground = new RigidBody({useGravity: false, drag: 4});
+
         const graphic = new Graphic({
             url: './assets/dude_idle.png',
-            width: 3, height: 7
+            width: 30, height: 70
         });
 
         this.size = 1;
@@ -23,17 +24,22 @@ class Man extends GameObject {
             stateMap: new Map([
                 ['idle', ['./assets/dude_idle.png']],
                 ['running', ['./assets/dude_run1.png', './assets/dude_idle.png', './assets/dude_run2.png', './assets/dude_idle.png',]],
+                ['jump', ['./assets/dude_run1.png']],
             ]),
             state: 'idle',
             graphicElement: graphic,
         });
 
-        this.RegisterModule(graphic);
+        this.rigidBody = new RigidBody({useGravity: true, gravityScale: 0.4, drag: 0.4});
 
-        this.gun = new GameObject({ position: new Vector(1,3), name: `${this.name}`});
+        this.RegisterModule(this.rigidBody);
+        this.RegisterModule(graphic);
+        this.RegisterModule(this.animator);
+
+        this.gun = new GameObject({ position: new Vector(10,30), name: `${this.name}`});
         const gunGraphic = new Graphic({
             url: './assets/gun.png',
-            width: 3, height: 2
+            width: 30, height: 20
         });
 
         this.gun.RegisterModule(gunGraphic);
@@ -54,24 +60,49 @@ class Man extends GameObject {
         return 0;
     }
 
+    Jump(shouldStand) {
+        if(InputSystem.KeyPressed('Space') && shouldStand) {
+            this.rigidBody.AddForce(Vector.MultiplyCoordinates(100, Vector.Down).Add(new Vector(this.horizontalDir * 40, 0)));
+        }
+    }
+
     Update() {
         this.horizontalDir = this.CheckHorizontalInputs();
         this.verticalDir = this.CheckVerticalInputs();
-        if(!!this.horizontalDir || !!this.verticalDir) {
-            this.prevHorDir = this.horizontalDir || this.prevHorDir;
-            this.animator.SetState('running');
+        const shouldStand = this.worldPosition.y >= 40;
+        this.rigidBody.UseGravity = !shouldStand
+        if(shouldStand) {
+            this.rigidBody.collidedRb = this.ground;
+            this.rigidBody.velocity.y = 0;
+            this.worldPosition.y = 40;
         } else {
-            this.animator.SetState('idle');
+            this.rigidBody.collidedRb = null;
         }
-        this.SetScale((this.horizontalDir || this.prevHorDir) * this.size, 1 * this.size);
-        this.worldPosition.Translate(0.1 * this.horizontalDir, 0.1 * this.verticalDir);
+        this.Jump(shouldStand);
+
+        if(shouldStand) {
+            if (!!this.horizontalDir || !!this.verticalDir) {
+                this.prevHorDir = this.horizontalDir || this.prevHorDir;
+                this.animator.SetState('running');
+            } else {
+                this.animator.SetState('idle');
+            }
+        } else {
+            this.animator.SetState('jump');
+        }
+        this.SetScale((this.horizontalDir || this.prevHorDir) * this.size, this.size);
+        const delta = Time.deltaTime / 1000;
+        // this.worldPosition.Translate(delta * 100 * this.horizontalDir, delta * 100 * this.verticalDir);
+        if(shouldStand) this.rigidBody.AddForce(Vector.MultiplyCoordinates(3, new Vector(this.horizontalDir, 0)));
         if(this.worldPosition.x > 40) {
-            this.gun.SetActive(false);
-            this.size = 1.1;
+            // this.gun.SetActive(false);
+            if(this.size < 1.2)
+            this.size += delta;
         }
         else {
-            this.gun.SetActive(true);
-            this.size = 1;
+            // this.gun.SetActive(true);
+            if(this.size > 1)
+            this.size -= delta;
         }
         if(this.cam) this.cam.SetPosition(this.worldPosition);
         super.Update();

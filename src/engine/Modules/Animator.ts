@@ -1,13 +1,13 @@
 import Module from "../Module";
-import GraphicElement from "./GraphicElement";
+import Sprite from "./Sprite";
 import {Maths} from "../Classes";
-import {IGameObject} from "../../types/GameObject";
+import Time from "../globals/Time";
 
 interface AnimatorOptions {
     frameDelay: number;
     stateMap: Map<string, Array<string>>;
     state: string;
-    graphicElement: GraphicElement;
+    graphicElement: Sprite;
     playing?: boolean;
 }
 
@@ -18,8 +18,8 @@ class Animator extends Module {
     private stateMap: Map<string, { images: Array<HTMLImageElement>, max: number, count: number }>;
     private availableStates: Array<string>;
     private currentFrame: number;
-    private interval: NodeJS.Timer;
-    private controlledGraphic: GraphicElement;
+    private controlledGraphic: Sprite;
+    private elapsedTime: number;
     private currentStateData?: { images: Array<HTMLImageElement>, max: number, count: number };
 
     constructor(options: AnimatorOptions) {
@@ -29,8 +29,8 @@ class Animator extends Module {
                 state = 'idle', graphicElement, playing = true
         } = options;
         if(!graphicElement) throw 'animator requires a graphic element';
-        if(!(graphicElement instanceof GraphicElement)) throw 'graphicElement should be an instance of GraphicElement class';
         this.frameDelay = frameDelay;
+        this.elapsedTime = 0;
         this.state = state;
         this.playing = playing;
         this.availableStates = Array.from(stateMap.keys());
@@ -39,17 +39,14 @@ class Animator extends Module {
         this.SetStateMap(stateMap)
         this.currentStateData = this.stateMap.get(state);
         if(!this.playing) return;
-        this.SetFrameInterval();
     }
 
     Stop() {
         this.playing = false;
-        clearInterval(this.interval);
     }
 
     Play() {
         this.playing = true;
-        this.SetFrameInterval();
     }
 
     SetState(newState: string) {
@@ -61,10 +58,6 @@ class Animator extends Module {
         this.UpdateFrame();
     }
 
-    SetFrameInterval() {
-        if(this.interval) clearInterval(this.interval);
-        this.interval = setInterval(this.UpdateFrame.bind(this), this.frameDelay);
-    }
 
     UpdateFrame() {
         if(!this.currentStateData) return;
@@ -91,6 +84,14 @@ class Animator extends Module {
             img.src = url;
             return img;
         })
+    }
+
+    Update() {
+        super.Update();
+        this.elapsedTime += Time.deltaTime;
+        if(this.elapsedTime < this.frameDelay) return;
+        this.elapsedTime = 0;
+        this.UpdateFrame();
     }
 }
 

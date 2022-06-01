@@ -6,7 +6,6 @@ The idea of this is a creation of unity-like game engine for simple 2d games.
 * Game objects
 * Sprite loading
 * Keyboard input handling
-* Resolution (for snake style games)
 * Simple animator
 * Helpers (RGBA, Math, Vector classes)
 

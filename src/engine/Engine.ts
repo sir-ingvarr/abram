@@ -1,25 +1,23 @@
 import {IGameObject} from "../types/GameObject";
 import {Point, RGBAColor} from "./Classes";
-import InputSystem from "./Input";
+import InputSystem from "./globals/Input";
 import CanvasContext2D from "./Context2d";
-import {DebugGrid} from "./Primitives/DebugGrid";
 import {ICoordinates} from "../types/common";
+import Time from "./globals/Time";
 
 class Engine {
   private gameObjects: Map<string, IGameObject>;
   private readonly context: CanvasContext2D;
   private bgColor: RGBAColor;
-
-  private debugGrid: DebugGrid;
+  private ctxPos: ICoordinates = new Point();
+  private frameDelay: number = 0;
+  private prevFrameTime: number;
 
   public canvas: HTMLCanvasElement;
-
-  private ctxPos: ICoordinates = new Point();
 
   constructor (
       private bgWidth: number,
       private bgHeight: number,
-      private resolution: number,
       private readonly root: HTMLElement,
       private readonly debug: boolean = false,
   ) {
@@ -29,7 +27,6 @@ class Engine {
     if(!context) throw 'Could not retrieve Context2D from canvas'
     this.context = new CanvasContext2D(context);
     if(!debug) return;
-    this.debugGrid = new DebugGrid(this.bgWidth, this.bgHeight, this.resolution);
   }
 
   get Context() {
@@ -45,10 +42,6 @@ class Engine {
     this.canvas.height = height;
     this.bgWidth = width;
     this.bgHeight = height;
-  }
-
-  DrawDebugGrid () {
-    this.context.DrawLines(this.debugGrid.lines, true);
   }
 
   SetBackgroundColor(rgbaColor: RGBAColor) {
@@ -83,39 +76,50 @@ class Engine {
     parent.appendChild(this.canvas);
   }
 
-  Start (fps = 60) {
+  Start (targetFps: number = 0) {
     if(!this.context) throw 'Canvas context not created, use CreateCanvas()';
     if(typeof InputSystem !== 'undefined') InputSystem.SetEventListeners();
-    setInterval(() => requestAnimationFrame(this.Render.bind(this)), 1000/fps);
+    this.frameDelay = targetFps ? 1000 / targetFps : 0;
+    console.log(`target fps set to ${targetFps}, targetFrameDelay: ${this.frameDelay}`);
+    this.prevFrameTime = Date.now();
+    this.Render();
   }
 
   Render () {
+    const now = Date.now();
+    if(this.frameDelay && now - this.prevFrameTime < this.frameDelay - Time.deltaTime) {
+      requestAnimationFrame(this.Render.bind(this));
+      return;
+    }
+    this.prevFrameTime = now;
     const { context } = this;
-    const startDraw = Date.now();
     this.ClearCanvas();
     this.RenderBackground();
-    const currentChildren = this.gameObjects.values();
-    for(let child of currentChildren) {
-      if(child.needDestroy) {
-        this.DeleteGameObjectById(child.id);
+    const gameObjects = this.gameObjects.values();
+    for(let gameObject of gameObjects) {
+      if(gameObject.needDestroy) {
+        this.DeleteGameObjectById(gameObject.id);
         continue;
       }
-      child.Update();
+      gameObject.Update();
     }
 
-    // draw time needed to draw the whole frame //
-    if(!this.debug) return;
-    this.DrawDebugGrid();
+    if(!this.debug) {
+      Time.FrameRendered();
+      requestAnimationFrame(this.Render.bind(this));
+      return;
+    }
     this.ctxPos = context.Position;
-    const endDraw = Date.now();
     context.ctx.fillStyle = 'white';
     context.ctx.fillRect(this.bgWidth - 100 - this.ctxPos.x, -this.ctxPos.y, 100, 40);
     context.ctx.fillStyle = 'red';
-    context.ctx.fillText(`TTR: ${endDraw - startDraw}`, this.bgWidth - 90 - this.ctxPos.x, 15 - this.ctxPos.y);
+    context.ctx.fillText(`delta time: ${Time.deltaTime}`, this.bgWidth - 90 - this.ctxPos.x, 15 - this.ctxPos.y);
+    context.ctx.fillText(`FPS: ${Math.floor(1000 / (Time.deltaTime || 1))}`, this.bgWidth - 90 - this.ctxPos.x, 30 - this.ctxPos.y);
+    Time.FrameRendered();
+    requestAnimationFrame(this.Render.bind(this));
   }
 
   AppendGameObject(element: IGameObject) {
-    element.SetResolution(this.resolution);
     element.Context = this.context;
     this.gameObjects.set(element.id, element);
     if(!element.IsActive()) return;

@@ -3,9 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const { Engine, Classes: { RGBAColor, Vector } } = window.Abram;
 
-    const RESOLUTION = 10;
-
-    const engine = new Engine(800, 600, RESOLUTION, root, true);
+    const engine = new Engine(800, 600, root, true);
 
     const bgColor = new RGBAColor(150,0,0, 150);
     engine.SetBackgroundColor(bgColor);
@@ -23,6 +21,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     engine.AppendGameObject(gameObject2);
 
-    engine.Start();
+    engine.Start(60);
 });
 

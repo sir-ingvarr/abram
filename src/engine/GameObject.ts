@@ -1,7 +1,7 @@
 import {IGameObject, IModule} from "../types/GameObject";
 import {ICoordinates, Nullable} from "../types/common";
 import Module from "./Module";
-import {Vector} from "./Classes";
+import {Point, Vector} from "./Classes";
 import CanvasContext2D from "./Context2d";
 
 abstract class GameObject extends Module implements IGameObject {
@@ -10,7 +10,6 @@ abstract class GameObject extends Module implements IGameObject {
 
     public name: string;
     public id: string;
-    public resolution: number;
     public localPosition: Vector;
     public worldPosition: Vector;
     public parent: IGameObject;
@@ -24,11 +23,11 @@ abstract class GameObject extends Module implements IGameObject {
         super();
         this.localPosition = new Vector(position.x, position.y);
         this.worldPosition = new Vector(position.x, position.y);
-        this.scale = new Vector(scale.x, scale.y);
-        this.localScale = new Vector(scale.x, scale.y);
+        this.scale = new Vector(1,1);
+        this.localScale = new Vector(1,1);
+        this.ReplaceScale(scale);
         this.needDestroy = false;
         this.active = true;
-        this.resolution = 1;
         this.name = name;
         this.id = this.GenerateId(name);
     }
@@ -40,20 +39,22 @@ abstract class GameObject extends Module implements IGameObject {
         module.Start();
     }
 
-    SetScale(scaleX: number, scaleY?: number) {
-        this.scale.Set(scaleX, scaleY);
-        // for(let module of this.modules) {
-        //     module.SetScale(this.scale.x, this.scale.y);
-        // }
+    SetScale(scaleX?: number, scaleY?: number) {
+        this.localScale.Set(scaleX || this.localScale.x, scaleY || this.localScale.y);
+        const extraFactor = this.parent ? this.parent.Scale : new Point(1, 1);
+        this.scale = Vector.MultiplyCoordinates(extraFactor, this.localScale);
         for(let child of this.children.values()) {
-            child.SetScale(scaleX , scaleY);
+            child.SetScale();
         }
     }
 
-    GetScale(): ICoordinates {
+    get Scale(): ICoordinates {
         return this.scale;
     }
 
+    get LocalScale(): ICoordinates {
+        return this.localScale;
+    }
 
     ReplaceScale(scale: ICoordinates) {
         this.SetScale(scale.x, scale.y);
@@ -65,13 +66,13 @@ abstract class GameObject extends Module implements IGameObject {
 
     SetParent(gameObject: IGameObject) {
         this.parent = gameObject;
+        this.SetScale();
         this.SetParentRespectivePosition();
     }
 
     AppendChild(child: IGameObject) {
         this.children.set(child.id, child);
         child.context = this.context;
-        child.SetResolution(this.resolution);
         child.SetParent(this);
         child.Start();
     }
@@ -95,17 +96,17 @@ abstract class GameObject extends Module implements IGameObject {
                 this.RemoveChildById(key);
                 continue;
             }
+            child.SetParentRespectivePosition();
             child.Update();
         }
-        if(!this.parent) return;
-        this.SetParentRespectivePosition();
     }
 
-    private SetParentRespectivePosition() {
-        this.worldPosition = Vector.Add(
+    public SetParentRespectivePosition() {
+        const parentRespectivePos = Vector.Add(
             Vector.MultiplyCoordinates(this.scale.Normalized, this.localPosition),
             this.parent.worldPosition
-        );
+        )
+        this.worldPosition.MoveTo(parentRespectivePos.x, parentRespectivePos.y);
     }
 
     set Context(ctx: CanvasContext2D) {
@@ -114,12 +115,6 @@ abstract class GameObject extends Module implements IGameObject {
 
     GenerateId(name: string) {
         return name + Date.now() + Math.random();
-    }
-
-    SetResolution(newRes: number) {
-        this.resolution = newRes;
-        this.worldPosition.ApplyResolution(newRes);
-        this.localPosition.ApplyResolution(newRes);
     }
 
     Destroy() {

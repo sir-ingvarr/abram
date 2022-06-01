@@ -9,8 +9,7 @@ class Camera {
         private ctx: CanvasContext2D,
         clientWidth: number,
         clientHeight: number,
-        private resolution: number,
-        private position: Vector = new Vector(0,0, resolution),
+        private position: Vector = new Vector(0,0),
         private scale: ICoordinates = new Point(1, 1),
     ) {
         this.baseX = clientWidth / 2;
@@ -18,7 +17,7 @@ class Camera {
     }
 
     CenterTo(pos: ICoordinates): void {
-        this.position = new Vector(-pos.x + this.baseX, -pos.y + this.baseY, this.resolution);
+        this.position = new Vector(this.baseX - pos.x, this.baseY - pos.y);
         this.ctx.SetPosition(this.position);
     }
 

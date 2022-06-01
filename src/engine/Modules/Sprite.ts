@@ -1,8 +1,9 @@
 import Module from "../Module";
 import {IGameObject} from "../../types/GameObject";
-import {ICoordinates} from "../../types/common";
+import {Rect} from "../Primitives/Primitive";
+import {Point, RGBAColor, Segment} from "../Classes";
 
-class GraphicElement extends Module {
+class Sprite extends Module {
     private width: number;
     private height: number;
     private image: HTMLImageElement;
@@ -23,8 +24,9 @@ class GraphicElement extends Module {
         this.width = width || this.width;
         this.height = height || this.height;
         if(!this.gameObject) return;
-        this.image.width = this.width * this.gameObject.resolution * this.gameObject.scale.x;
-        this.image.height = this.height * this.gameObject.resolution * this.gameObject.scale.y;
+        const { scale } = this.gameObject;
+        this.image.width = this.width * scale.x;
+        this.image.height = this.height * scale.y;
     }
 
     SetImageContent(image: HTMLImageElement | string) {
@@ -41,27 +43,29 @@ class GraphicElement extends Module {
         newImage.src = image;
     }
 
-    GetImage() {
+    get Image(): HTMLImageElement {
         return this.image;
     }
 
-    Update() {
-        const ctx = this.gameObject.context.ctx;
+    Update(): void {
+        const { context: { ctx }, worldPosition, scale } = this.gameObject;
         this.SetSize();
-        const scale = this.gameObject.GetScale();
         const dir = scale.Normalized;
         if(!ctx) return;
         ctx.save();
-        ctx.scale(scale.x, scale.y);
-        const { x, y } = this.gameObject.worldPosition;
+        ctx.scale(dir.x, dir.y);
+        const { x, y } = worldPosition;
         ctx.drawImage(
             this.image,
             x * dir.x, y * dir.y,
-            this.width * this.gameObject.resolution * dir.x,
-            this.height * this.gameObject.resolution * dir.y
+            this.width * scale.x,
+            this.height * scale.y
         );
         ctx.restore();
+        const pos2 = new Point(this.width * Math.abs(scale.x), this.height * Math.abs(scale.y));
+        const spriteBorder = new Rect(new Segment(worldPosition, pos2), { strokeStyle: new RGBAColor(0, 120).toString() })
+        this.gameObject.context.DrawRect(spriteBorder, 1)
     }
 }
 
-export default GraphicElement;
+export default Sprite;

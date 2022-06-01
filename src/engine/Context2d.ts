@@ -63,11 +63,12 @@ class CanvasContext2D {
         this.Restore();
     }
 
-    DrawRect(rect: Rect, type: 0) {
+    DrawRect(rect: Rect, type = 0, contextRespective = false) {
         const { options, dash, segment: {from, to} } = rect;
         this.SetOptions(options);
         this.ctx.setLineDash(dash);
-        this.ctx.rect(from.x, from.y, to.x, to.y);
+        const initialPos = contextRespective ? new Point(this.Position.x, this.Position.y) : new Point();
+        this.ctx.rect(from.x + initialPos.x, from.y + initialPos.y, to.x + initialPos.x, to.y + initialPos.y);
         if(type === 0) {
             this.ctx.fill();
         } else {
