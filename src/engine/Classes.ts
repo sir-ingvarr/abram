@@ -1,4 +1,5 @@
 import {ICoordinates} from "../types/common";
+import {IIterator, IList, IQueue, IStack, IteratorReturnValue} from "../types/Iterators";
 
 export class Point implements ICoordinates {
     public x: number;
@@ -60,6 +61,10 @@ export class Vector extends Point {
         return new Vector();
     }
 
+    static get One() {
+        return new Vector(1, 1);
+    }
+
     static Add(...args: Array<ICoordinates>): Vector {
         return args.reduce((acc: Vector, val) => {
             return acc.Add(val);
@@ -67,8 +72,11 @@ export class Vector extends Point {
     }
 
     static MultiplyCoordinates(base: ICoordinates | number, other: ICoordinates): Vector {
-        if(typeof base === 'number') return new Vector(base * other.x, base * other.y);
-        return new Vector(base.x * other.x, base.y * other.y);
+        return new Vector(other.x, other.y).MultiplyCoordinates(base);
+    }
+
+    static DivideCoordinates(base: ICoordinates | number, other: ICoordinates): Vector {
+        return new Vector(other.x, other.y).DivideCoordinates(base);
     }
 
     get Magnitude(): number {
@@ -93,6 +101,24 @@ export class Vector extends Point {
         return this;
     }
 
+    MultiplyCoordinates(base: ICoordinates | number): Vector {
+        if(typeof base === 'number') {
+            this.x *= base;
+            this.y *= base;
+            return this;
+        }
+        this.x *= base.x;
+        this.y *= base.y;
+        return this;
+    }
+
+    DivideCoordinates(base: ICoordinates | number): Vector {
+        if(typeof base === 'number') {
+            return this.MultiplyCoordinates(1 / base);
+        }
+        return this.MultiplyCoordinates(new Vector(1 / base.x, 1 / base.y));
+    }
+
     get Normalized(): Vector {
         const [x, y] = this.NormalizeCoords();
         return new Vector(x, y);
@@ -101,6 +127,12 @@ export class Vector extends Point {
     Add(other: ICoordinates): Vector {
         this.x += other.x;
         this.y += other.y;
+        return this;
+    }
+
+    Subtract(other: ICoordinates): Vector {
+        this.x -= other.x;
+        this.y -= other.y;
         return this;
     }
 
@@ -162,7 +194,7 @@ export class Maths {
      * @return {number}
      */
     static RandomRange(from: number, to: number) {
-        return this.LinearLerp(from, to, Math.random());
+        return Maths.LinearLerp(from, to, Math.random());
     }
 }
 
@@ -264,5 +296,96 @@ export class RGBAColor {
             Math.round(Maths.LinearLerp(this.blue, color.blue, factor)),
             Math.round(Maths.LinearLerp(this.alpha, color.alpha, factor)),
         );
+    }
+}
+
+export class Iterator<T> implements IIterator<T> {
+    protected index: number;
+    protected readonly infinite: boolean;
+    protected done: boolean;
+    protected data: Array<T>
+
+    constructor(options: { data: Array<T>, infinite?: boolean }) {
+        const {data, infinite = false} = options;
+        this.data = data;
+        this.index = -1;
+        this.infinite = infinite;
+        this.done = !!this.data.length && !this.infinite;
+    }
+
+
+    public Rewind(): Iterator<T> {
+        this.done = false;
+        this.index = 0;
+        return this;
+    }
+
+    [Symbol.iterator](): IteratorReturnValue<T> {
+        return this.Next;
+    }
+
+    get Next(): IteratorReturnValue<T> {
+        if(this.done) return this.Current;
+        this.index++;
+        const last = this.index === this.data.length;
+        if(last && !this.infinite) this.done = true;
+        else if(last && this.infinite) this.Rewind();
+        return this.Current;
+    }
+
+    get Current(): IteratorReturnValue<T> {
+        return  { value: this.data[this.index], done: this.done, index: this.index }
+    }
+
+    get Count(): number {
+        return this.data.length;
+    }
+
+    get Done(): boolean {
+        return this.done;
+    }
+}
+
+export class List<T> extends Iterator<T> implements IList<T> {
+    public Push(item: T): IList<T> {
+        this.data.push(item);
+        return this;
+    }
+
+    public Remove(index: number): IList<T> {
+        this.data.splice(index, 1);
+        return this;
+    }
+
+    public SearchAndRemove(predicate: (item: T) => boolean, global?: boolean): IList<T> {
+        let newData = [];
+        for(let item of this.data) {
+            if(predicate(item)) continue;
+            newData.push(item);
+        }
+        this.data = newData;
+        return this;
+    }
+}
+
+export class Queue<T> extends Iterator<T> implements IQueue<T> {
+    public Push(item: T): IQueue<T> {
+        this.data.push(item);
+        return this;
+    }
+
+    public Shift(): T {
+        return this.data.shift() as T;
+    }
+}
+
+export class Stack<T> extends Iterator<T> implements IStack<T> {
+    public Push(item: T): IStack<T> {
+        this.data.push(item);
+        return this;
+    }
+
+    public Pop(): T {
+        return this.data.pop() as T;
     }
 }

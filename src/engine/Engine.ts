@@ -2,11 +2,14 @@ import {IGameObject} from "../types/GameObject";
 import {Point, RGBAColor} from "./Classes";
 import InputSystem from "./globals/Input";
 import CanvasContext2D from "./Context2d";
-import {ICoordinates} from "../types/common";
 import Time from "./globals/Time";
+import SpriteRenderer from "./Managers/SpriteRenderer";
+
+import {ICoordinates} from "../types/common";
 
 class Engine {
   private gameObjects: Map<string, IGameObject>;
+  private graphicRenderer: SpriteRenderer;
   private readonly context: CanvasContext2D;
   private bgColor: RGBAColor;
   private ctxPos: ICoordinates = new Point();
@@ -26,6 +29,7 @@ class Engine {
     const context = this.canvas.getContext('2d');
     if(!context) throw 'Could not retrieve Context2D from canvas'
     this.context = new CanvasContext2D(context);
+    this.graphicRenderer = new SpriteRenderer(this.context);
     if(!debug) return;
   }
 
@@ -103,6 +107,8 @@ class Engine {
       }
       gameObject.Update();
     }
+
+    this.graphicRenderer.Render();
 
     if(!this.debug) {
       Time.FrameRendered();

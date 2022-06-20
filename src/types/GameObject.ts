@@ -14,13 +14,11 @@ interface IWithContext {
 }
 
 interface IScalable {
-    scale: ICoordinates;
-    localScale: ICoordinates;
+    get Scale(): Vector;
+    get LocalScale(): Vector;
 
-    SetScale(x?: number, y?: number): void;
-    ReplaceScale(scale: ICoordinates): void;
-    get Scale(): ICoordinates;
-    get LocalScale(): ICoordinates;
+    set LocalScale(value: Vector);
+    set Scale(value: Vector);
 }
 
 export interface IExecutable extends IWithLifeCycle {
@@ -35,18 +33,50 @@ export interface IModule extends IExecutable {
     SetGameObject(gameObject: IGameObject): void;
 }
 
-export interface IGameObject extends IExecutable, IWithContext, IScalable {
+export interface ITransform extends IScalable {
+    gameObject: IGameObject;
+    anchors: { x: number, y: number };
+
+    positionUpdated: boolean;
+    scaleUpdated: boolean;
+    rotationUpdated: boolean;
+
+    get Parent(): Nullable<ITransform>
+    SetParent(gameObject: ITransform): void;
+
+    get WorldPosition(): Vector;
+    get LocalPosition(): Vector;
+    get Rotation(): number;
+    get RotationDeg(): number;
+    get LocalRotation(): number;
+    get LocalRotationDeg(): number
+
+    set LocalPosition(value: Vector);
+    set WorldPosition(value: Vector);
+    set LocalRotation(value: number);
+    set LocalRotationDeg(value: number);
+
+    RotateDeg(amount: number): ITransform;
+    Translate(amount: ICoordinates): ITransform;
+
+    SetParentAwarePosition(): void;
+    SetParentAwareScale(): void;
+    SetParentAwareRotation(): void;
+}
+
+export interface IGameObject extends IExecutable, IWithContext {
     id: string;
-    localPosition: Vector;
-    worldPosition: Vector;
-    parent: Nullable<IGameObject>;
+    transform: ITransform;
     needDestroy: boolean;
 
-    SetParent(gameObject: IGameObject): void;
     GenerateId(name: string): string;
     AppendChild(child: IGameObject): void;
     RegisterModule(module: IModule): void;
     GetModuleByName(name: string): Nullable<IModule>;
     GetChildById(id: string): Nullable<IGameObject>;
-    SetParentRespectivePosition(): void;
+}
+
+export interface IGraphic {
+    layer: number;
+    Render(): void;
 }

@@ -1,6 +1,5 @@
-import {CtxOptions} from "../types/primitives";
-import {Line, LinesShape} from "./Primitives/Primitive";
-import {Rect} from "./Primitives/Primitive";
+import {CtxOptions} from "../types/GraphicPrimitives";
+import {Line, LinesShape, Rect} from "./GraphicPrimitives/GraphicPrimitive";
 import {Point} from "./Classes";
 import {ICoordinates} from "../types/common";
 

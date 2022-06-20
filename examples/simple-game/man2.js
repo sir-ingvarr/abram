@@ -17,7 +17,7 @@ class ManTwo extends Man {
     }
 
     Jump(shouldStand) {
-        if(InputSystem.KeyPressed('Ctrl') && shouldStand) {
+        if(InputSystem.KeyPressed('ControlLeft') && shouldStand) {
             this.rigidBody.AddForce(Vector.MultiplyCoordinates(100, Vector.Down));
         }
     }

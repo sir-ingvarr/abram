@@ -8,6 +8,7 @@ class Man extends GameObject {
         this.prevHorDir = 1;
         this.verticalDir = 0;
         this.cam = cam;
+        this.layer = params.layer;
     }
 
     Start() {
@@ -15,7 +16,7 @@ class Man extends GameObject {
 
         const graphic = new Graphic({
             url: './assets/dude_idle.png',
-            width: 30, height: 70
+            width: 30, height: 70, layer: this.layer,
         });
 
         this.size = 1;
@@ -36,16 +37,16 @@ class Man extends GameObject {
         this.RegisterModule(graphic);
         this.RegisterModule(this.animator);
 
-        this.gun = new GameObject({ position: new Vector(10,30), name: `${this.name}`});
+        this.gun = new GameObject({ position: new Vector(10,30), name: `${this.name}_gun`});
         const gunGraphic = new Graphic({
             url: './assets/gun.png',
-            width: 30, height: 20
+            width: 30, height: 20, layer: this.layer + 1,
         });
 
         this.gun.RegisterModule(gunGraphic);
         this.AppendChild(this.gun);
 
-        this.initialScale = this.scale.Copy();
+        // this.initialScale = this.transform.Scale;
     }
 
     CheckHorizontalInputs() {
@@ -69,20 +70,22 @@ class Man extends GameObject {
     Update() {
         this.horizontalDir = this.CheckHorizontalInputs();
         this.verticalDir = this.CheckVerticalInputs();
-        const shouldStand = this.worldPosition.y >= 40;
+        const pos = this.transform.WorldPosition;
+        const shouldStand = pos.y >= 40;
         this.rigidBody.UseGravity = !shouldStand
         if(shouldStand) {
             this.rigidBody.collidedRb = this.ground;
             this.rigidBody.velocity.y = 0;
-            this.worldPosition.y = 40;
+            this.transform.LocalPosition = new Vector(pos.x, 40);
         } else {
             this.rigidBody.collidedRb = null;
         }
         this.Jump(shouldStand);
 
+        this.prevHorDir = this.horizontalDir || this.prevHorDir;
+
         if(shouldStand) {
             if (!!this.horizontalDir || !!this.verticalDir) {
-                this.prevHorDir = this.horizontalDir || this.prevHorDir;
                 this.animator.SetState('running');
             } else {
                 this.animator.SetState('idle');
@@ -90,21 +93,22 @@ class Man extends GameObject {
         } else {
             this.animator.SetState('jump');
         }
-        this.SetScale((this.horizontalDir || this.prevHorDir) * this.size, this.size);
+        this.transform.LocalScale = new Vector((this.horizontalDir || this.prevHorDir) * this.size, this.size);
         const delta = Time.deltaTime / 1000;
         // this.worldPosition.Translate(delta * 100 * this.horizontalDir, delta * 100 * this.verticalDir);
-        if(shouldStand) this.rigidBody.AddForce(Vector.MultiplyCoordinates(3, new Vector(this.horizontalDir, 0)));
-        if(this.worldPosition.x > 40) {
+        if(shouldStand) {
+            this.rigidBody.AddForce(Vector.MultiplyCoordinates(3, new Vector(this.horizontalDir, 0)));
+            if(this.size > 1) this.size -= delta;
+            if(this.transform.RotationDeg !== 0) this.transform.RotateDeg(1)
+
+        } else {
             // this.gun.SetActive(false);
-            if(this.size < 1.2)
+            if(this.transform.RotationDeg > -10) this.transform.RotateDeg(-1);
+
+            if(this.size < 1.1)
             this.size += delta;
         }
-        else {
-            // this.gun.SetActive(true);
-            if(this.size > 1)
-            this.size -= delta;
-        }
-        if(this.cam) this.cam.SetPosition(this.worldPosition);
+        if(this.cam) this.cam.SetPosition(pos);
         super.Update();
     }
 }

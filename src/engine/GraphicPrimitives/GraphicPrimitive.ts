@@ -1,4 +1,4 @@
-import {CtxOptions, ShadowOptions, StrokeOptions} from "../../types/primitives";
+import {CtxOptions, ShadowOptions, StrokeOptions} from "../../types/GraphicPrimitives";
 import {Dictionary} from "../../types/common";
 import {RGBAColor, Segment} from "../Classes";
 
@@ -10,7 +10,7 @@ const defaultOpts: CtxOptions = {
     fillStyle: new RGBAColor(255, 255, 255, 255).toString()
 }
 
-export class Primitive<T, V extends Partial<CtxOptions>> {
+export class GraphicPrimitive<T, V extends Partial<CtxOptions>> {
     public options: V | Dictionary;
     public dash: Array<number> = [];
     constructor(public dimensions: T, options: V, shadow: ShadowOptions = {}) {
@@ -26,19 +26,19 @@ export class Primitive<T, V extends Partial<CtxOptions>> {
     }
 }
 
-export class Line extends Primitive<Segment, StrokeOptions>{
+export class Line extends GraphicPrimitive<Segment, StrokeOptions>{
     constructor(public segment: Segment, options: StrokeOptions = {}, shadow: ShadowOptions = {}) {
         super(segment, options, shadow);
     }
 }
 
-export class LinesShape extends Primitive<Array<Segment>, CtxOptions>{
+export class LinesShape extends GraphicPrimitive<Array<Segment>, CtxOptions>{
     constructor(public segments: Array<Segment>, options: StrokeOptions = {}, shadow: ShadowOptions = {}) {
         super(segments, options, shadow);
     }
 }
 
-export class Rect extends Primitive<Segment, CtxOptions>{
+export class Rect extends GraphicPrimitive<Segment, CtxOptions>{
     constructor(public segment: Segment, options: CtxOptions = {}, shadow: ShadowOptions = {}) {
         super(segment, options, shadow);
     }

@@ -77,7 +77,7 @@ class RigidBody extends Module {
         this.forces = [];
         this.ApplyDrag();
         const physicalMovement = Vector.MultiplyCoordinates(Time.deltaTime / 100, this.velocity);
-        this.gameObject.worldPosition.Add(physicalMovement);
+        this.gameObject.transform.Translate(physicalMovement);
     }
 
     private ApplyDrag() {

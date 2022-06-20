@@ -12,12 +12,12 @@ document.addEventListener('DOMContentLoaded', function() {
     engine.AppendGameObject(camera);
 
     const gameObject = new Man({
-        position: new Vector(10, 20), name: 'Man'
+        position: new Vector(10, 20), name: 'Man', layer: 1
     }, camera);
     engine.AppendGameObject(gameObject);
 
     const gameObject2 = new ManTwo({
-        position: new Vector(30, 30), name: 'Man2'
+        position: new Vector(30, 30), name: 'Man2', layer: 3
     });
     engine.AppendGameObject(gameObject2);
 

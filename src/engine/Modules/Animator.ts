@@ -1,6 +1,6 @@
 import Module from "../Module";
 import Sprite from "./Sprite";
-import {Maths} from "../Classes";
+import {Iterator, Maths} from "../Classes";
 import Time from "../globals/Time";
 
 interface AnimatorOptions {
@@ -15,12 +15,12 @@ class Animator extends Module {
     public frameDelay: number;
     private state: string;
     private playing: boolean;
-    private stateMap: Map<string, { images: Array<HTMLImageElement>, max: number, count: number }>;
+    private stateMap: Map<string, Iterator<HTMLImageElement>>;
     private availableStates: Array<string>;
     private currentFrame: number;
     private controlledGraphic: Sprite;
     private elapsedTime: number;
-    private currentStateData?: { images: Array<HTMLImageElement>, max: number, count: number };
+    private currentStateData?: Iterator<HTMLImageElement>
 
     constructor(options: AnimatorOptions) {
         super();
@@ -61,11 +61,8 @@ class Animator extends Module {
 
     UpdateFrame() {
         if(!this.currentStateData) return;
-        const { max, images, count } = this.currentStateData;
-        if(!count) return;
-        this.currentFrame = Maths.Clamp(++this.currentFrame, 0, count);
-        if(this.currentFrame > max) this.currentFrame = 0;
-        this.controlledGraphic.SetImageContent(images[this.currentFrame]);
+        const image = this.currentStateData.Next.value;
+        this.controlledGraphic.SetImageContent(image);
     }
 
     SetStateMap(stateMap: Map<string, Array<string>>) {
@@ -73,7 +70,7 @@ class Animator extends Module {
         const stateWithImages = new Map();
         for(let state of availableStates) {
             const images = this.LoadStateImages(stateMap.get(state) || []);
-            stateWithImages.set(state, { images, max: images.length - 1, count: images.length });
+            stateWithImages.set(state, new Iterator({ data: images, infinite: true }));
         }
         this.stateMap = stateWithImages;
     }
