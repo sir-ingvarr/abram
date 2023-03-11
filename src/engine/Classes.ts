@@ -389,3 +389,25 @@ export class Stack<T> extends Iterator<T> implements IStack<T> {
         return this.data.pop() as T;
     }
 }
+
+export class BezierCurve {
+    private p1: Vector;
+    private p2: Vector;
+    private p3: Vector;
+
+    constructor(p1: ICoordinates, p2: ICoordinates, p3: ICoordinates) {
+        this.p1 = new Vector(p1.x, p1.y);
+        this.p2 = new Vector(p2.x, p2.y);
+        this.p3 = new Vector(p3.x, p3.y);
+    }
+
+    public Eval(factor: number): ICoordinates
+    {
+        const t = 1 - factor;
+        const result =
+            Vector.MultiplyCoordinates(Math.pow(t, 2), this.p1)
+            .Add(Vector.MultiplyCoordinates(2 * t * factor, this.p2))
+            .Add(Vector.MultiplyCoordinates( Math.pow(factor, 2), this.p3));
+        return result;
+    }
+}
