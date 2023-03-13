@@ -36,10 +36,8 @@ class SpriteRenderer {
                 }
             }, width, height, image
         } = graphic;
-        // if(name === 'Man1_gun')
-        // console.log(name, scale, localPosition);
         const { x, y } = worldPosition;
-
+        if(!image.Data) return;
         const dir = scale.Normalized;
         const anchoredX = width * anchors.x;
         const anchoredY = height * anchors.y;
@@ -48,7 +46,7 @@ class SpriteRenderer {
         this.ctx.rotate(rotation * dir.x * dir.y);
         this.ctx.scale(scale.x, scale.y);
         this.ctx.drawImage(
-            image,
+            image.Data,
             -anchoredX, -anchoredY,
             width,
             height
@@ -56,16 +54,16 @@ class SpriteRenderer {
 
 
 
-        const centerDot = new Rect(
-            new Segment(
-                Vector.Zero,
-                Vector.One
-            ), { fillStyle: new RGBAColor(255, 0, 0).toString() }
-        );
-        this.context.DrawRect(centerDot, 1);
-        const pos2 = new Point(width, height);
-        const spriteBorder = new Rect(new Segment(new Vector(-anchoredX, -anchoredY), pos2), { strokeStyle: new RGBAColor(0, 120).toString() })
-        this.context.DrawRect(spriteBorder, 1)
+        // const centerDot = new Rect(
+        //     new Segment(
+        //         Vector.Zero,
+        //         Vector.One
+        //     ), { fillStyle: new RGBAColor(255, 0, 0).toString() }
+        // );
+        // this.context.DrawRect(centerDot, 1);
+        // const pos2 = new Point(width, height);
+        // const spriteBorder = new Rect(new Segment(new Vector(-anchoredX, -anchoredY), pos2), { strokeStyle: new RGBAColor(0, 120).toString() })
+        // this.context.DrawRect(spriteBorder, 1)
         this.ctx.restore();
 
     }

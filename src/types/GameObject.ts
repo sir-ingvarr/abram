@@ -6,6 +6,7 @@ interface IWithLifeCycle {
     Start(): void;
     Destroy?(): void;
     Update(): void;
+    get Id(): string;
 }
 
 interface IWithContext {
@@ -24,17 +25,17 @@ interface IScalable {
 export interface IExecutable extends IWithLifeCycle {
     name: string;
     active: boolean;
-    gameObject: IGameObject;
-    SetActive(value: boolean): void;
-    IsActive(): boolean;
+    gameObject: IBasicObject;
+    set Active(value: boolean);
+    get Active(): boolean;
 }
 
 export interface IModule extends IExecutable {
-    SetGameObject(gameObject: IGameObject): void;
+    SetGameObject(gameObject: IBasicObject): void;
 }
 
 export interface ITransform extends IScalable {
-    gameObject: IGameObject;
+    gameObject: IGameObject | IBasicObject;
     anchors: { x: number, y: number };
 
     positionUpdated: boolean;
@@ -64,16 +65,21 @@ export interface ITransform extends IScalable {
     SetParentAwareRotation(): void;
 }
 
-export interface IGameObject extends IExecutable, IWithContext {
-    id: string;
+export interface IBasicObject extends IExecutable, IWithContext {
     transform: ITransform;
-    needDestroy: boolean;
 
-    GenerateId(name: string): string;
+    get IsWaitingDestroy(): boolean;
+
+}
+
+export interface IGameObject extends IBasicObject, IWithContext {
+    active: boolean;
+    name: string;
+
     AppendChild(child: IGameObject): void;
     RegisterModule(module: IModule): void;
-    GetModuleByName(name: string): Nullable<IModule>;
-    GetChildById(id: string): Nullable<IGameObject>;
+    GetModuleByName(name: string): Nullable<IExecutable>;
+    GetChildById(id: string): Nullable<IExecutable>;
 }
 
 export interface IGraphic {

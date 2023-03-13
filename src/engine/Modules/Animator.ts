@@ -23,7 +23,7 @@ class Animator extends Module {
     private currentStateData?: Iterator<HTMLImageElement>
 
     constructor(options: AnimatorOptions) {
-        super();
+        super({name: 'Animator'});
         const {
             frameDelay = 50, stateMap = new Map([['idle', []]]),
                 state = 'idle', graphicElement, playing = true
@@ -38,7 +38,6 @@ class Animator extends Module {
         this.controlledGraphic = graphicElement;
         this.SetStateMap(stateMap)
         this.currentStateData = this.stateMap.get(state);
-        if(!this.playing) return;
     }
 
     Stop() {
@@ -62,7 +61,7 @@ class Animator extends Module {
     UpdateFrame() {
         if(!this.currentStateData) return;
         const image = this.currentStateData.Next.value;
-        this.controlledGraphic.SetImageContent(image);
+        this.controlledGraphic.image.SetImageContent(image);
     }
 
     SetStateMap(stateMap: Map<string, Array<string>>) {
@@ -85,6 +84,7 @@ class Animator extends Module {
 
     Update() {
         super.Update();
+        if(!this.playing) return;
         this.elapsedTime += Time.deltaTime;
         if(this.elapsedTime < this.frameDelay) return;
         this.elapsedTime = 0;

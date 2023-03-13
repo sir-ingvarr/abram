@@ -1,6 +1,37 @@
 import {ICoordinates} from "../types/common";
 import {IIterator, IList, IQueue, IStack, IteratorReturnValue} from "../types/Iterators";
 
+export class Coordinates {
+    static ConvertToPolar(x: number, y: number): { r: number, angle: number } {
+        const r = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+        if(r === 0) return { r, angle: 0 };
+        if (y >= 0) return { r, angle: Math.acos(x / r) };
+        return { r, angle: -Math.acos(x / r) }
+    }
+
+    static ConvertToCartesian(r: number, angle: number): { x: number, y: number } {
+        if(r === 0) return { x: 0, y: 0 };
+        return { x: r * Math.cos(angle), y: r * Math.sin(angle) }
+    }
+}
+
+export class PolarCoordinates {
+    private radius: number;
+    private angle: number;
+
+    constructor(props: { x: number, y: number, r: number, angle: number }) {
+        const { x, y, r, angle } = props;
+        if(Maths.IsValidNumber(r) && Maths.IsValidNumber(angle)) {
+            this.radius = r;
+            this.angle = angle;
+        } else if(Maths.IsValidNumber(x) && Maths.IsValidNumber(y)) {
+            const polarAttributes = Coordinates.ConvertToPolar(x, y);
+            this.radius = polarAttributes.r;
+            this.angle = polarAttributes.angle;
+        }
+    }
+}
+
 export class Point implements ICoordinates {
     public x: number;
     public y: number;
@@ -167,6 +198,7 @@ export class Maths {
      * @param val value to put into borders
      * @param min lower range of the value
      * @param max upper range of the value
+     * @return {number}
      */
     static Clamp(val: number, min: number, max: number): number {
         if(val < min) return min;
@@ -180,6 +212,7 @@ export class Maths {
      * @param from beginning of the interpolation
      * @param to end of the interpolation
      * @param factor midrange value
+     * @return {number}
      */
     static LinearLerp(from: number, to: number, factor = 0): number {
         return from + (to - from) * factor;
@@ -189,24 +222,36 @@ export class Maths {
     /**
      * Returns a random value in the specified range
      *
-     * @param {number} from range border
-     * @param {number} to range border
+     * @param from range border
+     * @param to range border
      * @return {number}
      */
-    static RandomRange(from: number, to: number) {
+    static RandomRange(from: number, to: number): number {
         return Maths.LinearLerp(from, to, Math.random());
     }
+
+    /**
+     * Returns true if the var is number and not NaN
+     *
+     * @param variable any variable
+     * @return {boolean}
+     */
+
+    static IsValidNumber(variable: unknown): boolean {
+        return typeof variable === 'number' && variable !== Number.NaN;
+    }
+
 }
 
 export class RGBAColor {
-    public OnUpdated: Function;
+    private onUpdated: Function;
     private red: number;
     private green: number;
     private blue: number;
     private alpha: number;
     private colorHex: string;
 
-    constructor(r = 0, g = 0, b = 0, a = 255, onUpdated = () => {}) {
+    constructor(r = 0, g = 0, b = 0, a = 255, onUpdated = function (){}) {
         this.OnUpdated = onUpdated;
         this.setColor({r,g,b,a});
     }
@@ -217,6 +262,10 @@ export class RGBAColor {
         this.blue = this.Clamp(b);
         this.alpha = this.Clamp(a);
         this.updateHex();
+    }
+
+    set OnUpdated(onUpdated: Function) {
+        this.onUpdated = onUpdated.bind(this);
     }
 
     static FromHex(hex: string) {
@@ -233,6 +282,10 @@ export class RGBAColor {
         } catch (e) {
             console.error(e);
         }
+    }
+
+    Copy () {
+        return new RGBAColor(this.red, this.green, this.blue, this.alpha);
     }
 
     Clamp (val: number) {
@@ -261,7 +314,7 @@ export class RGBAColor {
 
     updateHex () {
         this.colorHex = this.RgbToHex();
-        this.OnUpdated(this);
+        this.onUpdated(this);
     }
 
     valueOf() {
@@ -289,7 +342,6 @@ export class RGBAColor {
      * @return {RGBAColor}
      */
     LerpTo(color: RGBAColor, factor: number) {
-        if(!(color instanceof RGBAColor)) throw 'should be an instance of RGBAColor class';
         return new RGBAColor(
             Math.round(Maths.LinearLerp(this.red, color.red, factor)),
             Math.round(Maths.LinearLerp(this.green, color.green, factor)),
@@ -404,10 +456,8 @@ export class BezierCurve {
     public Eval(factor: number): ICoordinates
     {
         const t = 1 - factor;
-        const result =
-            Vector.MultiplyCoordinates(Math.pow(t, 2), this.p1)
-            .Add(Vector.MultiplyCoordinates(2 * t * factor, this.p2))
-            .Add(Vector.MultiplyCoordinates( Math.pow(factor, 2), this.p3));
-        return result;
+        return Vector.MultiplyCoordinates(Math.pow(t, 2), this.p1)
+                .Add(Vector.MultiplyCoordinates(2 * t * factor, this.p2))
+                .Add(Vector.MultiplyCoordinates( Math.pow(factor, 2), this.p3));
     }
 }

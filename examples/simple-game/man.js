@@ -1,4 +1,4 @@
-const { GameObject, Graphic, Animator, InputSystem, Time, Classes: {Vector}, RigidBody } = window.Abram;
+const { GameObject, Sprite, Animator, InputSystem, Time, Classes: {Vector}, RigidBody } = window.Abram;
 
 class Man extends GameObject {
     constructor(params, cam) {
@@ -14,7 +14,7 @@ class Man extends GameObject {
     Start() {
         this.ground = new RigidBody({useGravity: false, drag: 4});
 
-        const graphic = new Graphic({
+        const graphic = new Sprite({
             url: './assets/dude_idle.png',
             width: 30, height: 70, layer: this.layer,
         });
@@ -38,7 +38,7 @@ class Man extends GameObject {
         this.RegisterModule(this.animator);
 
         this.gun = new GameObject({ position: new Vector(10,30), name: `${this.name}_gun`});
-        const gunGraphic = new Graphic({
+        const gunGraphic = new Sprite({
             url: './assets/gun.png',
             width: 30, height: 20, layer: this.layer + 1,
         });

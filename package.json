@@ -8,7 +8,8 @@
   },
   "scripts": {
     "test": "test",
-    "build": "tsc",
+    "build": "npm run build-ts && npm run bundle",
+    "build-ts": "tsc",
     "bundle": "webpack"
   },
   "repository": {

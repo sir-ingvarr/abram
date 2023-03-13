@@ -1,33 +1,43 @@
-import {IGameObject, IModule} from "../types/GameObject";
+import {IBasicObject, IGameObject, IModule} from "../types/GameObject";
 import CanvasContext2D from "./Context2d";
 import {ICoordinates} from "../types/common";
 
 abstract class Module implements IModule {
-    readonly scale: ICoordinates;
-    readonly localScale: ICoordinates;
-
+    protected readonly id: string;
     name: string;
     active: boolean = true;
-    gameObject: IGameObject;
+    gameObject: IBasicObject;
     public context: CanvasContext2D;
 
-    public SetActive(value: boolean) {
+    constructor(params: {name?: string}) {
+        this.id = this.GenerateId(params.name || this.constructor.name);
+    }
+
+    get Id() {
+        return this.id;
+    }
+
+    set Active(value: boolean) {
         this.active = value
     }
 
-    public ScaleUpdated(newScale: ICoordinates) {}
-
-    public IsActive(): boolean {
+    get Active(): boolean {
         return this.active;
     }
+
+    GenerateId(name: string) {
+        return name + Date.now() + Math.random();
+    }
+
+    public ScaleUpdated(newScale: ICoordinates) {}
 
     SetGameObject(gameObject: IGameObject) {
         this.gameObject = gameObject;
     }
 
-    Start() {}
+    Start(): void {}
 
-    Update() {}
+    Update(): void {}
 }
 
 export default Module;

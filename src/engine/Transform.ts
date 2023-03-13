@@ -1,12 +1,12 @@
 import {Vector} from "./Classes";
-import {IGameObject, ITransform} from "../types/GameObject";
+import {IBasicObject, IGameObject, ITransform} from "../types/GameObject";
 import {ICoordinates, Nullable} from "../types/common";
 
 type TransformOptions = {
-    lP?: Vector,
-    lS?: Vector,
-    lR?: number,
-    lRDeg?: number,
+    localPosition?: Vector,
+    localScale?: Vector,
+    localRotation?: number,
+    localRotationDegrees?: number,
     parent?: ITransform,
     anchors?: { x: number, y: number }
 }
@@ -21,7 +21,7 @@ class Transform implements ITransform {
     private rotation: number;
     private rotationDeg: number;
     private parent: Nullable<ITransform>;
-    public gameObject: IGameObject;
+    public gameObject: IGameObject | IBasicObject;
     public anchors: { x: number, y: number };
 
     public scaleUpdated: boolean;
@@ -29,17 +29,17 @@ class Transform implements ITransform {
     public rotationUpdated: boolean;
 
 
-    constructor(go: IGameObject, params: TransformOptions) {
-        const { lP = Vector.Zero, lS = Vector.One, lR, lRDeg, parent = null, anchors = { x: 0.5, y: 0.5 } } = params;
+    constructor(go: IGameObject | IBasicObject, params: TransformOptions) {
+        const { localPosition = Vector.Zero, localScale = Vector.One, localRotation, localRotationDegrees, parent = null, anchors = { x: 0.5, y: 0.5 } } = params;
         this.gameObject = go;
         this.parent = parent;
-        this.localPosition = lP.Copy();
-        this.localScale = lS.Copy();
-        if(typeof lR === 'number') this.LocalRotation = lR;
-        if(typeof lRDeg === 'number') this.LocalRotationDeg = lRDeg;
+        this.localPosition = localPosition.Copy();
+        this.localScale = localScale.Copy();
+        if(typeof localRotationDegrees === 'number') this.LocalRotationDeg = localRotationDegrees;
+        else if(typeof localRotation === 'number') this.LocalRotation = localRotation;
         this.anchors = anchors;
-        this.worldPosition = parent ? parent.WorldPosition.Add(lP) : lP.Copy();
-        this.scale = parent ? Vector.MultiplyCoordinates(parent.Scale, lS) : lS.Copy();
+        this.worldPosition = parent ? parent.WorldPosition.Add(localPosition) : localPosition.Copy();
+        this.scale = parent ? Vector.MultiplyCoordinates(parent.Scale, localScale) : localScale.Copy();
     }
     get Parent(): Nullable<ITransform> {
         return this.parent;
@@ -54,7 +54,6 @@ class Transform implements ITransform {
     public SetParentAwarePosition() {
         if(this.parent === null || !this.parent.positionUpdated) return;
         this.worldPosition = this.parent.WorldPosition.Add(this.LocalPosition.MultiplyCoordinates(this.scale.Normalized));
-        console.log(this.worldPosition);
     }
 
     public SetParentAwareScale() {

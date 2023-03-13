@@ -1,4 +1,4 @@
-class ManTwo extends Man {
+class ManTwo extends ParticleSystem {
     constructor(params) {
         super(params);
         this.name = 'Man2';

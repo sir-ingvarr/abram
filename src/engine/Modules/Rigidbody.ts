@@ -27,7 +27,7 @@ class RigidBody extends Module {
 
 
     constructor(params: RigidBodyParams) {
-        super();
+        super({ name: 'RigidBody' });
         const { mass = 1, velocity = new Vector(), useGravity = true, drag = 1, angularVelocity = 1, gravityScale = 1 } = params;
         this.mass = mass;
         this.velocity = velocity;
@@ -60,6 +60,22 @@ class RigidBody extends Module {
 
     set Velocity(val: Vector) {
         this.velocity = val.Copy();
+    }
+
+    get GravityScale() {
+        return this.gravityScale;
+    }
+
+    set GravityScale(val: number) {
+        this.gravityScale = val;
+    }
+
+    get Drag() {
+        return this.drag;
+    }
+
+    set Drag(val: number) {
+        this.drag = val;
     }
 
     private ApplyGravity() {

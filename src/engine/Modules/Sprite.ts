@@ -1,52 +1,39 @@
 import Module from "../Module";
-import {IGameObject} from "../../types/GameObject";
+import {IBasicObject, IGameObject} from "../../types/GameObject";
 import SpriteRenderer from "../Managers/SpriteRenderer";
+import ImageWrapper from "./ImageWrapper";
 
 class Sprite extends Module {
     public width: number;
     public height: number;
-    public image: HTMLImageElement;
-    public gameObject: IGameObject;
+    public image: ImageWrapper;
+    public gameObject: IBasicObject;
     public layer: number;
 
-    constructor(params: { url: string, width: number, height: number, layer: number}) {
-        super();
-        const { url, width, height, layer = 0 } = params;
+    constructor(params: { image: ImageWrapper, width?: number, height?: number, layer?: number, gameObject?: IBasicObject}) {
+        super({name: 'SpriteRenderer'});
+        const { width = 100, height = 100, layer = 0, image } = params;
         this.layer = layer;
-        this.image = new Image();
+        this.image = image;
         this.SetSize(width, height);
-        this.SetImageContent(url);
     }
 
     SetGameObject(gameObject: IGameObject) {
         this.gameObject = gameObject;
+        this.SetSize()
     }
 
     SetSize(width?: number, height?: number) {
         this.width = width || this.width;
         this.height = height || this.height;
-        if(!this.gameObject) return;
+        if(!this.gameObject || !this.image.isReady) return;
         const { Scale: scale } = this.gameObject.transform;
-        this.image.width = this.width * scale.x;
-        this.image.height = this.height * scale.y;
-    }
-
-    SetImageContent(image: HTMLImageElement | string) {
-        if(image instanceof Image) {
-            this.image = image;
-            return;
-        }
-        if(typeof image !== "string") throw 'unacceptable image content provided';
-        const newImage = new Image();
-        newImage.onload = e => {
-            this.image = newImage;
-            this.SetSize();
-        }
-        newImage.src = image;
+        this.image.Data.width = this.width * scale.x;
+        this.image.Data.height = this.height * scale.y;
     }
 
     get Image(): HTMLImageElement {
-        return this.image;
+        return this.image.Data;
     }
 
     Update(): void {
