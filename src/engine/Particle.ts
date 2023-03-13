@@ -26,7 +26,7 @@ class Particle extends BasicObject {
     }
 
     SetSize(factor: number) {
-        this.sprite.SetSize(this.initialSize * factor);
+        this.sprite.SetSize(this.initialSize * factor, this.initialSize * factor);
     }
 
     Update() {

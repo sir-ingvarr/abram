@@ -7,21 +7,27 @@ class ParticleSystemTest extends GameObject {
     }
 
     Start() {
-        const gunGraphic = new ImageWrapper('./assets/spark.png');
+        const imageArray = [];
+        imageArray.push(new ImageWrapper('./assets/circle_purple.png'));
+        imageArray.push(new ImageWrapper('./assets/heart_green.png'));
+        imageArray.push(new ImageWrapper('./assets/sun_yellow.png'));
+        imageArray.push(new ImageWrapper('./assets/triangle_red.png'));
+        imageArray.push(new ImageWrapper('./assets/poly_orange.png'));
+
 
         this.particleSystem = new ParticleSystem({
             parent: this,
             params: {
-                sprite: gunGraphic,
-                lifeTime: 1000,
-                maxParticles: 2000,
-                emitOverTime: 1,
+                sprite: () => imageArray[Math.floor(Maths.RandomRange(0, imageArray.length - 1))],
+                lifeTime: () => Maths.RandomRange(1, 3)*1000,
+                maxParticles: 5000,
+                emitOverTime: 5,
                 emitEachTimeFrame: 0,
                 initialColor: new RGBAColor(120, 140, 240),
-                gravityForceScale: 1,
-                initialVelocity: () => new Vector(Maths.RandomRange(-300, 300), Maths.RandomRange(-300, 300)),
-                initialSize: () => Maths.RandomRange(20, 100),
-                sizeOverLifeTime: factor => Maths.Clamp(1 - factor, 0.2, 1),
+                gravityForceScale: 1.2,
+                initialVelocity: () => new Vector(Maths.RandomRange(-200, 200), Maths.RandomRange(-300, 100)),
+                initialSize: () => Maths.RandomRange(10, 60),
+                sizeOverLifeTime: factor => Maths.Clamp(1 - factor, 0.3, 1),
             },
         })
     }
@@ -29,6 +35,5 @@ class ParticleSystemTest extends GameObject {
     Update() {
         super.Update();
         this.particleSystem.Update();
-        // if(this.cam) this.cam.SetPosition(this.transform.WorldPosition);
     }
 }
