@@ -1,9 +1,10 @@
 import {ExecutableManager} from "./ExecutableManager";
-import GameObject from "../GameObject";
+import GameObject from "../Objects/GameObject";
 import {IGameObject} from "../../types/GameObject";
+import CanvasContext2D from "../Canvas/Context2d";
 
 export class GameObjectManager extends ExecutableManager {
-    constructor(params: { modules: Array<GameObject>, parent?: IGameObject }) {
+    constructor(params: { modules: Array<GameObject>, parent?: IGameObject, context?: CanvasContext2D }) {
         super(params);
     }
 
@@ -11,7 +12,7 @@ export class GameObjectManager extends ExecutableManager {
         super.PostModuleRegister(module);
         if(this.parent) {
             module.context = this.parent.Context;
-            module.transform.SetParent(this.parent.transform);
+            module.transform.Parent = this.parent.transform;
         }
     }
 
@@ -26,8 +27,5 @@ export class GameObjectManager extends ExecutableManager {
 
     protected PostUpdate(module: GameObject) {
         super.PostUpdate(module);
-        module.transform.SetParentAwarePosition();
-        module.transform.SetParentAwareScale();
-        module.transform.SetParentAwareRotation();
     }
 }

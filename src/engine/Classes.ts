@@ -1,35 +1,50 @@
-import {ICoordinates} from "../types/common";
+import {ICoordinates, Nullable} from "../types/common";
 import {IIterator, IList, IQueue, IStack, IteratorReturnValue} from "../types/Iterators";
 
 export class Coordinates {
-    static ConvertToPolar(x: number, y: number): { r: number, angle: number } {
+    static ConvertToPolar(x: number, y: number): PolarCoordinates {
         const r = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
-        if(r === 0) return { r, angle: 0 };
-        if (y >= 0) return { r, angle: Math.acos(x / r) };
-        return { r, angle: -Math.acos(x / r) }
+        if(r === 0) return new PolarCoordinates({ r, angle: 0 });
+        if (y >= 0) return new PolarCoordinates({ r, angle: Math.acos(x / r) });
+        return new PolarCoordinates({ r, angle: -Math.acos(x / r) });
     }
 
-    static ConvertToCartesian(r: number, angle: number): { x: number, y: number } {
-        if(r === 0) return { x: 0, y: 0 };
-        return { x: r * Math.cos(angle), y: r * Math.sin(angle) }
+    static ConvertToCartesian(r: number, angle: number): Point {
+        if(r === 0) return new Point(0, 0);
+        return new Point(r * Math.cos(angle), r * Math.sin(angle));
     }
 }
 
 export class PolarCoordinates {
-    private radius: number;
-    private angle: number;
+    public radius: number;
+    public angle: number;
 
-    constructor(props: { x: number, y: number, r: number, angle: number }) {
-        const { x, y, r, angle } = props;
+    constructor(props: { x?: number, y?: number, r?: number, angle?: number }) {
+        const { x = 0, y = 0, r, angle } = props;
         if(Maths.IsValidNumber(r) && Maths.IsValidNumber(angle)) {
-            this.radius = r;
-            this.angle = angle;
+            this.radius = r as number;
+            this.angle = angle as number;
         } else if(Maths.IsValidNumber(x) && Maths.IsValidNumber(y)) {
             const polarAttributes = Coordinates.ConvertToPolar(x, y);
-            this.radius = polarAttributes.r;
+            this.radius = polarAttributes.radius;
             this.angle = polarAttributes.angle;
         }
+        throw 'invalid constructor parameters passed.'
     }
+
+    static From(point: ICoordinates): PolarCoordinates {
+        return new PolarCoordinates({x: point.x, y: point.y});
+    }
+
+    ToCartesian(): Point {
+        const {x, y} = Coordinates.ConvertToCartesian(this.radius, this.angle);
+        return new Point(x, y);
+    }
+
+    Copy(): PolarCoordinates {
+        return new PolarCoordinates({r: this.radius, angle: this.angle})
+    }
+
 }
 
 export class Point implements ICoordinates {
@@ -40,26 +55,23 @@ export class Point implements ICoordinates {
         this.Set(x, y);
     }
 
-    protected NormalizeCoord(coordinate: number): number {
-        return coordinate < 0 ? -1 : coordinate === 0 ? 0 : 1;
+    static From(source: ICoordinates): Point {
+        return new Point(source.x, source.y);
     }
 
-    protected NormalizeCoords(): [number, number] {
-        return [this.NormalizeCoord(this.x), this.NormalizeCoord(this.y)];
-    }
-
-    Set(x: number, y = x) {
+    Set(x: number, y = x): Point {
         this.x = x;
         this.y = y;
+        return this;
+    }
+
+    SetFrom(other: ICoordinates): Point {
+        this.Set(other.x, other.y);
+        return this;
     }
 
     Copy(): Point {
         return new Point(this.x, this.y);
-    }
-
-    get Normalized(): Point {
-        const [x, y] = this.NormalizeCoords();
-        return new Point(x, y);
     }
 
     ToVector(): Vector {
@@ -72,28 +84,36 @@ export class Vector extends Point {
         super(x, y);
     }
 
+    static From(source: ICoordinates): Vector {
+        return new Vector(source.x, source.y);
+    }
+
+    static Of(x: number, y?: number): Vector {
+        return new Vector(x, y || x);
+    }
+
     static get Up() {
-        return new Vector(0, 1);
+        return Vector.Of(0, 1);
     }
 
     static get Down() {
-        return new Vector(0, -1);
+        return Vector.Of(0, -1);
     }
 
     static get Left() {
-        return new Vector(-1, 0);
+        return Vector.Of(-1, 0);
     }
 
     static get Right() {
-        return new Vector(1, 0);
+        return Vector.Of(1, 0);
     }
 
     static get Zero() {
-        return new Vector();
+        return Vector.Of(0);
     }
 
     static get One() {
-        return new Vector(1, 1);
+        return Vector.Of(1, 1);
     }
 
     static Add(...args: Array<ICoordinates>): Vector {
@@ -101,6 +121,17 @@ export class Vector extends Point {
             return acc.Add(val);
         }, new Vector())
     }
+
+    static LerpBetween(p1: ICoordinates, p2: ICoordinates, factor: number): Vector {
+        return new Vector(
+            Maths.Lerp(p1.x, p2.x, factor),
+            Maths.Lerp(p1.y, p2.y, factor)
+        )
+    }
+
+     static SameVectors(v1: ICoordinates, v2: ICoordinates): boolean {
+        return Math.abs(v1.x - v2.x) < 0.000001 && Math.abs(v1.y - v2.y) < 0.000001
+     }
 
     static MultiplyCoordinates(base: ICoordinates | number, other: ICoordinates): Vector {
         return new Vector(other.x, other.y).MultiplyCoordinates(base);
@@ -110,25 +141,40 @@ export class Vector extends Point {
         return new Vector(other.x, other.y).DivideCoordinates(base);
     }
 
+    static Distance(from: ICoordinates, to: ICoordinates):number {
+        return new Vector(from.x - to.x, from.y - to.y).Magnitude;
+    }
+
+    static Angle(from: Vector, to: Vector): number {
+        return from.Angle - to.Angle;
+    }
+
     get Magnitude(): number {
         return Math.sqrt(this.x * this.x + this.y * this.y);
     }
 
-    Translate (x = 0, y = 0): Vector {
-        this.x += x;
-        this.y += y;
-        return this;
+    set Magnitude(newMag: number) {
+        this.SetMagnitude(newMag);
     }
 
-    MoveTo (newX: number, newY: number): Vector {
-        this.x = newX;
-        this.y = newY;
-        return this;
+    get Angle(): number {
+        const cosine = Math.abs(this.x) / this.Magnitude;
+        return Math.acos(cosine);
     }
 
-    Multiply(multiplier: number ): Vector {
-        this.x *= multiplier;
-        this.y *= multiplier;
+    ToBinary(): Vector {
+        let x = 0;
+        let y = 0;
+        if(this.x < 0) x = -1;
+        else if(this.x > 0) x = 1;
+        if(this.y < 0) y = -1;
+        else if(this.y > 0) y = 1;
+        return new Vector(x, y);
+    }
+
+    SetMagnitude(newMag: number): Vector {
+        const factor = newMag / this.Magnitude;
+        this.MultiplyCoordinates(factor);
         return this;
     }
 
@@ -151,13 +197,18 @@ export class Vector extends Point {
     }
 
     get Normalized(): Vector {
-        const [x, y] = this.NormalizeCoords();
-        return new Vector(x, y);
+        return this.Copy().SetMagnitude(1);
     }
 
     Add(other: ICoordinates): Vector {
         this.x += other.x;
         this.y += other.y;
+        return this;
+    }
+
+    Mirror(x: boolean, y: boolean): Vector {
+        if(x) this.x *= -1;
+        if(y) this.y *= -1;
         return this;
     }
 
@@ -189,6 +240,53 @@ export class Vector extends Point {
 
 export class Segment {
     constructor(public from: ICoordinates, public to: ICoordinates) {}
+
+    HasPoint(point: ICoordinates): boolean {
+        const xLerp = Maths.GetLerpFactor(this.from.x, this.to.x, point.x);
+        if(xLerp === -1) return false;
+        const yLerp = Maths.GetLerpFactor(this.from.y, this.to.y, point.y);
+        if(yLerp === -1) return false;
+        return xLerp === yLerp;
+    }
+
+    getIntersection(other: Segment): Nullable<Point> {
+        const { x: x1, y: y1 } = this.from;
+        const { x: x2, y: y2 } = this.to;
+        const { x: x3, y: y3 } = other.from;
+        const { x: x4, y: y4 } = other.to;
+        const denominator = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+        if (denominator === 0) return null;
+        const ua = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / denominator;
+        const ub = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / denominator;
+        if (ua < 0 || ua > 1 || ub < 0 || ub > 1) return null;
+        return new Point(x1 + ua * (x2 - x1), y1 + ua * (y2 - y1));
+    }
+
+    get Length() : number {
+        return Math.sqrt(Math.pow(this.to.x - this.from.x, 2) + Math.pow(this.to.y - this.from.y, 2))
+    }
+
+    Copy(): Segment {
+        return new Segment(this.from.Copy(), this.to.Copy());
+    }
+}
+
+export class Ray {
+    private to: ICoordinates;
+    constructor(public from: ICoordinates, public angle: number) {
+        this.to = this.ToUnitVector().Add(this.from);
+    }
+    Copy(): Ray {
+        return new Ray(this.from.Copy(), this.angle);
+    }
+
+    ToUnitVector(): Vector {
+        return Coordinates.ConvertToCartesian(1, this.angle).ToVector();
+    }
+
+    IsPointOnRay(point: ICoordinates): boolean {
+        return Vector.SameVectors(this.ToUnitVector(), new Vector(point.x, point.y).Normalized);
+    }
 }
 
 export class Maths {
@@ -214,8 +312,13 @@ export class Maths {
      * @param factor midrange value
      * @return {number}
      */
-    static LinearLerp(from: number, to: number, factor = 0): number {
+    static Lerp(from: number, to: number, factor = 0): number {
         return from + (to - from) * factor;
+    }
+
+    static GetLerpFactor(from: number, to: number, value: number): Nullable<number> {
+        if(!from || !to || !value) return null;
+        return value - from / to - from;
     }
 
 
@@ -227,7 +330,7 @@ export class Maths {
      * @return {number}
      */
     static RandomRange(from: number, to: number): number {
-        return Maths.LinearLerp(from, to, Math.random());
+        return Maths.Lerp(from, to, Math.random());
     }
 
     /**
@@ -238,7 +341,7 @@ export class Maths {
      */
 
     static IsValidNumber(variable: unknown): boolean {
-        return typeof variable === 'number' && variable !== Number.NaN;
+        return !!variable && typeof variable === 'number' && variable !== Number.NaN;
     }
 
 }
@@ -313,7 +416,7 @@ export class RGBAColor {
     }
 
     updateHex () {
-        this.colorHex = this.RgbToHex();
+        this.colorHex = this.ToHex();
         this.onUpdated(this);
     }
 
@@ -330,7 +433,7 @@ export class RGBAColor {
         return hex.length === 1 ? `0${hex}` : hex;
     }
 
-    RgbToHex() {
+    ToHex() {
         return `#${this.ComponentToHex(this.red)}${this.ComponentToHex(this.green)}${this.ComponentToHex(this.blue)}${this.ComponentToHex(this.alpha)}`;
     }
 
@@ -343,10 +446,10 @@ export class RGBAColor {
      */
     LerpTo(color: RGBAColor, factor: number) {
         return new RGBAColor(
-            Math.round(Maths.LinearLerp(this.red, color.red, factor)),
-            Math.round(Maths.LinearLerp(this.green, color.green, factor)),
-            Math.round(Maths.LinearLerp(this.blue, color.blue, factor)),
-            Math.round(Maths.LinearLerp(this.alpha, color.alpha, factor)),
+            Math.round(Maths.Lerp(this.red, color.red, factor)),
+            Math.round(Maths.Lerp(this.green, color.green, factor)),
+            Math.round(Maths.Lerp(this.blue, color.blue, factor)),
+            Math.round(Maths.Lerp(this.alpha, color.alpha, factor)),
         );
     }
 }

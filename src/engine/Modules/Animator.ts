@@ -1,7 +1,7 @@
-import Module from "../Module";
+import Module from "./Module";
 import Sprite from "./Sprite";
 import {Iterator, Maths} from "../Classes";
-import Time from "../globals/Time";
+import Time from "../Globals/Time";
 
 interface AnimatorOptions {
     frameDelay: number;

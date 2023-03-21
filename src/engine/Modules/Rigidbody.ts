@@ -1,6 +1,6 @@
-import Module from "../Module";
+import Module from "./Module";
 import {Vector} from "../Classes";
-import Time from "../globals/Time";
+import Time from "../Globals/Time";
 
 type RigidBodyParams = {
     mass?: number,
@@ -99,7 +99,7 @@ class RigidBody extends Module {
     private ApplyDrag() {
         const drag = ((this.collidedRb ? this.collidedRb.drag : AIR_RESISTANCE) + this.drag) / 2;
         const dragMultiplier = 1 - (Time.deltaTime / 1000) * drag;
-        this.velocity.Multiply(dragMultiplier);
+        this.velocity.MultiplyCoordinates(dragMultiplier);
     }
 
     Update(): void {

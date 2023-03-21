@@ -1,10 +1,10 @@
-import {IExecutable, IGameObject, IModule} from "../types/GameObject";
-import {Dictionary, Nullable} from "../types/common";
-import {Vector} from "./Classes";
-import CanvasContext2D from "./Context2d";
+import {IExecutable, IGameObject} from "../../types/GameObject";
+import {Dictionary, Nullable} from "../../types/common";
+import {Vector} from "../Classes";
+import CanvasContext2D from "../Canvas/Context2d";
 import Transform from "./Transform";
-import {ExecutableManager} from "./Managers/ExecutableManager";
-import {GameObjectManager} from "./Managers/GameObjectManager";
+import {ExecutableManager} from "../Managers/ExecutableManager";
+import {GameObjectManager} from "../Managers/GameObjectManager";
 import BasicObject from "./BasicObject";
 
 class GameObject extends BasicObject implements IGameObject {
@@ -15,7 +15,7 @@ class GameObject extends BasicObject implements IGameObject {
     public active: boolean;
 
     protected constructor(params: Dictionary) {
-        const { active = true, position = new Vector(), name = 'GameObject', scale = Vector.One, rotation = 0, rotationDeg } = params;
+        const { active = true, position = new Vector(), name = 'GameObject', scale = Vector.One, rotation = 0, rotationDeg, context: CanvasContext2D } = params;
         super({ name });
         this.transform = new Transform(this, {
             localPosition: position,
@@ -23,8 +23,8 @@ class GameObject extends BasicObject implements IGameObject {
             localRotation: rotation,
             localRotationDegrees: rotationDeg
         });
-        this.childManager = new GameObjectManager({ modules: [], parent: this });
-        this.modulesManager = new ExecutableManager({ modules: [], parent: this });
+        this.childManager = new GameObjectManager({ modules: [], parent: this, context: this.context });
+        this.modulesManager = new ExecutableManager({ modules: [], parent: this, context: this.context });
         this.needDestroy = false;
         this.active = active;
         this.name = name;
@@ -32,9 +32,13 @@ class GameObject extends BasicObject implements IGameObject {
 
 
 
-    RegisterModule(module: IModule) {
+    RegisterModule(module: IExecutable) {
         this.modulesManager.RegisterModule(module);
         module.SetGameObject(this);
+    }
+
+    get Context() {
+        return this.context as CanvasContext2D;
     }
 
     GetModuleByName(name: string): Nullable<IExecutable> {
@@ -56,9 +60,6 @@ class GameObject extends BasicObject implements IGameObject {
     Update() {
         this.modulesManager.Update();
         this.childManager.Update();
-        this.transform.scaleUpdated = false;
-        this.transform.positionUpdated = false;
-        this.transform.rotationUpdated = false;
     }
 
 
@@ -68,6 +69,8 @@ class GameObject extends BasicObject implements IGameObject {
 
     Destroy() {
         this.needDestroy = true;
+        this.modulesManager.Destroy();
+        this.childManager.Destroy();
     }
 }
 

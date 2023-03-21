@@ -1,11 +1,34 @@
+import {BoundingBox} from "../engine/Canvas/GraphicPrimitives/Shapes";
+
 export type Nullable<T> = T | null;
 
 export type Dictionary<V = any> = { [key: string]: V };
 
+export enum ColorSpace {
+    SRGB='srgb',
+    DisplayP3='display-p3'
+}
+
+export type CanvasContext2DAttributes = {
+    alpha: boolean,
+    desynchronized: boolean,
+    willReadFrequently: boolean,
+    colorSpace: ColorSpace,
+}
+
 export interface ICoordinates {
     x: number,
     y: number,
-    Set(x: number, y?: number): void,
+    Set(x: number, y?: number): ICoordinates,
     Copy(): ICoordinates,
-    get Normalized(): ICoordinates
+}
+
+export interface IShape {
+    get Offset(): ICoordinates;
+    set Offset(newOffset: ICoordinates);
+    get Center(): ICoordinates;
+    IsPointInside(point: ICoordinates): boolean;
+    IsIntersectingOther(other: unknown): boolean;
+    GetIntersectionPoints(other: unknown): Array<ICoordinates>;
+    get BoundingBox(): BoundingBox;
 }
