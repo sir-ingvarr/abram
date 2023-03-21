@@ -1,4 +1,4 @@
-import GameObject from "../GameObject";
+import GameObject from "../Objects/GameObject";
 import {Nullable} from "../../types/common";
 import {Time} from "../../index";
 

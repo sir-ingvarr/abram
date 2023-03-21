@@ -1,16 +1,17 @@
-import {ICoordinates, Nullable} from "./common";
+import {ICoordinates, IShape, Nullable} from "./common";
 import {Vector} from "../engine/Classes";
-import CanvasContext2D from "../engine/Context2d";
+import CanvasContext2D from "../engine/Canvas/Context2d";
+import Rigidbody from "../engine/Modules/Rigidbody";
 
 interface IWithLifeCycle {
     Start(): void;
-    Destroy?(): void;
+    Destroy(): void;
     Update(): void;
     get Id(): string;
 }
 
 interface IWithContext {
-    context: CanvasContext2D;
+    get Context(): CanvasContext2D;
     set Context(ctx: CanvasContext2D);
 }
 
@@ -28,22 +29,23 @@ export interface IExecutable extends IWithLifeCycle {
     gameObject: IBasicObject;
     set Active(value: boolean);
     get Active(): boolean;
+    SetGameObject(gameObject: IBasicObject): void;
 }
 
-export interface IModule extends IExecutable {
-    SetGameObject(gameObject: IBasicObject): void;
+export interface ICollider2D extends IExecutable {
+    rigidbody: Rigidbody;
+    shape: IShape;
+    parent: ITransform;
+    Collide(other: ICollider2D): void;
+    Leave(other: ICollider2D): void
 }
 
 export interface ITransform extends IScalable {
     gameObject: IGameObject | IBasicObject;
     anchors: { x: number, y: number };
 
-    positionUpdated: boolean;
-    scaleUpdated: boolean;
-    rotationUpdated: boolean;
-
     get Parent(): Nullable<ITransform>
-    SetParent(gameObject: ITransform): void;
+    set Parent(transform: Nullable<ITransform>);
 
     get WorldPosition(): Vector;
     get LocalPosition(): Vector;
@@ -53,23 +55,16 @@ export interface ITransform extends IScalable {
     get LocalRotationDeg(): number
 
     set LocalPosition(value: Vector);
-    set WorldPosition(value: Vector);
     set LocalRotation(value: number);
     set LocalRotationDeg(value: number);
 
     RotateDeg(amount: number): ITransform;
     Translate(amount: ICoordinates): ITransform;
-
-    SetParentAwarePosition(): void;
-    SetParentAwareScale(): void;
-    SetParentAwareRotation(): void;
 }
 
 export interface IBasicObject extends IExecutable, IWithContext {
     transform: ITransform;
-
     get IsWaitingDestroy(): boolean;
-
 }
 
 export interface IGameObject extends IBasicObject, IWithContext {
@@ -77,7 +72,7 @@ export interface IGameObject extends IBasicObject, IWithContext {
     name: string;
 
     AppendChild(child: IGameObject): void;
-    RegisterModule(module: IModule): void;
+    RegisterModule(module: IExecutable): void;
     GetModuleByName(name: string): Nullable<IExecutable>;
     GetChildById(id: string): Nullable<IExecutable>;
 }

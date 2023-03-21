@@ -1,53 +1,70 @@
 import {IGameObject} from "../types/GameObject";
-import {Point, RGBAColor} from "./Classes";
-import InputSystem from "./globals/Input";
-import CanvasContext2D from "./Context2d";
-import Time from "./globals/Time";
+import {RGBAColor} from "./Classes";
+import InputSystem from "./Globals/Input";
+import Time from "./Globals/Time";
 import SpriteRenderer from "./Managers/SpriteRenderer";
 
-import {ICoordinates} from "../types/common";
+import {CanvasContext2DAttributes, ColorSpace} from "../types/common";
 import {GameObjectManager} from "./Managers/GameObjectManager";
 import {FpsProvider} from "./Debug/FpsProvider";
+import CollisionsManager from "./Managers/CollisionsManager";
+import Canvas from "./Canvas/Canvas";
+
+export type EngineConfigOptions = {
+  width: number,
+  height: number,
+  debug?: boolean,
+  targetFps?: number,
+  bgColor?: RGBAColor,
+  adaptiveFrameDelay?: boolean,
+  pauseOnBlur?: boolean,
+  canvasContextAttributes?: CanvasContext2DAttributes
+}
 
 class Engine {
-  private gameObjectManager: GameObjectManager;
-  private graphicRenderer: SpriteRenderer;
-  private readonly context: CanvasContext2D;
-  private bgColor: RGBAColor;
-  private ctxPos: ICoordinates = new Point();
-  private frameDelay: number = 0;
-  private prevFrameTime: number;
+  private readonly root: HTMLElement;
   private readonly fpsProvider: FpsProvider;
   private readonly adaptiveFrameDelay: boolean;
+  private readonly debug: boolean = false;
+  private canvas: Canvas;
+  private gameObjectManager: GameObjectManager;
+  private collisionsManager: CollisionsManager;
+  private graphicRenderer: SpriteRenderer;
+  private frameDelay: number = 0;
+  private prevFrameTime: number;
   private isPlaying: boolean;
+  private targetFps: number;
 
-  public canvas: HTMLCanvasElement;
 
-  constructor (
-      private bgWidth: number,
-      private bgHeight: number,
-      private readonly root: HTMLElement,
-      private readonly debug: boolean = false,
-      private targetFps: number = 0,
-      options: { adaptiveFrameDelay?: boolean, pauseOnBlur?: boolean } = {}
-  ) {
-    const {adaptiveFrameDelay = false, pauseOnBlur=true} = options;
+  constructor (root: HTMLElement, options: EngineConfigOptions = { width: 800, height: 600 }) {
+    const {
+      width, height,
+      debug = false, targetFps = 60, adaptiveFrameDelay = false, pauseOnBlur = true,
+      bgColor = new RGBAColor(),
+      canvasContextAttributes = {
+        alpha: true,
+        willReadFrequently: false,
+        desynchronized: false,
+        colorSpace: ColorSpace.SRGB,
+      }
+    } = options;
     this.isPlaying = true;
     if(pauseOnBlur) {
       window.onblur = this.Pause.bind(this);
       window.onfocus = this.Play.bind(this);
     }
+    this.root = root;
+    this.debug = debug;
+    this.targetFps = targetFps;
     this.adaptiveFrameDelay = adaptiveFrameDelay;
-    this.gameObjectManager = new GameObjectManager({ modules: [] });
-    this.CreateCanvas();
-    const context = this.canvas.getContext('2d');
-    if(!context) throw 'Could not retrieve Context2D from canvas'
-    this.context = new CanvasContext2D(context);
-    this.graphicRenderer = new SpriteRenderer(this.context);
+    this.CreateCanvas(width, height, canvasContextAttributes, bgColor);
+    this.gameObjectManager = new GameObjectManager({ modules: [], context: this.canvas.Context2D });
+    this.collisionsManager = new CollisionsManager({ modules: [] });
+    this.graphicRenderer = SpriteRenderer.GetInstance(this.canvas.Context2D);
     this.frameDelay = this.targetFps && this.targetFps < 60 ? 1000 / this.targetFps : 0;
     if(!debug) return;
     this.fpsProvider = new FpsProvider({
-      name: "FPS Provider",
+      name: "FPSProvider",
       realFpsFramesBuffer: this.targetFps,
       targetFps: this.targetFps,
       frameDelay: this.frameDelay,
@@ -56,61 +73,50 @@ class Engine {
     this.gameObjectManager.RegisterModule(this.fpsProvider);
   }
 
+  CreateCanvas (width: number, height: number, canvasContextAttributes?: CanvasContext2DAttributes, bgColor?: RGBAColor): HTMLCanvasElement {
+    const canvas: HTMLCanvasElement = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    if(!this.root) return canvas;
+    this.canvas = new Canvas({ canvas, width, height, bgColor, canvasContextAttributes });
+    return this.InsertCanvas(this.root);
+  }
+
+  InsertCanvas (root: Element | Document): HTMLCanvasElement {
+    if(!(root instanceof Element) && !(root instanceof Document)) throw 'parent should be html Element or Document.';
+    root.appendChild(this.canvas.CanvasElement);
+    return this.canvas.CanvasElement;
+  }
+
+  get Canvas(): Canvas {
+    return this.canvas;
+  }
+
+  SetCanvasDimensions(width: number, height?: number) {
+    this.canvas.SetSize(width, height);
+  }
+
+  SetBackgroundColor(color: RGBAColor): void {
+    this.canvas.Context2D.BgColor = color;
+  }
+
+  AppendGameObject(element: IGameObject) {
+    element.Context = this.canvas.Context2D;
+    this.gameObjectManager.RegisterModule(element);
+  }
+
+  GetGameObjectById(id: string) {
+    return this.gameObjectManager.GetModuleById(id);
+  }
+
   public SetFrameDelay(delay: number) {
     this.frameDelay = delay;
     if(!this.debug) return;
     console.info(`new target frame delay set: ${this.frameDelay}`);
   }
 
-  get Context() {
-    return this.context;
-  }
-
-  private ClearCanvas () {
-    this.context.ctx.clearRect(-this.ctxPos.x, -this.ctxPos.y, this.bgWidth, this.bgHeight);
-  }
-
-  SetCanvasDimensions(width: number = this.bgWidth, height: number = this.bgHeight) {
-    this.canvas.width = width;
-    this.canvas.height = height;
-    this.bgWidth = width;
-    this.bgHeight = height;
-  }
-
-  SetBackgroundColor(rgbaColor: RGBAColor) {
-    this.bgColor = rgbaColor;
-    if(!this.debug) return;
-    console.log('bg color changed', rgbaColor);
-  }
-
-  RenderBackground() {
-    if(!this.bgColor) return;
-    const { context } = this;
-    context.ctx.beginPath();
-    context.ctx.fillStyle = this.bgColor.valueOf();
-    context.ctx.rect(-this.ctxPos.x, -this.ctxPos.y, this.bgWidth, this.bgHeight);
-    context.ctx.fill();
-    context.ctx.closePath();
-  }
-
-  CreateCanvas (): HTMLCanvasElement {
-    const canvas: HTMLCanvasElement = this.canvas || document.createElement('canvas');
-    const { bgWidth: width, bgHeight: height } = this;
-    canvas.width = width;
-    canvas.height = height;
-    if(!this.root) return canvas;
-    this.canvas = canvas;
-    this.InsertCanvas(this.root);
-    return canvas;
-  }
-
-  InsertCanvas (root: Element | Document) {
-    if(!(root instanceof Element) && !(root instanceof Document)) throw 'parent should be html Element or Document.';
-    root.appendChild(this.canvas);
-  }
-
   Start () {
-    if(!this.context) throw 'Canvas context not created, use CreateCanvas()';
+    if(!this.canvas) throw 'Canvas not set, use CreateCanvas()';
     if(typeof InputSystem !== 'undefined') InputSystem.SetEventListeners();
     this.Play();
     this.Render();
@@ -121,12 +127,10 @@ class Engine {
   Play () {
     this.prevFrameTime = Date.now();
     this.isPlaying = true;
-    console.log('play');
   }
 
   Pause() {
     this.isPlaying = false;
-    console.log('pause');
   }
 
   Render () {
@@ -135,33 +139,29 @@ class Engine {
       requestAnimationFrame(this.Render.bind(this));
       return;
     }
-    const { context } = this;
-    this.ClearCanvas();
-    this.RenderBackground();
+    this.canvas.Context2D
+        .Reset()
+        .ContextRespectivePosition(true)
+        .Clear()
+        .DrawBg()
+
     this.gameObjectManager.Update();
+    this.collisionsManager.Update();
     this.graphicRenderer.Render();
 
     if(this.debug) {
-      this.ctxPos = context.Position;
-      context.ctx.fillStyle = 'white';
-      context.ctx.fillRect(this.bgWidth - 100 - this.ctxPos.x, -this.ctxPos.y, 100, 40);
-      context.ctx.fillStyle = 'red';
-      context.ctx.fillText(`frame time: ${Time.deltaTime}`, this.bgWidth - 90 - this.ctxPos.x, 15 - this.ctxPos.y);
-      context.ctx.fillText(`FPS: ${Math.floor(this.fpsProvider.FPS)}`, this.bgWidth - 90 - this.ctxPos.x, 30 - this.ctxPos.y);
+      this.canvas.Context2D
+          .ContextRespectivePosition(true)
+          .FillStyle('white')
+          .FillRect(this.canvas.Width - 100, 0, 100, 40)
+          .FillStyle('red')
+          .FillText(`frame time: ${Time.deltaTime}`, this.canvas.Width - 90, 15)
+          .FillText(`FPS: ${Math.floor(this.fpsProvider.FPS)}`, this.canvas.Width - 90, 30)
     }
 
     Time.FrameRendered();
     this.prevFrameTime = Date.now();
     requestAnimationFrame(this.Render.bind(this));
-  }
-
-  AppendGameObject(element: IGameObject) {
-    element.Context = this.context;
-    this.gameObjectManager.RegisterModule(element);
-  }
-
-  GetGameObjectById(id: string) {
-    return this.gameObjectManager.GetModuleById(id);
   }
 }
 

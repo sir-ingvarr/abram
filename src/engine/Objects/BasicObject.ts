@@ -1,8 +1,8 @@
-import {IBasicObject, ITransform} from "../types/GameObject";
-import {Dictionary} from "../types/common";
-import Module from "./Module";
-import {Vector} from "./Classes";
-import CanvasContext2D from "./Context2d";
+import {IBasicObject, ITransform} from "../../types/GameObject";
+import {Dictionary} from "../../types/common";
+import Module from "../Modules/Module";
+import {Vector} from "../Classes";
+import CanvasContext2D from "../Canvas/Context2d";
 import Transform from "./Transform";
 
 
@@ -22,18 +22,22 @@ abstract class BasicObject extends Module implements IBasicObject {
         this.needDestroy = false;
     }
 
-    Update() {
-        this.transform.scaleUpdated = false;
-        this.transform.positionUpdated = false;
-        this.transform.rotationUpdated = false;
-    }
+    Update() {}
 
     set Context(ctx: CanvasContext2D) {
         this.context = ctx;
     }
 
+    get Context() {
+        return this.context || this.transform.Parent?.gameObject?.Context as CanvasContext2D;
+    }
+
     get IsWaitingDestroy(): boolean {
         return this.needDestroy;
+    }
+
+    set NeedDestroy(val: boolean) {
+        this.needDestroy = val;
     }
 
     Destroy() {

@@ -1,13 +1,13 @@
-import {IBasicObject, IGameObject, IModule} from "../types/GameObject";
-import CanvasContext2D from "./Context2d";
-import {ICoordinates} from "../types/common";
+import {IBasicObject, IGameObject, IExecutable} from "../../types/GameObject";
+import CanvasContext2D from "../Canvas/Context2d";
+import {ICoordinates} from "../../types/common";
 
-abstract class Module implements IModule {
+abstract class Module implements IExecutable {
     protected readonly id: string;
     name: string;
     active: boolean = true;
     gameObject: IBasicObject;
-    public context: CanvasContext2D;
+    public context?: CanvasContext2D;
 
     constructor(params: {name?: string}) {
         this.id = this.GenerateId(params.name || this.constructor.name);
@@ -25,11 +25,13 @@ abstract class Module implements IModule {
         return this.active;
     }
 
+    get Context() {
+        return this.context || this.gameObject.Context;
+    }
+
     GenerateId(name: string) {
         return name + Date.now() + Math.random();
     }
-
-    public ScaleUpdated(newScale: ICoordinates) {}
 
     SetGameObject(gameObject: IGameObject) {
         this.gameObject = gameObject;
@@ -38,6 +40,8 @@ abstract class Module implements IModule {
     Start(): void {}
 
     Update(): void {}
+
+    Destroy(): void {}
 }
 
 export default Module;

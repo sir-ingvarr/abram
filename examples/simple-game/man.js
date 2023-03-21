@@ -21,6 +21,7 @@ class Man extends GameObject {
             width: 30, height: 70, layer: this.layer,
         });
 
+        graphic.parent = this.transform;
         this.size = 1;
         this.animator = new Animator({
             frameDelay: 100,
@@ -47,6 +48,9 @@ class Man extends GameObject {
             image: gunImage,
             width: 30, height: 20, layer: this.layer + 1,
         });
+
+        gunGraphic.parent = this.gun.transform;
+
 
         this.gun.RegisterModule(gunGraphic);
         this.AppendChild(this.gun);
@@ -76,12 +80,13 @@ class Man extends GameObject {
         this.horizontalDir = this.CheckHorizontalInputs();
         this.verticalDir = this.CheckVerticalInputs();
         const pos = this.transform.WorldPosition;
-        const shouldStand = pos.y >= 40;
+        if(this.cam) this.cam.SetPosition(pos);
+        const shouldStand = pos.y >= 250;
         this.rigidBody.UseGravity = !shouldStand
         if(shouldStand) {
             this.rigidBody.collidedRb = this.ground;
             this.rigidBody.velocity.y = 0;
-            this.transform.LocalPosition = new Vector(pos.x, 40);
+            this.transform.LocalPosition = new Vector(pos.x, 250);
         } else {
             this.rigidBody.collidedRb = null;
         }
@@ -113,7 +118,6 @@ class Man extends GameObject {
             if(this.size < 1.1)
             this.size += delta;
         }
-        if(this.cam) this.cam.SetPosition(pos);
         super.Update();
     }
 }

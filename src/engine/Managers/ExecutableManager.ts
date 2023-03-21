@@ -1,11 +1,13 @@
 import {IExecutable, IGameObject} from "../../types/GameObject";
 import {Nullable} from "../../types/common";
+import CanvasContext2D from "../Canvas/Context2d";
 
 export class ExecutableManager {
     protected readonly modules: Map<string, IExecutable>;
     protected readonly parent?: IGameObject;
+    protected readonly context?: CanvasContext2D;
 
-    constructor(props: { modules?: Array<IExecutable>, parent?: IGameObject }) {
+    constructor(props: { modules?: Array<IExecutable>, parent?: IGameObject, context?: CanvasContext2D }) {
         this.modules = new Map();
         const { modules = [], parent } = props;
         this.parent = parent;
@@ -26,7 +28,6 @@ export class ExecutableManager {
     protected PostModuleRegister(module: IExecutable): void {
         if(module.active) module.Start();
     }
-
 
     RegisterModule(module: IExecutable): string {
         if(!this.PreModuleRegister(module)) {
@@ -60,6 +61,13 @@ export class ExecutableManager {
             if(!this.PreUpdate(module)) continue;
             module.Update();
             if(this.PostUpdate) this.PostUpdate(module);
+        }
+    }
+
+    Destroy() {
+        for(let [_, module] of this.modules) {
+            module.Destroy();
+            this.modules.clear();
         }
     }
 }

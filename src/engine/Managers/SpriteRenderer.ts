@@ -1,78 +1,92 @@
-import CanvasContext2D from "../Context2d";
-import {Point, RGBAColor, Segment, Stack, Vector} from "../Classes";
-import {Rect} from "../GraphicPrimitives/GraphicPrimitive";
+import CanvasContext2D from "../Canvas/Context2d";
+import {RGBAColor, Stack} from "../Classes";
 import Sprite from "../Modules/Sprite";
 import {IStack} from "../../types/Iterators";
+import {GraphicPrimitive, IGraphicPrimitive} from "../Canvas/GraphicPrimitives/GraphicPrimitive";
+
+type Graphic = Sprite | GraphicPrimitive<any, any>
 
 class SpriteRenderer {
     private context: CanvasContext2D;
-    private ctx: CanvasRenderingContext2D;
-    private static renderingStackList: Array<IStack<Sprite>> = [];
+    private renderingStackList: Array<IStack<Sprite | IGraphicPrimitive>> = [];
+    private static instance: SpriteRenderer;
 
     constructor(context: CanvasContext2D) {
         this.context = context;
-        this.ctx = context.ctx;
+        SpriteRenderer.instance = this;
     }
 
-    public static AddToRenderQueue(graphic: Sprite) {
+    public static GetInstance(context?: CanvasContext2D): SpriteRenderer {
+        if(!SpriteRenderer.instance) {
+            if(!context) throw `no instance of ${this.constructor.name} was found. cannot create a new one without CanvasContext2D`;
+            return new SpriteRenderer(context);
+        }
+        return SpriteRenderer.instance;
+    }
+
+    public AddToRenderQueue(graphic: Sprite | IGraphicPrimitive) {
         const { layer } = graphic;
-        const layerStack = SpriteRenderer.renderingStackList[layer];
+        const layerStack = this.renderingStackList[layer];
         if(!layerStack) {
-            this.renderingStackList[layer] = new Stack<Sprite>({ data: [graphic] });
+            this.renderingStackList[layer] = new Stack<Sprite | IGraphicPrimitive>({ data: [graphic] });
             return;
         }
         this.renderingStackList[layer].Push(graphic);
     }
 
-    private RenderElement(graphic: Sprite) {
+    private RenderElement(graphic: Sprite | IGraphicPrimitive) {
         const {
-            gameObject: {
-                name,
-                transform: {
-                    WorldPosition: worldPosition,
-                    Scale: scale,
-                    Rotation: rotation,
-                    anchors
-                }
-            }, width, height, image
+            parent: {
+                WorldPosition: worldPosition,
+                Scale: scale,
+                Rotation: rotation,
+                anchors
+            }
         } = graphic;
-        const { x, y } = worldPosition;
-        if(!image.Data) return;
-        const dir = scale.Normalized;
-        const anchoredX = width * anchors.x;
-        const anchoredY = height * anchors.y;
-        this.ctx.save();
-        this.ctx.translate(x + anchoredX, y + anchoredY);
-        this.ctx.rotate(rotation * dir.x * dir.y);
-        this.ctx.scale(scale.x, scale.y);
-        this.ctx.drawImage(
-            image.Data,
-            -anchoredX, -anchoredY,
-            width,
-            height
-        );
+
+        const {x, y} = worldPosition;
+        const dir = scale.ToBinary();
+        let width = 1;
+        let height = 1;
+
+        this.context
+            .Save()
+            .ContextRespectivePosition(false);
+
+            let anchoredX = 0;
+            let anchoredY = 0;
+            if(graphic instanceof Sprite) {
+                width = graphic.width;
+                height = graphic.height;
+                if (!graphic.image.Data) return;
+                anchoredX = anchors.x * width;
+                anchoredY = anchors.y * height;
+            }
+            this.context.Translate(x + anchoredX, y + anchoredY);
 
 
+            this.context
+                .Rotate(rotation * dir.x * dir.y)
+                .SetScale(scale.x, scale.y);
+            if(graphic instanceof Sprite) {
+                this.context.DrawImage(graphic.image.Data, -anchoredX , -anchoredY, width, height);
+            } else {
+                this.context.Draw(graphic);
+            }
 
-        // const centerDot = new Rect(
-        //     new Segment(
-        //         Vector.Zero,
-        //         Vector.One
-        //     ), { fillStyle: new RGBAColor(255, 0, 0).toString() }
-        // );
-        // this.context.DrawRect(centerDot, 1);
-        // const pos2 = new Point(width, height);
-        // const spriteBorder = new Rect(new Segment(new Vector(-anchoredX, -anchoredY), pos2), { strokeStyle: new RGBAColor(0, 120).toString() })
-        // this.context.DrawRect(spriteBorder, 1)
-        this.ctx.restore();
-
+        this.context
+            // .ContextRespectivePosition(false)
+            // .StrokeStyle(new RGBAColor(0, 120).ToHex())
+            // .StrokeRect(0, 0, 1, 1)
+            // .StrokeRect(-anchoredX, -anchoredY, width + anchoredX, height + anchoredY)
+            .Restore();
     }
 
     public Render() {
-        for(let i = 0; i < SpriteRenderer.renderingStackList.length; i++) {
-            const layerStack = SpriteRenderer.renderingStackList[i];
+        for(let i = 0; i < this.renderingStackList.length; i++) {
+            const layerStack = this.renderingStackList[i];
             if(!layerStack) {
-                SpriteRenderer.renderingStackList[i] = new Stack<Sprite>({data: []});
+                // this.renderingStackList[i] = new Stack<Sprite>({data: []});
                 continue;
             }
             while(layerStack.Count) {
