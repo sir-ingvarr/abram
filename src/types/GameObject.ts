@@ -1,7 +1,7 @@
-import {ICoordinates, IShape, Nullable} from "./common";
-import {Vector} from "../engine/Classes";
-import CanvasContext2D from "../engine/Canvas/Context2d";
-import Rigidbody from "../engine/Modules/Rigidbody";
+import {ICoordinates, IShape, Nullable} from './common';
+import {Vector} from '../engine/Classes';
+import CanvasContext2D from '../engine/Canvas/Context2d';
+import Rigidbody from '../engine/Modules/Rigidbody';
 
 interface IWithLifeCycle {
     Start(): void;
@@ -17,10 +17,10 @@ interface IWithContext {
 
 interface IScalable {
     get Scale(): Vector;
-    get LocalScale(): Vector;
-
-    set LocalScale(value: Vector);
     set Scale(value: Vector);
+
+    get LocalScale(): Vector;
+    set LocalScale(value: Vector);
 }
 
 export interface IExecutable extends IWithLifeCycle {
@@ -49,16 +49,18 @@ export interface ITransform extends IScalable {
 
     get WorldPosition(): Vector;
     get LocalPosition(): Vector;
+    set LocalPosition(value: Vector);
+
     get Rotation(): number;
     get RotationDeg(): number;
-    get LocalRotation(): number;
-    get LocalRotationDeg(): number
+    RotateDeg(amount: number): ITransform;
 
-    set LocalPosition(value: Vector);
+    get LocalRotation(): number;
     set LocalRotation(value: number);
+
+    get LocalRotationDeg(): number
     set LocalRotationDeg(value: number);
 
-    RotateDeg(amount: number): ITransform;
     Translate(amount: ICoordinates): ITransform;
 }
 

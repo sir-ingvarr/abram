@@ -1,6 +1,6 @@
-import Module from "./Module";
-import {Vector} from "../Classes";
-import Time from "../Globals/Time";
+import Module from './Module';
+import {Vector} from '../Classes';
+import Time from '../Globals/Time';
 
 type RigidBodyParams = {
     mass?: number,
@@ -15,98 +15,98 @@ const G_CONSTANT = 9.82;
 const AIR_RESISTANCE = 0.2;
 
 class RigidBody extends Module {
-    private velocity: Vector;
-    private angularVelocity: number;
-    private drag: number;
-    private mass: number;
-    private useGravity: boolean;
-    private gravityScale: number;
-    private forces: Array<Vector>;
-    private isColliding: boolean;
-    public collidedRb?: RigidBody;
+	private velocity: Vector;
+	private angularVelocity: number;
+	private drag: number;
+	private mass: number;
+	private useGravity: boolean;
+	private gravityScale: number;
+	private forces: Array<Vector>;
+	private isColliding: boolean;
+	public collidedRb?: RigidBody;
 
 
-    constructor(params: RigidBodyParams) {
-        super({ name: 'RigidBody' });
-        const { mass = 1, velocity = new Vector(), useGravity = true, drag = 1, angularVelocity = 1, gravityScale = 1 } = params;
-        this.mass = mass;
-        this.velocity = velocity;
-        this.useGravity = useGravity;
-        this.drag = drag;
-        this.angularVelocity = angularVelocity;
-        this.forces = [];
-        this.gravityScale = gravityScale;
-    }
+	constructor(params: RigidBodyParams) {
+		super({ name: 'RigidBody' });
+		const { mass = 1, velocity = new Vector(), useGravity = true, drag = 1, angularVelocity = 1, gravityScale = 1 } = params;
+		this.mass = mass;
+		this.velocity = velocity;
+		this.useGravity = useGravity;
+		this.drag = drag;
+		this.angularVelocity = angularVelocity;
+		this.forces = [];
+		this.gravityScale = gravityScale;
+	}
 
-    get Mass() {
-        return this.mass;
-    }
+	get Mass() {
+		return this.mass;
+	}
 
-    set Mass(val: number) {
-        this.mass = val;
-    }
+	set Mass(val: number) {
+		this.mass = val;
+	}
 
-    get UseGravity() {
-        return this.useGravity;
-    }
+	get UseGravity() {
+		return this.useGravity;
+	}
 
-    set UseGravity(val: boolean) {
-        this.useGravity = val;
-    }
+	set UseGravity(val: boolean) {
+		this.useGravity = val;
+	}
 
-    get Velocity() {
-        return this.velocity.Copy();
-    }
+	get Velocity() {
+		return this.velocity.Copy();
+	}
 
-    set Velocity(val: Vector) {
-        this.velocity = val.Copy();
-    }
+	set Velocity(val: Vector) {
+		this.velocity = val.Copy();
+	}
 
-    get GravityScale() {
-        return this.gravityScale;
-    }
+	get GravityScale() {
+		return this.gravityScale;
+	}
 
-    set GravityScale(val: number) {
-        this.gravityScale = val;
-    }
+	set GravityScale(val: number) {
+		this.gravityScale = val;
+	}
 
-    get Drag() {
-        return this.drag;
-    }
+	get Drag() {
+		return this.drag;
+	}
 
-    set Drag(val: number) {
-        this.drag = val;
-    }
+	set Drag(val: number) {
+		this.drag = val;
+	}
 
-    private ApplyGravity() {
-        this.AddForce(Vector.MultiplyCoordinates(G_CONSTANT * this.gravityScale, Vector.Up));
-    }
+	private ApplyGravity() {
+		this.AddForce(Vector.MultiplyCoordinates(G_CONSTANT * this.gravityScale, Vector.Up));
+	}
 
-    AddForce(force: Vector): void {
-        this.forces.push(force.Copy());
-    }
+	AddForce(force: Vector): void {
+		this.forces.push(force.Copy());
+	}
 
-    private CalcVelocityByForces() {
-        const resultingForce = Vector.Add(Vector.Zero, ...this.forces);
-        const accelerationVector = Vector.MultiplyCoordinates(1 / this.mass, resultingForce);
-        this.velocity.Add(accelerationVector);
-        this.forces = [];
-        this.ApplyDrag();
-        const physicalMovement = Vector.MultiplyCoordinates(Time.deltaTime / 100, this.velocity);
-        this.gameObject.transform.Translate(physicalMovement);
-    }
+	private CalcVelocityByForces() {
+		const resultingForce = Vector.Add(Vector.Zero, ...this.forces);
+		const accelerationVector = Vector.MultiplyCoordinates(1 / this.mass, resultingForce);
+		this.velocity.Add(accelerationVector);
+		this.forces = [];
+		this.ApplyDrag();
+		const physicalMovement = Vector.MultiplyCoordinates(Time.deltaTime / 100, this.velocity);
+		this.gameObject.transform.Translate(physicalMovement);
+	}
 
-    private ApplyDrag() {
-        const drag = ((this.collidedRb ? this.collidedRb.drag : AIR_RESISTANCE) + this.drag) / 2;
-        const dragMultiplier = 1 - (Time.deltaTime / 1000) * drag;
-        this.velocity.MultiplyCoordinates(dragMultiplier);
-    }
+	private ApplyDrag() {
+		const drag = ((this.collidedRb ? this.collidedRb.drag : AIR_RESISTANCE) + this.drag) / 2;
+		const dragMultiplier = 1 - (Time.deltaTime / 1000) * drag;
+		this.velocity.MultiplyCoordinates(dragMultiplier);
+	}
 
-    Update(): void {
-        if(this.useGravity) this.ApplyGravity();
-        this.ApplyDrag();
-        this.CalcVelocityByForces();
-    }
+	Update(): void {
+		if(this.useGravity) this.ApplyGravity();
+		this.ApplyDrag();
+		this.CalcVelocityByForces();
+	}
 }
 
 export default RigidBody;

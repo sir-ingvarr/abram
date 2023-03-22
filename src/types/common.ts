@@ -1,8 +1,10 @@
-import {BoundingBox} from "../engine/Canvas/GraphicPrimitives/Shapes";
+import {BoundingBox} from '../engine/Canvas/GraphicPrimitives/Shapes';
 
 export type Nullable<T> = T | null;
 
-export type Dictionary<V = any> = { [key: string]: V };
+export type Dictionary<V> = { [key: string]: V };
+
+export type AnyFunc = (...args: any) => any;
 
 export enum ColorSpace {
     SRGB='srgb',
