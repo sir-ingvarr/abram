@@ -1,6 +1,6 @@
 import {CtxOptions, ShadowOptions, StrokeOptions} from '../../../types/GraphicPrimitives';
 import {RGBAColor, Segment} from '../../Classes';
-import {Circle, Rect} from './Shapes';
+import {Circle, Polygon, PolygonalChain, Rect} from './Shapes';
 import {ITransform} from '../../../types/GameObject';
 
 const defaultOpts: CtxOptions = {
@@ -19,20 +19,24 @@ export enum PrimitiveType {
     Line
 }
 
+export type PrimitiveShape = Segment | Rect | PolygonalChain | Circle | Polygon;
+
 export interface IGraphicPrimitive {
     layer: number,
     options: CtxOptions,
     dash: Array<number>,
     type: PrimitiveType,
-    shape: Segment | Rect | Array<Segment> | Circle,
+    shape: PrimitiveShape,
     parent: ITransform,
+	readonly Width: number,
+	readonly Height: number
 }
 
 export class GraphicPrimitive<V extends Partial<CtxOptions>> implements IGraphicPrimitive {
 	public options: V | CtxOptions;
 	public dash: Array<number> = [];
 	public type: PrimitiveType;
-	public shape: Segment | Rect | Array<Segment> | Circle;
+	public shape: PrimitiveShape;
 	public layer: number;
 	public parent: ITransform;
 
@@ -43,6 +47,13 @@ export class GraphicPrimitive<V extends Partial<CtxOptions>> implements IGraphic
 		this.parent = parent;
 	}
 
+	get Width() {
+		return this.shape.Width;
+	}
+
+	get Height() {
+		return this.shape.Height;
+	}
 	private HandleOptions(options: V, shadow: ShadowOptions) {
 		this.options = {};
 		const opts =  Object.assign({}, defaultOpts, options, shadow);
@@ -59,7 +70,7 @@ export class LinePrimitive extends GraphicPrimitive<StrokeOptions>{
 }
 
 export class PolygonPrimitive extends GraphicPrimitive<CtxOptions>{
-	constructor(public shape: Array<Segment>, parent: ITransform, options: StrokeOptions = {}, shadow: ShadowOptions = {}) {
+	constructor(public shape: PolygonalChain, parent: ITransform, options: StrokeOptions = {}, shadow: ShadowOptions = {}) {
 		super(PrimitiveType.Polygon, parent, options, shadow);
 	}
 }

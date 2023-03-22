@@ -245,6 +245,14 @@ export class Segment {
 		return xLerp === yLerp;
 	}
 
+	get Width() {
+		return Math.abs(this.from.x - this.to.x);
+	}
+
+	get Height() {
+		return Math.abs(this.from.y - this.to.y);
+	}
+
 	getIntersection(other: Segment): Nullable<Point> {
 		const { x: x1, y: y1 } = this.from;
 		const { x: x2, y: y2 } = this.to;

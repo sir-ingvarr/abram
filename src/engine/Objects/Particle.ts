@@ -68,13 +68,14 @@ class Particle extends BasicObject {
 		super.Destroy();
 	}
 
-	Update() {
-		super.Update();
-		const deltaTime = Time.deltaTime;
-		this.age += deltaTime;
+	UpdateAge() {
+		this.age += Time.deltaTime;
 		if(this.age > this.lifeTime) return this.Destroy();
+	}
+
+	Update() {
 		this.collider?.Update();
-		this.transform.Translate(Vector.MultiplyCoordinates(deltaTime / 1000, this.velocity));
+		this.transform.Translate(Vector.MultiplyCoordinates(Time.deltaTime / 1000, this.velocity));
 		if(this.graphic instanceof GraphicPrimitive) {
 			this.graphic.options.fillStyle = this.color;
 		}

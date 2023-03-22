@@ -73,15 +73,36 @@ export class BoundingBox extends Rect implements IShape {
 export class PolygonalChain {
 	protected points: Array<ICoordinates>;
 	protected segments: Array<Segment>;
+	protected boundingBox: BoundingBox;
 	private readonly closed: boolean;
 	protected offset: ICoordinates;
 
 	constructor(points: Array<[number, number]>, closeChain?: boolean, offset: ICoordinates = new Vector() ) {
 		this.closed = closeChain || false;
 		this.offset = offset;
-		points.forEach(([x, y]) => {
+		let minX = points[0][0];
+		let maxX = points[0][0];
+		let minY = points[0][1];
+		let maxY = points[0][1];
+		this.AddPoint(new Vector(minX, maxY));
+		for(let index = 1; index < this.PointsCount; index++) {
+			const [x, y] = points[index];
 			this.AddPoint(new Vector(x, y));
-		});
+			if(x < minX) minX = x;
+			else if(x > maxX) maxX = x;
+			if(y < minY) minY = y;
+			else if(y > maxY) maxY = y;
+		}
+		this.boundingBox = new BoundingBox(new Point(minX, maxY), new Point(maxX, minY), this.offset);
+	}
+
+
+	get Width() {
+		return this.boundingBox.Width;
+	}
+
+	get Height() {
+		return this.boundingBox.Height;
 	}
 
 	set Offset(val: ICoordinates) {
@@ -140,22 +161,10 @@ export class PolygonalChain {
 }
 
 export class Polygon extends PolygonalChain implements IShape {
-	private boundingBox: BoundingBox;
+	protected boundingBox: BoundingBox;
 
 	constructor(points: Array<[number, number]>, offset: ICoordinates = new Vector()) {
 		super(points, true, offset);
-		let minX = this.points[0].x;
-		let maxX = this.points[0].x;
-		let minY = this.points[0].y;
-		let maxY = this.points[0].y;
-		for(let index = 1; index < this.PointsCount; index++) {
-			const p = this.points[index];
-			if(p.x < minX) minX = p.x;
-			else if(p.x > maxX) maxX = p.x;
-			if(p.y < minY) minY = p.y;
-			else if(p.y > maxY) maxY = p.y;
-		}
-		this.boundingBox = new BoundingBox(new Point(minX, maxY), new Point(maxX, minY), this.offset);
 	}
 
 	get BoundingBox(): BoundingBox {
@@ -188,6 +197,14 @@ export class Circle {
         public radius: number,
         public center: ICoordinates,
 	) {}
+
+	get Width() {
+		return this.radius * 2;
+	}
+
+	get Height() {
+		return this.radius * 2;
+	}
 }
 
 export class CircleArea extends Circle implements IShape {

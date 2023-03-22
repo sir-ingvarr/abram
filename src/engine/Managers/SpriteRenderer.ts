@@ -46,30 +46,28 @@ class SpriteRenderer {
 
 		const {x, y} = worldPosition;
 		const dir = scale.ToBinary();
-		let width = 1;
-		let height = 1;
+
+		const width = graphic.Width;
+		const height = graphic.Height;
 
 		this.context
 			.Save()
 			.ContextRespectivePosition(false);
 
-		let anchoredX = 0;
-		let anchoredY = 0;
+		const anchoredX = anchors.x * width;
+		const anchoredY = anchors.y * height;
 		if(graphic instanceof Sprite) {
-			width = graphic.width;
-			height = graphic.height;
 			if (!graphic.image.Data) return;
-			anchoredX = anchors.x * width;
-			anchoredY = anchors.y * height;
 		}
-		this.context.Translate(x + anchoredX, y + anchoredY);
-
-
 		this.context
+			.Translate(x, y )
 			.Rotate(rotation * dir.x * dir.y)
+			.Translate(-anchoredX, -anchoredY)
 			.SetScale(scale.x, scale.y);
+
+
 		if(graphic instanceof Sprite) {
-			this.context.DrawImage(graphic.image.Data, -anchoredX , -anchoredY, width, height);
+			this.context.DrawImage(graphic.image.Data, 0 , 0, width, height);
 		} else {
 			this.context.Draw(graphic);
 		}
@@ -78,7 +76,7 @@ class SpriteRenderer {
 		// .ContextRespectivePosition(false)
 		// .StrokeStyle(new RGBAColor(0, 120).ToHex())
 		// .StrokeRect(0, 0, 1, 1)
-		// .StrokeRect(-anchoredX, -anchoredY, width + anchoredX, height + anchoredY)
+		// .StrokeRect(0, 0, width, height)
 			.Restore();
 	}
 
