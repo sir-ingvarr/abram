@@ -11,21 +11,23 @@ import CollisionsManager from './Managers/CollisionsManager';
 import Canvas from './Canvas/Canvas';
 
 export type EngineConfigOptions = {
-  width: number,
-  height: number,
-  debug?: boolean,
-  targetFps?: number,
-  bgColor?: RGBAColor,
-  adaptiveFrameDelay?: boolean,
-  pauseOnBlur?: boolean,
-  canvasContextAttributes?: CanvasContext2DAttributes
+	width: number,
+	height: number,
+	debug?: boolean,
+	drawFps?: boolean,
+	targetFps?: number,
+	bgColor?: RGBAColor,
+	adaptiveFrameDelay?: boolean,
+	pauseOnBlur?: boolean,
+	canvasContextAttributes?: CanvasContext2DAttributes
 }
 
 class Engine {
 	private readonly root: HTMLElement;
 	private readonly fpsProvider: FpsProvider;
 	private readonly adaptiveFrameDelay: boolean;
-	private readonly debug: boolean = false;
+	private readonly debug: boolean;
+	private readonly drawFps: boolean;
 	private canvas: Canvas;
 	private gameObjectManager: GameObjectManager;
 	private collisionsManager: CollisionsManager;
@@ -39,7 +41,8 @@ class Engine {
 	constructor (root: HTMLElement, options: EngineConfigOptions = { width: 800, height: 600 }) {
 		const {
 			width, height,
-			debug = false, targetFps = 60, adaptiveFrameDelay = false, pauseOnBlur = true,
+			debug = false, drawFps = false,
+			targetFps = 60, adaptiveFrameDelay = false, pauseOnBlur = true,
 			bgColor = new RGBAColor(),
 			canvasContextAttributes = {
 				alpha: true,
@@ -55,14 +58,15 @@ class Engine {
 		}
 		this.root = root;
 		this.debug = debug;
+		this.drawFps = drawFps;
 		this.targetFps = targetFps;
 		this.adaptiveFrameDelay = adaptiveFrameDelay;
 		this.CreateCanvas(width, height, canvasContextAttributes, bgColor);
 		this.gameObjectManager = new GameObjectManager({ modules: [], context: this.canvas.Context2D });
 		this.collisionsManager = new CollisionsManager({ modules: [] });
-		this.graphicRenderer = SpriteRenderer.GetInstance(this.canvas.Context2D);
+		this.graphicRenderer = SpriteRenderer.GetInstance(this.canvas.Context2D, this.debug);
 		this.frameDelay = this.targetFps && this.targetFps < 60 ? 1000 / this.targetFps : 0;
-		if(!debug) return;
+		if(!drawFps) return;
 		this.fpsProvider = new FpsProvider({
 			name: 'FPSProvider',
 			realFpsFramesBuffer: this.targetFps,
@@ -149,7 +153,7 @@ class Engine {
 		this.collisionsManager.Update();
 		this.graphicRenderer.Render();
 
-		if(this.debug) {
+		if(this.drawFps) {
 			this.canvas.Context2D
 				.ContextRespectivePosition(true)
 				.FillStyle('white')

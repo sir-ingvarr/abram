@@ -10,6 +10,7 @@ import SpriteRenderer from '../Managers/SpriteRenderer';
 export type ParticleConstructorOptions =  {
     graphic: Nullable<IGraphicPrimitive | Sprite>;
     size?: number;
+	layer: number;
     lifeTime?: number;
     initialColor?: RGBAColor;
     initialVelocity?: Vector;
@@ -19,6 +20,7 @@ export type ParticleConstructorOptions =  {
 
 class Particle extends BasicObject {
 	public graphic: Nullable<IGraphicPrimitive | Sprite>;
+	private layer: number;
 	private size: number;
 	public initialScale: ICoordinates;
 	public age: number;
@@ -36,11 +38,15 @@ class Particle extends BasicObject {
 
 	SetParams(params: ParticleConstructorOptions) {
 		const {
-			graphic, lifeTime = 10,
+			graphic, lifeTime = 10, layer,
 			initialColor = new RGBAColor(),
 			size = 10, initialVelocity = new Vector(), OnCollide, collider
 		} = params;
-		this.graphic = graphic;
+		if(graphic) {
+			graphic.layer = layer;
+			this.graphic = graphic;
+			this.layer = layer;
+		}
 		this.lifeTime = lifeTime;
 		this.size = size;
 		this.age = 0;

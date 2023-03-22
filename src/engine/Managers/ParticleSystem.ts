@@ -1,7 +1,7 @@
 import {ExecutableManager} from './ExecutableManager';
 import {IGameObject} from '../../types/GameObject';
 import Particle, {ParticleConstructorOptions} from '../Objects/Particle';
-import {Maths, RGBAColor, Vector} from '../Classes';
+import {Maths, PolarCoordinates, RGBAColor, Vector} from '../Classes';
 import Sprite from '../Modules/Sprite';
 import {Nullable} from '../../types/common';
 import Rigidbody from '../Modules/Rigidbody';
@@ -26,6 +26,7 @@ export type ParticleSystemOptions = {
     particleBufferSize?: number,
     inheritVelocity?: boolean
     maxParticles?: number,
+	layer: number;
     gravityForceScale?: number,
     timeLastEmitted?: number;
     attachedRigidbody?: Rigidbody;
@@ -55,6 +56,7 @@ class ParticleSystem extends ExecutableManager {
 	protected particleBufferingSize: number;
 	protected inheritVelocity: boolean;
 	protected maxParticles: number;
+	protected layer: number;
 	protected gravityForceScale: number;
 	protected renderingStyle: RenderingStyle;
 	protected attachedRigidbody?: Rigidbody;
@@ -89,15 +91,18 @@ class ParticleSystem extends ExecutableManager {
 			maxParticles = 10,
 			gravityForceScale = 1,
 			graphic = null,
+			layer = 0,
 			renderingStyle = RenderingStyle.Local,
 			lifeTime = 5000,
 			emitOverTime = 10,
 			emitOverDistance = 0,
 			emitEachTimeFrame = 0.2,
-			initialPosition = new Vector(),
-			initialVelocity = function () {
-				return new Vector(Maths.RandomRange(-1,1), Maths.RandomRange(-1, 1));
+			initialPosition = () => {
+				const { x = 0, y = 0 } = this.parent?.transform.WorldPosition as Vector;
+				return new PolarCoordinates({ x, y, r: Maths.RandomRange(0, 2), angle: Maths.RandomRange(0, 6.18) })
+						.ToCartesian().ToVector();
 			},
+			initialVelocity = new Vector(),
 			initialRotation = function () {
 				return Maths.RandomRange(0, 360);
 			},
@@ -121,6 +126,7 @@ class ParticleSystem extends ExecutableManager {
 		this.graphic = graphic;
 		this.occlusionCulling = occlusionCulling;
 		this.lifeTime = lifeTime;
+		this.layer = layer;
 		this.initialVelocity = initialVelocity;
 		this.initialRotation = initialRotation;
 		this.initialColor = initialColor;
@@ -177,7 +183,6 @@ class ParticleSystem extends ExecutableManager {
 	}
 
 	Update() {
-		console.log(this.parent?.Context?.TrueBoundingBox);
 		super.Update();
 		if(!this.isPlaying) return;
 		const now = Date.now();
@@ -252,6 +257,7 @@ class ParticleSystem extends ExecutableManager {
 		return {
 			initialColor: this.SetOrExecute(this.initialColor),
 			graphic: graphicObj,
+			layer: this.layer,
 			lifeTime: this.SetOrExecute(this.lifeTime),
 			size: this.SetOrExecute(this.initialSize),
 			OnCollide: this.onParticleCollision,

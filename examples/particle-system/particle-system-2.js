@@ -13,6 +13,7 @@ class ParticleSystemTest2 extends GameObject {
         this.particleSystem = new ParticleSystem({
             parent: this,
             params: {
+                layer: 3,
                 occlusionCulling: true,
                 particleBuffering: true,
                 graphic: () => imageArray[Math.round(Maths.RandomRange(0, imageArray.length - 1))],

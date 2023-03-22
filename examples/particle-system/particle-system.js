@@ -18,12 +18,16 @@ class ParticleSystemTest extends GameObject {
                 particleBuffering: true,
                 graphic: () => Math.random() < 0.5 ? new CirclePrimitive(new Circle(20, new Point()), this)
                 : new RectPrimitive(new Rect(new Point, new Point(50, 50)), this),
-                lifeTime: () => Maths.RandomRange(8, 10) * 1000,
+                lifeTime: () => Maths.RandomRange(7, 10) * 1000,
                 maxParticles: 5000,
                 emitOverTime: 15,
                 emitEachTimeFrame: 40,
-                initialColor: new RGBAColor(255, 0, 0),
-                colorOverLifeTime: (initial, factor) => initial.LerpTo(orange, factor),
+                initialColor: () => new RGBAColor(Maths.RandomRange(0, 255), Maths.RandomRange(0, 255), Maths.RandomRange(0, 255), 190),
+                colorOverLifeTime: (initial, factor) => {
+                    const color = initial.Copy();
+                    color.Alpha = 0;
+                    return initial.LerpTo(color, factor)
+                },
                 gravityForceScale: 0.4,
                 rotationOverLifeTime: factor => Maths.Lerp(0, -20, factor),
                 initialVelocity: () => Vector.zero,

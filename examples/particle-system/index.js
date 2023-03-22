@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const { Engine, Classes: { RGBAColor, Vector } } = window.Abram;
 
-    const engine = new Engine(root, { width: 1280, occlusionCulling: true, height: 800, debug: true, adaptiveFrameDelay: true, pauseOnBlur: false });
+    const engine = new Engine(root, { width: 1280, height: 800, debug: false, drawFps: true, adaptiveFrameDelay: false, pauseOnBlur: false });
 
     const bgColor = new RGBAColor(0,0,255, 220);
     engine.SetBackgroundColor(bgColor);

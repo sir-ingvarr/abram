@@ -48,7 +48,6 @@ class ParticleSystemTest extends GameObject {
         super.Update();
         this.frames++;
         if(this.frames > 120) {
-            console.log(this.particleSystem.TotalParticles);
             this.frames = 0;
         }
         this.particleSystem.Update();
