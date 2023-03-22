@@ -1,47 +1,46 @@
-import {IBasicObject, IGameObject, IExecutable} from "../../types/GameObject";
-import CanvasContext2D from "../Canvas/Context2d";
-import {ICoordinates} from "../../types/common";
+import {IBasicObject, IGameObject, IExecutable} from '../../types/GameObject';
+import CanvasContext2D from '../Canvas/Context2d';
 
 abstract class Module implements IExecutable {
-    protected readonly id: string;
-    name: string;
-    active: boolean = true;
-    gameObject: IBasicObject;
-    public context?: CanvasContext2D;
+	protected readonly id: string;
+	name: string;
+	active = true;
+	gameObject: IBasicObject;
+	public context?: CanvasContext2D;
 
-    constructor(params: {name?: string}) {
-        this.id = this.GenerateId(params.name || this.constructor.name);
-    }
+	constructor(params: {name?: string}) {
+		this.id = this.GenerateId(params.name || this.constructor.name);
+	}
 
-    get Id() {
-        return this.id;
-    }
+	get Id() {
+		return this.id;
+	}
 
-    set Active(value: boolean) {
-        this.active = value
-    }
+	set Active(value: boolean) {
+		this.active = value;
+	}
 
-    get Active(): boolean {
-        return this.active;
-    }
+	get Active(): boolean {
+		return this.active;
+	}
 
-    get Context() {
-        return this.context || this.gameObject.Context;
-    }
+	get Context() {
+		return this.context || this.gameObject.Context;
+	}
 
-    GenerateId(name: string) {
-        return name + Date.now() + Math.random();
-    }
+	GenerateId(name: string) {
+		return name + Date.now() + Math.random();
+	}
 
-    SetGameObject(gameObject: IGameObject) {
-        this.gameObject = gameObject;
-    }
+	SetGameObject(gameObject: IGameObject) {
+		this.gameObject = gameObject;
+	}
 
-    Start(): void {}
+	Start() { return; }
 
-    Update(): void {}
+	Update() { return; }
 
-    Destroy(): void {}
+	Destroy() { return; }
 }
 
 export default Module;

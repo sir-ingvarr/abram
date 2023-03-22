@@ -1,13 +1,12 @@
-// @ts-nocheck
 import Engine,
 {
-    GraphicPrimitives, Shapes, ImageWrapper, Camera, GameObject,
-    InputSystem, Animator, Sprite, Classes, Time, RigidBody,
-    ParticleSystem
-} from "./index";
+	GraphicPrimitives, Shapes, ImageWrapper, Camera, GameObject,
+	InputSystem, Animator, Sprite, Classes, Time, RigidBody,
+	ParticleSystem
+} from './index';
 
-global.Abram = Object.assign({}, {
-    Engine, GameObject, InputSystem, Animator, Sprite,
-    Classes, Camera, Time, RigidBody, ParticleSystem, ImageWrapper,
-    GraphicPrimitives, Shapes
-})
+const Abram =  Object.assign({}, {
+	Engine, GameObject, InputSystem, Animator, Sprite,
+	Classes, Camera, Time, RigidBody, ParticleSystem, ImageWrapper,
+	GraphicPrimitives, Shapes
+});
