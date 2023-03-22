@@ -26,7 +26,7 @@ class ParticleSystemTest2 extends GameObject {
                 initialVelocity: () => new Vector(Maths.RandomRange(100, 350), Maths.RandomRange(50, -200)),
                 initialSize: () => Maths.RandomRange(40, 60),
                 scaleOverLifeTime: factor => ({ x: Maths.Clamp(1 - factor, 0.1, 1), y: 1 }),
-                initialPosition: () => new Vector(Maths.RandomRange(-50, 50), Maths.RandomRange(-550, 100))
+                initialPosition: () => new Vector(Maths.RandomRange(-50, 50), Maths.RandomRange(-300, 300))
             },
         });
         // this.particleSystem.Pause();

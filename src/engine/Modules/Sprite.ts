@@ -4,8 +4,8 @@ import ImageWrapper from './ImageWrapper';
 import {ITransform} from '../../types/GameObject';
 
 class Sprite extends Module {
-	public width: number;
-	public height: number;
+	private width: number;
+	private height: number;
 	public image: ImageWrapper;
 	public parent: ITransform;
 	public layer: number;
@@ -19,6 +19,13 @@ class Sprite extends Module {
 		this.height = height;
 	}
 
+	get Width() {
+		return this.width;
+	}
+
+	get Height() {
+		return this.height;
+	}
 
 	get Image(): HTMLImageElement {
 		return this.image.Data;

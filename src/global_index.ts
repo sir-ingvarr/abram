@@ -10,3 +10,5 @@ const Abram =  Object.assign({}, {
 	Classes, Camera, Time, RigidBody, ParticleSystem, ImageWrapper,
 	GraphicPrimitives, Shapes
 });
+
+Object.assign(window, { Abram });

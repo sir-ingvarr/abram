@@ -139,7 +139,6 @@ class ParticleSystem extends ExecutableManager {
 		if(particleBuffering) {
 			this.particleBufferingSize = particleBufferSize || maxParticles + 50;
 		}
-
 	}
 
 	public Play() {
@@ -171,12 +170,15 @@ class ParticleSystem extends ExecutableManager {
 			this.DestroyParticleSequence(module);
 			return false;
 		}
+		module.UpdateAge();
+		this.ExecuteLifeTimeCalculations(module);
 		if(!this.occlusionCulling || this.modules.size === 0) return true;
-		return (module.age < 1000 || !!this.parent?.Context?.boundingBox.IsPointInside(module.transform.WorldPosition));
+		return (module.age < 1000 || !!this.parent?.Context?.TrueBoundingBox.IsPointInside(module.transform.WorldPosition));
 	}
 
-
 	Update() {
+		console.log(this.parent?.Context?.TrueBoundingBox);
+		super.Update();
 		if(!this.isPlaying) return;
 		const now = Date.now();
 		const timeSinceLastEmitted = now - this.timeLastEmitted;
@@ -186,13 +188,6 @@ class ParticleSystem extends ExecutableManager {
 			for(let i = 0; i < emitAmount; i++) {
 				this.RegisterModule(this.CreateOrObtainParticle());
 			}
-		}
-
-		const particles = this.modules.values() as IterableIterator<Particle>;
-		for(const particle of particles) {
-			particle.Update();
-			if(!this.PreUpdate(particle)) continue;
-			this.ExecuteLifeTimeCalculations(particle);
 		}
 	}
 
