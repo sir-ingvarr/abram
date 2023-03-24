@@ -24,8 +24,4 @@ export class GameObjectManager extends ExecutableManager {
 		}
 		return true;
 	}
-
-	protected PostUpdate(module: GameObject) {
-		super.PostUpdate(module);
-	}
 }

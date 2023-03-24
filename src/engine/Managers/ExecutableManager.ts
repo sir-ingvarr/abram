@@ -1,6 +1,7 @@
 import {IExecutable, IGameObject} from '../../types/GameObject';
 import {Nullable} from '../../types/common';
 import CanvasContext2D from '../Canvas/Context2d';
+import {RGBAColor} from '../Classes';
 
 export class ExecutableManager {
 	protected readonly modules: Map<string, IExecutable>;

@@ -28,6 +28,8 @@ export interface ICoordinates {
 export interface IShape {
     get Offset(): ICoordinates;
     set Offset(newOffset: ICoordinates);
+    get Width(): number;
+    get Height(): number;
     get Center(): ICoordinates;
     IsPointInside(point: ICoordinates): boolean;
     IsIntersectingOther(other: unknown): boolean;

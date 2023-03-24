@@ -1,25 +1,25 @@
 import CanvasContext2D from '../Canvas/Context2d';
-import {Stack} from '../Classes';
+import {RGBAColor, Stack} from '../Classes';
 import Sprite from '../Modules/Sprite';
 import {IStack} from '../../types/Iterators';
-import {IGraphicPrimitive} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
+import {GraphicPrimitive} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
 
-type Graphic = Sprite | IGraphicPrimitive
+type Graphic = Sprite | GraphicPrimitive<any>
 
 class SpriteRenderer {
 	private context: CanvasContext2D;
 	private renderingStackList: Array<IStack<Graphic>> = [];
 	private static instance: SpriteRenderer;
 
-	constructor(context: CanvasContext2D) {
+	constructor(context: CanvasContext2D, 	private debug?: boolean) {
 		this.context = context;
 		SpriteRenderer.instance = this;
 	}
 
-	public static GetInstance(context?: CanvasContext2D): SpriteRenderer {
+	public static GetInstance(context?: CanvasContext2D, debug?: boolean): SpriteRenderer {
 		if(!SpriteRenderer.instance) {
 			if(!context) throw `no instance of ${this.constructor.name} was found. cannot create a new one without CanvasContext2D`;
-			return new SpriteRenderer(context);
+			return new SpriteRenderer(context, debug);
 		}
 		return SpriteRenderer.instance;
 	}
@@ -52,6 +52,7 @@ class SpriteRenderer {
 
 		this.context
 			.Save()
+			// .Reset()
 			.ContextRespectivePosition(false);
 
 		const anchoredX = anchors.x * width;
@@ -59,25 +60,31 @@ class SpriteRenderer {
 		if(graphic instanceof Sprite) {
 			if (!graphic.image.Data) return;
 		}
+		console.log(graphic);
+		console.log(x, y, anchoredX, anchoredY);
 		this.context
-			.Translate(x, y )
+			.Translate(x, y)
 			.Rotate(rotation * dir.x * dir.y)
 			.Translate(-anchoredX, -anchoredY)
 			.SetScale(scale.x, scale.y);
 
 
+
+
+
 		if(graphic instanceof Sprite) {
-			this.context.DrawImage(graphic.image.Data, 0 , 0, width, height);
+			this.context.DrawImage(graphic.image.Data, 0, 0, width, height);
 		} else {
 			this.context.Draw(graphic);
 		}
 
-		this.context
-		// .ContextRespectivePosition(false)
-		// .StrokeStyle(new RGBAColor(0, 120).ToHex())
-		// .StrokeRect(0, 0, 1, 1)
-		// .StrokeRect(0, 0, width, height)
-			.Restore();
+		if(this.debug)
+			this.context
+				.StrokeStyle(new RGBAColor(0, 120).ToHex())
+				.StrokeRect(anchoredX, anchoredY, 1, 1)
+				.StrokeRect(0, 0, width, height);
+
+		this.context.Restore();
 	}
 
 	public Render() {

@@ -3,8 +3,8 @@ import {IBasicObject, IGameObject, ITransform} from '../../types/GameObject';
 import {ICoordinates, Nullable} from '../../types/common';
 
 type TransformOptions = {
-    localPosition?: Vector,
-    localScale?: Vector,
+    localPosition?: ICoordinates,
+    localScale?: ICoordinates,
     localRotation?: number,
     localRotationDegrees?: number,
     parent?: ITransform,
@@ -12,8 +12,8 @@ type TransformOptions = {
 }
 
 class Transform implements ITransform {
-	private localPosition: Vector;
-	private localScale: Vector;
+	private localPosition: ICoordinates;
+	private localScale: ICoordinates;
 	private localRotationDeg: number;
 	private localRotation: number;
 	private rotation: number;
@@ -41,7 +41,7 @@ class Transform implements ITransform {
 	}
 
 	get LocalPosition(): Vector {
-		return this.localPosition.Copy();
+		return Vector.From(this.localPosition);
 	}
 
 	set LocalPosition(newLocalPos: Vector) {
@@ -50,11 +50,11 @@ class Transform implements ITransform {
 
 	get WorldPosition(): Vector {
 		if(this.parent) return this.parent.WorldPosition.Add(Vector.MultiplyCoordinates(this.localPosition, this.Scale.ToBinary()));
-		return this.localPosition.Copy();
+		return Vector.From(this.localPosition);
 	}
 
 	get LocalScale(): Vector {
-		return this.localScale.Copy();
+		return Vector.From(this.localScale);
 	}
 
 	set LocalScale(newLocalScale: Vector) {
@@ -97,7 +97,7 @@ class Transform implements ITransform {
 	}
 
 	public Translate(amount: ICoordinates): ITransform {
-		this.localPosition.Add(amount);
+		this.localPosition.Set(this.localPosition.x + amount.x, this.localPosition.y + amount.y);
 		return this;
 	}
 

@@ -1,7 +1,16 @@
 import GameObject from '../Objects/GameObject';
 import {Nullable} from '../../types/common';
+import {BasicObjectsConstructorParams} from '../Objects/BasicObject';
 
-export class FpsProvider extends GameObject {
+export type FpsProviderConstructorOptions = BasicObjectsConstructorParams & {
+	threshold?: number,
+	realFpsFramesBuffer: number,
+	targetFps: number,
+	onFrameDelaySet: Nullable<(newFactor: number) => void>,
+	frameDelay: number
+}
+
+export class FpsProvider extends GameObject<FpsProviderConstructorOptions> {
 	private targetFps: number;
 	private frameDelay: number;
 	private realFps = 0;
@@ -15,8 +24,8 @@ export class FpsProvider extends GameObject {
 		return this.realFps;
 	}
 
-	constructor(params: {name: string, threshold?: number, realFpsFramesBuffer: number, targetFps: number, onFrameDelaySet: Nullable<(newFactor: number) => void>, frameDelay: number}) {
-		super({name: 'FpsProvider'});
+	constructor(params: FpsProviderConstructorOptions) {
+		super(params);
 		const { realFpsFramesBuffer, threshold = 10, targetFps = 0, onFrameDelaySet = () => null, frameDelay = 0 } = params;
 		this.realFpsFramesBuffer = realFpsFramesBuffer || targetFps;
 		this.startCountTime = Date.now();

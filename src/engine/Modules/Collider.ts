@@ -1,10 +1,12 @@
 import Rigidbody from './Rigidbody';
 import {IShape} from '../../types/common';
-import {CircleArea} from '../Canvas/GraphicPrimitives/Shapes';
-import {Vector} from '../Classes';
+import {Circle, CircleArea} from '../Canvas/GraphicPrimitives/Shapes';
+import {Point, RGBAColor, Vector} from '../Classes';
 import EventEmitterModule from './EventEmitterModule';
 import CollisionsManager from '../Managers/CollisionsManager';
 import {ITransform} from '../../types/GameObject';
+import {GraphicPrimitive, PrimitiveType, ShapeDrawMethod} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
+import SpriteRenderer from '../Managers/SpriteRenderer';
 
 type Collider2DParams = {
     rb?: Rigidbody,
@@ -32,6 +34,7 @@ class Collider2D extends EventEmitterModule {
 	public shape: IShape;
 	private isColliding = false;
 	private type: Collider2DType;
+	private colliderGraphic: GraphicPrimitive<any>;
 
 
 	constructor(params: Collider2DParams) {
@@ -42,6 +45,14 @@ class Collider2D extends EventEmitterModule {
 			shape = new CircleArea(10, new Vector(0,0), parentPos), type = Collider2DType.Collider
 		} = params;
 		this.shape = shape;
+		this.colliderGraphic = new GraphicPrimitive({
+			type: PrimitiveType.Circle,
+			shape:	new Circle(this.shape.Width / 2, new Point()),
+			options: { strokeStyle: new RGBAColor(0, 180).ToHex() },
+			layer: 5,
+			drawMethod: ShapeDrawMethod.Stroke,
+			parent: this.parent
+		});
 		this.type = type;
 		CollisionsManager.GetInstance().RegisterModule(this);
 	}
@@ -89,6 +100,7 @@ class Collider2D extends EventEmitterModule {
 	Update() {
 		super.Update();
 		this.shape.Offset = this.parent.WorldPosition;
+		SpriteRenderer.GetInstance().AddToRenderQueue(this.colliderGraphic);
 	}
 
 	Start() {

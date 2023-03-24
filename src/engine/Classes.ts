@@ -1,7 +1,7 @@
 import {AnyFunc, ICoordinates, Nullable} from '../types/common';
 import {IIterator, IList, IQueue, IStack, IteratorReturnValue} from '../types/Iterators';
 
-export class Coordinates {
+export class CoordinatesConverter {
 	static ConvertToPolar(x: number, y: number): PolarCoordinates {
 		const r = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
 		if(r === 0) return new PolarCoordinates({ r, angle: 0 });
@@ -25,11 +25,10 @@ export class PolarCoordinates {
 			this.radius = r as number;
 			this.angle = angle as number;
 		} else if(Maths.IsValidNumber(x) && Maths.IsValidNumber(y)) {
-			const polarAttributes = Coordinates.ConvertToPolar(x, y);
+			const polarAttributes = CoordinatesConverter.ConvertToPolar(x, y);
 			this.radius = polarAttributes.radius;
 			this.angle = polarAttributes.angle;
-		}
-		throw 'invalid constructor parameters passed.';
+		} else throw 'invalid constructor parameters passed.';
 	}
 
 	static From(point: ICoordinates): PolarCoordinates {
@@ -37,7 +36,7 @@ export class PolarCoordinates {
 	}
 
 	ToCartesian(): Point {
-		const {x, y} = Coordinates.ConvertToCartesian(this.radius, this.angle);
+		const {x, y} = CoordinatesConverter.ConvertToCartesian(this.radius, this.angle);
 		return new Point(x, y);
 	}
 
@@ -57,6 +56,10 @@ export class Point implements ICoordinates {
 
 	static From(source: ICoordinates): Point {
 		return new Point(source.x, source.y);
+	}
+
+	static Of(x: number, y: number): Point {
+		return new Point(x, y);
 	}
 
 	Set(x: number, y = x): Point {
@@ -253,6 +256,8 @@ export class Segment {
 		return Math.abs(this.from.y - this.to.y);
 	}
 
+
+
 	getIntersection(other: Segment): Nullable<Point> {
 		const { x: x1, y: y1 } = this.from;
 		const { x: x2, y: y2 } = this.to;
@@ -285,7 +290,7 @@ export class Ray {
 	}
 
 	ToUnitVector(): Vector {
-		return Coordinates.ConvertToCartesian(1, this.angle).ToVector();
+		return CoordinatesConverter.ConvertToCartesian(1, this.angle).ToVector();
 	}
 
 	IsPointOnRay(point: ICoordinates): boolean {
@@ -331,10 +336,12 @@ export class Maths {
      *
      * @param from range border
      * @param to range border
+	 * @param int allow only integer results
      * @return {number}
      */
-	static RandomRange(from: number, to: number): number {
-		return Maths.Lerp(from, to, Math.random());
+	static RandomRange(from: number, to: number, int = false): number {
+		const res = Maths.Lerp(from, to, Math.random());
+		return int ? Math.round(res) : res;
 	}
 
 	/**

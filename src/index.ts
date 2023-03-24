@@ -12,10 +12,13 @@ import ParticleSystem from './engine/Managers/ParticleSystem';
 import ImageWrapper from './engine/Modules/ImageWrapper';
 import * as Shapes from './engine/Canvas/GraphicPrimitives/Shapes';
 import * as GraphicPrimitives from './engine/Canvas/GraphicPrimitives/GraphicPrimitive';
+import * as Collision from './engine/Modules/Collider';
+import Collider2D from './engine/Modules/Collider';
+
 
 export default Engine;
 export {
 	GameObject, InputSystem, Animator, Sprite, CanvasContext2D,
 	Camera, Classes, Time, RigidBody, ParticleSystem, ImageWrapper,
-	GraphicPrimitives, Shapes,
+	GraphicPrimitives, Shapes, Collision, Collider2D
 };

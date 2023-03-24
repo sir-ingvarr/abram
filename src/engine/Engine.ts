@@ -1,31 +1,44 @@
-import {IGameObject} from '../types/GameObject';
-import {RGBAColor} from './Classes';
+import {IGameObject, IGameObjectConstructable, ITransform} from '../types/GameObject';
+import {Queue, RGBAColor} from './Classes';
 import InputSystem from './Globals/Input';
 import Time from './Globals/Time';
 import SpriteRenderer from './Managers/SpriteRenderer';
 
-import {CanvasContext2DAttributes, ColorSpace} from '../types/common';
+import {AnyFunc, CanvasContext2DAttributes, ColorSpace} from '../types/common';
 import {GameObjectManager} from './Managers/GameObjectManager';
 import {FpsProvider} from './Debug/FpsProvider';
 import CollisionsManager from './Managers/CollisionsManager';
 import Canvas from './Canvas/Canvas';
+import {BasicObjectsConstructorParams} from './Objects/BasicObject';
+import GameObject from './Objects/GameObject';
 
 export type EngineConfigOptions = {
-  width: number,
-  height: number,
-  debug?: boolean,
-  targetFps?: number,
-  bgColor?: RGBAColor,
-  adaptiveFrameDelay?: boolean,
-  pauseOnBlur?: boolean,
-  canvasContextAttributes?: CanvasContext2DAttributes
+	width: number,
+	height: number,
+	fullscreen?: boolean,
+	debug?: boolean,
+	drawFps?: boolean,
+	targetFps?: number,
+	bgColor?: RGBAColor,
+	adaptiveFrameDelay?: boolean,
+	pauseOnBlur?: boolean,
+	canvasContextAttributes?: CanvasContext2DAttributes,
 }
+
+type InstantiateOpts = {
+	gameObject: IGameObjectConstructable<any>,
+	params: any,
+	parent?: ITransform,
+}
+
 
 class Engine {
 	private readonly root: HTMLElement;
 	private readonly fpsProvider: FpsProvider;
 	private readonly adaptiveFrameDelay: boolean;
-	private readonly debug: boolean = false;
+	private readonly debug: boolean;
+	private readonly drawFps: boolean;
+	private fullScreen: boolean;
 	private canvas: Canvas;
 	private gameObjectManager: GameObjectManager;
 	private collisionsManager: CollisionsManager;
@@ -34,12 +47,19 @@ class Engine {
 	private prevFrameTime: number;
 	private isPlaying: boolean;
 	private targetFps: number;
+	static instantiateQueue: Queue<InstantiateOpts & { callOnDone: AnyFunc }> = new Queue<InstantiateOpts & { callOnDone: AnyFunc }>({data: []});
 
+	public static async Instantiate<T extends BasicObjectsConstructorParams>(opts: InstantiateOpts): Promise<T> {
+		return new Promise(resolve => {
+			Engine.instantiateQueue.Push({ ...opts, callOnDone: go => resolve(go) });
+		});
+	}
 
 	constructor (root: HTMLElement, options: EngineConfigOptions = { width: 800, height: 600 }) {
 		const {
-			width, height,
-			debug = false, targetFps = 60, adaptiveFrameDelay = false, pauseOnBlur = true,
+			width, height, fullscreen = false,
+			debug = false, drawFps = false,
+			targetFps = 60, adaptiveFrameDelay = false, pauseOnBlur = true,
 			bgColor = new RGBAColor(),
 			canvasContextAttributes = {
 				alpha: true,
@@ -49,12 +69,14 @@ class Engine {
 			}
 		} = options;
 		this.isPlaying = true;
+		this.fullScreen = fullscreen;
 		if(pauseOnBlur) {
 			window.onblur = this.Pause.bind(this);
 			window.onfocus = this.Play.bind(this);
 		}
 		this.root = root;
 		this.debug = debug;
+		this.drawFps = drawFps;
 		this.targetFps = targetFps;
 		this.adaptiveFrameDelay = adaptiveFrameDelay;
 		this.CreateCanvas(width, height, canvasContextAttributes, bgColor);
@@ -62,7 +84,7 @@ class Engine {
 		this.collisionsManager = new CollisionsManager({ modules: [] });
 		this.graphicRenderer = SpriteRenderer.GetInstance(this.canvas.Context2D);
 		this.frameDelay = this.targetFps && this.targetFps < 60 ? 1000 / this.targetFps : 0;
-		if(!debug) return;
+		if(!drawFps) return;
 		this.fpsProvider = new FpsProvider({
 			name: 'FPSProvider',
 			realFpsFramesBuffer: this.targetFps,
@@ -71,6 +93,33 @@ class Engine {
 			onFrameDelaySet: this.adaptiveFrameDelay ? this.SetFrameDelay.bind(this) : null,
 		});
 		this.gameObjectManager.RegisterModule(this.fpsProvider);
+	}
+
+	Instantiate<T extends BasicObjectsConstructorParams>(args:{
+		gameObject: IGameObjectConstructable<T>,
+		params: T, parent?: ITransform, callOnDone?: AnyFunc,
+	}): string {
+		const gameObjectInstance = new args.gameObject(args.params);
+		if(!args.parent) {
+			this.AppendGameObject(gameObjectInstance);
+		} else {
+			if(!(args.parent.gameObject instanceof GameObject)) throw 'unable to instantiate child to non GameObject parent';
+			args.parent.gameObject.AppendChild(gameObjectInstance);
+		}
+		if(args.callOnDone) args.callOnDone(gameObjectInstance);
+		return gameObjectInstance.Id;
+	}
+
+	async RequestFullScreen() {
+		if(this.fullScreen) return;
+		await this.canvas.CanvasElement.requestFullscreen();
+		this.fullScreen = true;
+	}
+
+	async ExitFullScreen() {
+		if(!this.fullScreen) return;
+		await document.exitFullscreen();
+		this.fullScreen = false;
 	}
 
 	CreateCanvas (width: number, height: number, canvasContextAttributes?: CanvasContext2DAttributes, bgColor?: RGBAColor): HTMLCanvasElement {
@@ -134,6 +183,11 @@ class Engine {
 	}
 
 	Render () {
+		while(Engine.instantiateQueue.Count) {
+			const element = Engine.instantiateQueue.Shift();
+			this.Instantiate(element);
+		}
+
 		const now = Date.now();
 		if(this.frameDelay && now - this.prevFrameTime < this.frameDelay || !this.isPlaying) {
 			requestAnimationFrame(this.Render.bind(this));
@@ -149,7 +203,7 @@ class Engine {
 		this.collisionsManager.Update();
 		this.graphicRenderer.Render();
 
-		if(this.debug) {
+		if(this.drawFps) {
 			this.canvas.Context2D
 				.ContextRespectivePosition(true)
 				.FillStyle('white')
