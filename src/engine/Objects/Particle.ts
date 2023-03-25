@@ -1,25 +1,35 @@
-import BasicObject from './BasicObject';
+import BasicObject, {BasicObjectsConstructorParams} from './BasicObject';
 import {ICoordinates, Nullable} from '../../types/common';
 import {Sprite, Time} from '../../index';
-import {RGBAColor, Vector} from '../Classes';
+import {Maths, RGBAColor, Vector} from '../Classes';
 import Collider2D, {Collider2DEvent, Collider2DType} from '../Modules/Collider';
 import {CircleArea} from '../Canvas/GraphicPrimitives/Shapes';
 import {GraphicPrimitive, IGraphicPrimitive} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
 import SpriteRenderer from '../Managers/SpriteRenderer';
 
-export type ParticleConstructorOptions =  {
-    graphic: Nullable<IGraphicPrimitive | Sprite>;
+export interface IFollower {
+	UpdateFollowedPosition(x: number, y: number): void
+	Destroy(): void
+}
+
+export type ParticleConstructorOptions = BasicObjectsConstructorParams & {
+    graphic: Nullable<IGraphicPrimitive<any> | Sprite>;
     size?: number;
+	layer: number;
+	drag?: number;
     lifeTime?: number;
     initialColor?: RGBAColor;
     initialVelocity?: Vector;
     OnCollide?: (self: Collider2D, other: Collider2D) => void;
     collider?: Collider2D;
+	followers?: Array<IFollower>;
 }
 
 class Particle extends BasicObject {
-	public graphic: Nullable<IGraphicPrimitive | Sprite>;
+	public graphic: Nullable<IGraphicPrimitive<any> | Sprite>;
+	private layer: number;
 	private size: number;
+	public drag: number;
 	public initialScale: ICoordinates;
 	public age: number;
 	public lifeTime: number;
@@ -28,6 +38,7 @@ class Particle extends BasicObject {
 	public velocity: Vector;
 	public OnCollide?: (self: Collider2D, other: Collider2D) => void;
 	public collider: Collider2D;
+	private followers?: Array<IFollower>;
 
 	constructor(params: ParticleConstructorOptions) {
 		super(params);
@@ -36,14 +47,20 @@ class Particle extends BasicObject {
 
 	SetParams(params: ParticleConstructorOptions) {
 		const {
-			graphic, lifeTime = 10,
-			initialColor = new RGBAColor(),
+			graphic, lifeTime = 10, layer, drag = 0,
+			initialColor = new RGBAColor(), followers,
 			size = 10, initialVelocity = new Vector(), OnCollide, collider
 		} = params;
-		this.graphic = graphic;
+		if(graphic) {
+			graphic.layer = layer;
+			this.graphic = graphic;
+			this.layer = layer;
+		}
+		this.drag = Maths.Clamp(drag, -1 ,1);
 		this.lifeTime = lifeTime;
 		this.size = size;
 		this.age = 0;
+		this.followers = followers;
 		this.initialColor = initialColor?.Copy();
 		this.initialScale = this.transform.Scale;
 		this.velocity = initialVelocity.Copy();
@@ -65,6 +82,9 @@ class Particle extends BasicObject {
 	}
 
 	Destroy() {
+		if(this.followers) {
+			this.followers.forEach(val => val.Destroy());
+		}
 		super.Destroy();
 	}
 
@@ -76,11 +96,19 @@ class Particle extends BasicObject {
 	Update() {
 		this.collider?.Update();
 		this.transform.Translate(Vector.MultiplyCoordinates(Time.deltaTime / 1000, this.velocity));
-		if(this.graphic instanceof GraphicPrimitive) {
-			this.graphic.options.fillStyle = this.color;
-		}
+
 		if(!this.graphic) return;
+		if(this.graphic instanceof GraphicPrimitive) {
+			this.graphic.options.fillStyle = this.color.ToHex();
+		}
 		SpriteRenderer.GetInstance().AddToRenderQueue(this.graphic);
+		if(this.followers) {
+			const {x, y} = this.transform.WorldPosition;
+
+			for (const follower of this.followers) {
+				follower.UpdateFollowedPosition.bind(follower)(x,y);
+			}
+		}
 	}
 }
 

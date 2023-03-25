@@ -1,7 +1,9 @@
-import {CtxOptions, ShadowOptions, StrokeOptions} from '../../../types/GraphicPrimitives';
+import {CtxOptions, ShadowOptions} from '../../../types/GraphicPrimitives';
 import {RGBAColor, Segment} from '../../Classes';
 import {Circle, Polygon, PolygonalChain, Rect} from './Shapes';
 import {ITransform} from '../../../types/GameObject';
+import SpriteRenderer from '../../Managers/SpriteRenderer';
+import Module from '../../Modules/Module';
 
 const defaultOpts: CtxOptions = {
 	dash: [],
@@ -19,32 +21,53 @@ export enum PrimitiveType {
     Line
 }
 
-export type PrimitiveShape = Segment | Rect | PolygonalChain | Circle | Polygon;
+export enum ShapeDrawMethod {
+	Fill,
+	Stroke
+}
 
-export interface IGraphicPrimitive {
+export type PrimitiveShape = Rect | Circle | Polygon | PolygonalChain | Segment;
+
+export interface IGraphicPrimitive<T extends PrimitiveShape> {
     layer: number,
     options: CtxOptions,
     dash: Array<number>,
     type: PrimitiveType,
-    shape: PrimitiveShape,
-    parent: ITransform,
+	shape: T,
+	parent: ITransform,
+	drawMethod: ShapeDrawMethod,
 	readonly Width: number,
 	readonly Height: number
 }
 
-export class GraphicPrimitive<V extends Partial<CtxOptions>> implements IGraphicPrimitive {
-	public options: V | CtxOptions;
+export type GraphicPrimitiveConstructorParams<T extends PrimitiveShape> = {
+	type: PrimitiveType,
+	parent: ITransform,
+	options?: Partial<CtxOptions>,
+	shadow?: ShadowOptions,
+	layer?: number,
+	drawMethod?: ShapeDrawMethod,
+	shape: T
+}
+
+export class GraphicPrimitive<Shape extends PrimitiveShape> extends Module implements IGraphicPrimitive<Shape> {
+	public options: CtxOptions;
 	public dash: Array<number> = [];
 	public type: PrimitiveType;
-	public shape: PrimitiveShape;
+	public shape: Shape;
 	public layer: number;
 	public parent: ITransform;
+	public drawMethod: ShapeDrawMethod;
 
-	constructor(type: PrimitiveType, parent: ITransform, options: V, shadow: ShadowOptions = {}, layer = 1) {
+	constructor(params: GraphicPrimitiveConstructorParams<Shape>) {
+		super({});
+		const { shape, type, layer = 0, options = {}, shadow = {}, parent, drawMethod = ShapeDrawMethod.Fill } = params;
 		this.type = type;
 		this.layer = layer;
+		this.shape = shape;
 		this.HandleOptions(options, shadow);
 		this.parent = parent;
+		this.drawMethod = drawMethod;
 	}
 
 	get Width() {
@@ -54,35 +77,17 @@ export class GraphicPrimitive<V extends Partial<CtxOptions>> implements IGraphic
 	get Height() {
 		return this.shape.Height;
 	}
-	private HandleOptions(options: V, shadow: ShadowOptions) {
+
+	private HandleOptions(options: CtxOptions, shadow: ShadowOptions) {
 		this.options = {};
 		const opts =  Object.assign({}, defaultOpts, options, shadow);
 		this.dash = this.dash.concat(opts.dash || defaultOpts.dash as Array<number>);
 		delete opts.dash;
 		this.options = opts;
 	}
-}
 
-export class LinePrimitive extends GraphicPrimitive<StrokeOptions>{
-	constructor(public shape: Segment, parent: ITransform, options: StrokeOptions = {}, shadow: ShadowOptions = {}) {
-		super(PrimitiveType.Line, parent, options, shadow);
+	Update() {
+		SpriteRenderer.GetInstance().AddToRenderQueue(this);
 	}
 }
 
-export class PolygonPrimitive extends GraphicPrimitive<CtxOptions>{
-	constructor(public shape: PolygonalChain, parent: ITransform, options: StrokeOptions = {}, shadow: ShadowOptions = {}) {
-		super(PrimitiveType.Polygon, parent, options, shadow);
-	}
-}
-
-export class RectPrimitive extends GraphicPrimitive<CtxOptions>{
-	constructor(public shape: Rect, parent: ITransform, options: CtxOptions = {}, shadow: ShadowOptions = {}) {
-		super(PrimitiveType.Rect, parent, options, shadow);
-	}
-}
-
-export class CirclePrimitive extends GraphicPrimitive<CtxOptions> {
-	constructor(public shape: Circle, parent: ITransform, options: CtxOptions = {}, shadow: ShadowOptions = {}) {
-		super(PrimitiveType.Circle, parent, options, shadow);
-	}
-}

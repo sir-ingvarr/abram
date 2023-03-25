@@ -21,7 +21,6 @@ class Man extends GameObject {
             width: 30, height: 70, layer: this.layer,
         });
 
-        graphic.parent = this.transform;
         this.size = 1;
         this.animator = new Animator({
             frameDelay: 100,
@@ -40,7 +39,7 @@ class Man extends GameObject {
         this.RegisterModule(graphic);
         this.RegisterModule(this.animator);
 
-        this.gun = new GameObject({ position: new Vector(10,30), name: `${this.name}_gun`});
+        this.gun = new GameObject({ position: new Vector(15,0), name: `${this.name}_gun`});
 
         const gunImage = new ImageWrapper('./assets/gun.png');
 
@@ -48,9 +47,6 @@ class Man extends GameObject {
             image: gunImage,
             width: 30, height: 20, layer: this.layer + 1,
         });
-
-        gunGraphic.parent = this.gun.transform;
-
 
         this.gun.RegisterModule(gunGraphic);
         this.AppendChild(this.gun);

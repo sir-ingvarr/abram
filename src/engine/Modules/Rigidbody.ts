@@ -79,6 +79,7 @@ class RigidBody extends Module {
 	}
 
 	private ApplyGravity() {
+		if(!this.useGravity) return;
 		this.AddForce(Vector.MultiplyCoordinates(G_CONSTANT * this.gravityScale, Vector.Up));
 	}
 
@@ -93,7 +94,7 @@ class RigidBody extends Module {
 		this.forces = [];
 		this.ApplyDrag();
 		const physicalMovement = Vector.MultiplyCoordinates(Time.deltaTime / 100, this.velocity);
-		this.gameObject.transform.Translate(physicalMovement);
+		this.gameObject?.transform.Translate(physicalMovement);
 	}
 
 	private ApplyDrag() {
@@ -103,7 +104,7 @@ class RigidBody extends Module {
 	}
 
 	Update(): void {
-		if(this.useGravity) this.ApplyGravity();
+		this.ApplyGravity();
 		this.ApplyDrag();
 		this.CalcVelocityByForces();
 	}

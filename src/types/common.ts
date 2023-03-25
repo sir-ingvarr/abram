@@ -4,7 +4,7 @@ export type Nullable<T> = T | null;
 
 export type Dictionary<V> = { [key: string]: V };
 
-export type AnyFunc = (...args: any) => any;
+export type AnyFunc<T = any> = (...args: any) => T;
 
 export enum ColorSpace {
     SRGB='srgb',
@@ -28,6 +28,8 @@ export interface ICoordinates {
 export interface IShape {
     get Offset(): ICoordinates;
     set Offset(newOffset: ICoordinates);
+    get Width(): number;
+    get Height(): number;
     get Center(): ICoordinates;
     IsPointInside(point: ICoordinates): boolean;
     IsIntersectingOther(other: unknown): boolean;

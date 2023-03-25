@@ -1,15 +1,12 @@
 import {CtxOptions} from '../../types/GraphicPrimitives';
 import {
-	CirclePrimitive,
 	IGraphicPrimitive,
-	LinePrimitive,
-	PolygonPrimitive,
 	PrimitiveType,
-	RectPrimitive
+	GraphicPrimitive, PrimitiveShape,
 } from './GraphicPrimitives/GraphicPrimitive';
-import {Point, RGBAColor} from '../Classes';
+import {Point, RGBAColor, Segment} from '../Classes';
 import {ICoordinates} from '../../types/common';
-import {BoundingBox} from './GraphicPrimitives/Shapes';
+import {BoundingBox, Circle, PolygonalChain, Rect} from './GraphicPrimitives/Shapes';
 
 class CanvasContext2D {
 	private contextRespectivePositionBackup = false;
@@ -225,18 +222,18 @@ class CanvasContext2D {
 			.Restore();
 	}
 
-	Draw(any: IGraphicPrimitive, offsetX = 0, offsetY = 0) {
+	Draw<T extends PrimitiveShape>(any: IGraphicPrimitive<T>, offsetX = 0, offsetY = 0, fillStroke = 0) {
 		const { type, options, dash } = any;
 		this.SetOptions(options)
 			.LineDash(dash)
 			.BeginPath();
-		if(type === PrimitiveType.Circle) return this.DrawCircle(any as CirclePrimitive,offsetX, offsetY, 0);
-		if(type === PrimitiveType.Polygon) return this.DrawLines(any as PolygonPrimitive, offsetX, offsetY);
-		if(type === PrimitiveType.Line) return this.DrawLine(any as LinePrimitive, offsetX, offsetY);
-		if(type === PrimitiveType.Rect) return this.DrawRect(any as RectPrimitive, offsetX, offsetY, 0);
+		if(type === PrimitiveType.Circle) return this.DrawCircle(any as IGraphicPrimitive<Circle>, offsetX, offsetY, fillStroke);
+		if(type === PrimitiveType.Polygon) return this.DrawLines(any as IGraphicPrimitive<PolygonalChain>, offsetX, offsetY);
+		if(type === PrimitiveType.Line) return this.DrawLine(any as IGraphicPrimitive<Segment>, offsetX, offsetY);
+		if(type === PrimitiveType.Rect) return this.DrawRect(any as IGraphicPrimitive<Segment>, offsetX, offsetY, fillStroke);
 	}
 
-	DrawLine(line: LinePrimitive, offsetX: number, offsetY: number): CanvasContext2D {
+	DrawLine(line: IGraphicPrimitive<Segment>, offsetX: number, offsetY: number): CanvasContext2D {
 		const { shape: { from, to } } = line;
 		return this
 			.MoveTo(from.x + offsetX, from.y + offsetY)
@@ -246,7 +243,7 @@ class CanvasContext2D {
 			.Restore();
 	}
 
-	DrawLines(lines: PolygonPrimitive, offsetX: number, offsetY: number) {
+	DrawLines(lines: IGraphicPrimitive<PolygonalChain>, offsetX: number, offsetY: number) {
 		for(const line of lines.shape.Segments) {
 			const { from, to } = line;
 			this
@@ -256,10 +253,9 @@ class CanvasContext2D {
 		this.Stroke().ClosePath().Restore();
 	}
 
-	DrawRect(rect: RectPrimitive, offsetX: number, offsetY: number, type = 0) {
+	DrawRect(rect: IGraphicPrimitive<Segment>, offsetX: number, offsetY: number, type = 0) {
 		const { shape: {from, to} } = rect;
-		this
-			.Rect(from.x + offsetX, from.y + offsetY, to.x + offsetX, to.y + offsetY);
+		this.Rect(from.x + offsetX, from.y + offsetY, to.x + offsetX, to.y + offsetY);
 		if(type === 0) {
 			this.Fill();
 		} else {
@@ -268,9 +264,9 @@ class CanvasContext2D {
 		this.ClosePath().Restore();
 	}
 
-	DrawCircle(circle: CirclePrimitive, offsetX: number, offsetY: number, type = 0) {
+	DrawCircle(circle: IGraphicPrimitive<Circle>, offsetX: number, offsetY: number, type = 0) {
 		const { shape: { center, radius } } = circle;
-		this.Arc(center.x + radius + offsetX, center.y + radius + offsetY, radius);
+		this.Arc(center.x + offsetX + radius, center.y + offsetY + radius, radius);
 		if(type === 0) {
 			this.Fill();
 		} else {
@@ -312,6 +308,18 @@ class CanvasContext2D {
 	Arc(x: number, y: number, r: number): CanvasContext2D {
 		const initialPos = this.contextRespectivePosition ? this.Position : new Point();
 		this.ctx.arc(x - initialPos.x, y - initialPos.y, r, 0, 2 * Math.PI);
+		return this;
+	}
+
+	Line(x1: number, y1: number, x2: number, y2: number): CanvasContext2D {
+		const initialPos = this.contextRespectivePosition ? this.Position : new Point();
+		this.Save()
+			.BeginPath()
+			.MoveTo(x1 + initialPos.x, y1 + initialPos.y)
+			.LineTo(x2 + initialPos.x, y2 + initialPos.y)
+			.ClosePath()
+			.Stroke()
+			.Restore();
 		return this;
 	}
 

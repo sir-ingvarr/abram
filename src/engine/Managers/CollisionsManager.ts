@@ -29,10 +29,10 @@ class CollisionsManager extends ExecutableManager {
 		const arr = Array.from(this.modules);
 		for(let i = 0; i < arr.length; i++) {
 			const [_, collider1] = arr[i];
-			if(!collider1.parent.gameObject.active) continue;
+			if(!collider1.parent?.gameObject.active) continue;
 			for(let j = i; j < arr.length; j++) {
 				const [_, collider2] = arr[j];
-				if(!collider2.parent.gameObject.active) continue;
+				if(!collider2.parent?.gameObject.active) continue;
 				if(collider1.shape.IsIntersectingOther(collider2.shape)) {
 					collider1.Collide(collider2);
 					collider2.Collide(collider1);

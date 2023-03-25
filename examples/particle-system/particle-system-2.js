@@ -18,15 +18,15 @@ class ParticleSystemTest2 extends GameObject {
                 graphic: () => imageArray[Math.round(Maths.RandomRange(0, imageArray.length - 1))],
                 lifeTime: () => Maths.RandomRange(10, 20)*1000,
                 maxParticles: 5000,
-                emitOverTime: 8,
+                emitOverTime: 10,
                 emitEachTimeFrame: 200,
                 initialColor: new RGBAColor(120, 140, 240),
                 gravityForceScale: 0.1,
                 rotationOverLifeTime: factor => Maths.Lerp(0, 10, factor),
                 initialVelocity: () => new Vector(Maths.RandomRange(100, 350), Maths.RandomRange(50, -200)),
-                initialSize: () => Maths.RandomRange(40, 60),
+                initialSize: () => Maths.RandomRange(30, 70),
                 scaleOverLifeTime: factor => ({ x: Maths.Clamp(1 - factor, 0.1, 1), y: 1 }),
-                initialPosition: () => new Vector(Maths.RandomRange(-50, 50), Maths.RandomRange(-300, 300))
+                initialPosition: () => new Vector(Maths.RandomRange(-50, 50), Maths.RandomRange(-400, 400))
             },
         });
         // this.particleSystem.Pause();

@@ -7,6 +7,15 @@ export class Rect {
         public to: ICoordinates
 	) {}
 
+	SetSize(size: number) {
+		const factorX = size / Math.abs(this.to.x - this.from.x);
+		const factorY = size / Math.abs(this.to.y - this.from.y);
+		this.from.x *= factorX;
+		this.to.x *= factorX;
+		this.from.y *= factorY;
+		this.to.y *= factorY;
+	}
+
 	get Width() {
 		return Math.abs(this.from.x - this.to.x);
 	}
@@ -197,6 +206,10 @@ export class Circle {
         public radius: number,
         public center: ICoordinates,
 	) {}
+
+	SetSize(size: number) {
+		this.radius = size / 2;
+	}
 
 	get Width() {
 		return this.radius * 2;

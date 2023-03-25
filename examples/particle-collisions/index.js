@@ -3,9 +3,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const { Engine, Classes: { RGBAColor, Vector } } = window.Abram;
 
-    const engine = new Engine(root,{ targetFps: 60, width: 1280, height: 800, adaptiveFrameDelay: false, pauseOnBlur: false });
+    const engine = new Engine(root, { width: 1280, height: 800, debug: true, drawFps: true, canvasContextAttributes: { alpha: false }, adaptiveFrameDelay: false, pauseOnBlur: true });
 
-    const bgColor = new RGBAColor(0,0,255, 140);
+    const bgColor = new RGBAColor(0,0,255, 255);
     engine.SetBackgroundColor(bgColor);
 
     const camera = new CameraMovement({}, engine.Canvas.Context2D);

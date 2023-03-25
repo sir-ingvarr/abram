@@ -1,40 +1,36 @@
 import {IExecutable, IGameObject} from '../../types/GameObject';
-import {Dictionary, Nullable} from '../../types/common';
-import {Vector} from '../Classes';
+import {Nullable} from '../../types/common';
 import CanvasContext2D from '../Canvas/Context2d';
-import Transform from './Transform';
 import {ExecutableManager} from '../Managers/ExecutableManager';
 import {GameObjectManager} from '../Managers/GameObjectManager';
-import BasicObject from './BasicObject';
+import BasicObject, {BasicObjectsConstructorParams} from './BasicObject';
 
-class GameObject extends BasicObject implements IGameObject {
+class GameObject<T extends BasicObjectsConstructorParams = BasicObjectsConstructorParams> extends BasicObject implements IGameObject {
 	private modulesManager: ExecutableManager;
 	private childManager: GameObjectManager;
-
-	public name: string;
-	public active: boolean;
-
-	protected constructor(params: Dictionary<any>) {
-		const { active = true, position = new Vector(), name = 'GameObject', scale = Vector.One, rotation = 0, rotationDeg } = params;
-		super({ name });
-		this.transform = new Transform(this, {
-			localPosition: position,
-			localScale: scale,
-			localRotation: rotation,
-			localRotationDegrees: rotationDeg
-		});
+	protected constructor(params: T) {
+		super(params);
 		this.childManager = new GameObjectManager({ modules: [], parent: this, context: this.context });
 		this.modulesManager = new ExecutableManager({ modules: [], parent: this, context: this.context });
 		this.needDestroy = false;
-		this.active = active;
-		this.name = name;
 	}
 
+	Update() {
+		super.Update();
+		this.modulesManager.Update();
+		this.childManager.Update();
+	}
 
+	Destroy() {
+		super.Destroy();
+		this.modulesManager.Destroy();
+		this.childManager.Destroy();
+	}
 
 	RegisterModule(module: IExecutable) {
 		this.modulesManager.RegisterModule(module);
 		module.SetGameObject(this);
+		module.parent = this.transform;
 	}
 
 	get Context() {
@@ -49,8 +45,8 @@ class GameObject extends BasicObject implements IGameObject {
 		return this.modulesManager.GetModuleByName(name);
 	}
 
-	AppendChild(child: IGameObject) {
-		this.childManager.RegisterModule(child);
+	AppendChild(child: IGameObject): string {
+		return this.childManager.RegisterModule(child);
 	}
 
 	GetChildById(id: string): Nullable<IExecutable> {
@@ -59,17 +55,6 @@ class GameObject extends BasicObject implements IGameObject {
 
 	RemoveChildById(id: string) {
 		return this.childManager.UnregisterModuleById(id);
-	}
-
-	Update() {
-		this.modulesManager.Update();
-		this.childManager.Update();
-	}
-
-	Destroy() {
-		this.needDestroy = true;
-		this.modulesManager.Destroy();
-		this.childManager.Destroy();
 	}
 }
 

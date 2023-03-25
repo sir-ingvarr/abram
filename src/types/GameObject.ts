@@ -2,6 +2,7 @@ import {ICoordinates, IShape, Nullable} from './common';
 import {Vector} from '../engine/Classes';
 import CanvasContext2D from '../engine/Canvas/Context2d';
 import Rigidbody from '../engine/Modules/Rigidbody';
+import {BasicObjectsConstructorParams} from '../engine/Objects/BasicObject';
 
 interface IWithLifeCycle {
     Start(): void;
@@ -26,7 +27,8 @@ interface IScalable {
 export interface IExecutable extends IWithLifeCycle {
     name: string;
     active: boolean;
-    gameObject: IBasicObject;
+    gameObject?: IBasicObject;
+    parent?: ITransform;
     set Active(value: boolean);
     get Active(): boolean;
     SetGameObject(gameObject: IBasicObject): void;
@@ -35,7 +37,6 @@ export interface IExecutable extends IWithLifeCycle {
 export interface ICollider2D extends IExecutable {
     rigidbody: Rigidbody;
     shape: IShape;
-    parent: ITransform;
     Collide(other: ICollider2D): void;
     Leave(other: ICollider2D): void
 }
@@ -69,11 +70,15 @@ export interface IBasicObject extends IExecutable, IWithContext {
     get IsWaitingDestroy(): boolean;
 }
 
+export interface IGameObjectConstructable<T extends BasicObjectsConstructorParams> {
+    new(params: T): IGameObject;
+}
+
 export interface IGameObject extends IBasicObject, IWithContext {
     active: boolean;
     name: string;
 
-    AppendChild(child: IGameObject): void;
+    AppendChild(child: IGameObject): string;
     RegisterModule(module: IExecutable): void;
     GetModuleByName(name: string): Nullable<IExecutable>;
     GetChildById(id: string): Nullable<IExecutable>;
