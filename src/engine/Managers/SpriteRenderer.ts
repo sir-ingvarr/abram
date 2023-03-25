@@ -52,7 +52,6 @@ class SpriteRenderer {
 
 		this.context
 			.Save()
-			// .Reset()
 			.ContextRespectivePosition(false);
 
 		const anchoredX = anchors.x * width;
@@ -64,7 +63,7 @@ class SpriteRenderer {
 			.Translate(x, y)
 			.Rotate(rotation * dir.x * dir.y)
 			.SetScale(scale.x, scale.y)
-			.Translate(-anchoredX, -anchoredY)
+			.Translate(-anchoredX, -anchoredY);
 
 		if(graphic instanceof Sprite) {
 			this.context.DrawImage(graphic.image.Data, 0, 0, width, height);
@@ -84,10 +83,7 @@ class SpriteRenderer {
 	public Render() {
 		for(let i = 0; i < this.renderingStackList.length; i++) {
 			const layerStack = this.renderingStackList[i];
-			if(!layerStack) {
-				// this.renderingStackList[i] = new Stack<Sprite>({data: []});
-				continue;
-			}
+			if(!layerStack) continue;
 			while(layerStack.Count) {
 				const sprite = layerStack.Pop();
 				this.RenderElement(sprite);

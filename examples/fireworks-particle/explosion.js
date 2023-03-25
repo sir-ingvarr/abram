@@ -1,4 +1,5 @@
-const { GameObject,Time, GraphicPrimitives: { GraphicPrimitive, PrimitiveType, ShapeDrawMethod }, Shapes: { Rect, Circle }, Sprite, ImageWrapper, Classes: {RGBAColor, Vector, Maths}, ParticleSystem } = window.Abram;
+
+const { GameObject,Time, GraphicPrimitives: { GraphicPrimitive, PrimitiveType, ShapeDrawMethod }, Shapes: { Rect, Circle }, Sprite, ImageWrapper, Classes: {RGBAColor, Vector, Maths, PolarCoordinates}, ParticleSystem } = window.Abram;
 
 class Explosion extends GameObject {
     lifetime;
@@ -6,7 +7,7 @@ class Explosion extends GameObject {
 
     constructor(params) {
         super(params);
-        this.lifetime = params.lifetime || 5;
+        this.lifetime = params.lifetime || 500;
         this.color = params.color || new RGBAColor();
     }
 
@@ -14,16 +15,16 @@ class Explosion extends GameObject {
         this.particleSystem = new ParticleSystem({
             parent: this,
             params: {
+                layer: 2,
                 occlusionCulling: true,
                 particleBuffering: true,
                 graphic: () => new GraphicPrimitive({
-                    layer: 10,
                     type: PrimitiveType.Rect,
                     shape: new Rect(new Point(), new Point(10, 10)),
                     parent: this.Transform,
                     drawMethod: ShapeDrawMethod.Fill,
                 }),
-                lifeTime: () => Maths.RandomRange(1, 2) * 1000,
+                lifeTime: () => Maths.RandomRange(0.7, 1.2) * 1000,
                 emitOverTime: 0,
                 maxParticles: 20000,
                 burstEmit: () => ({ repeat: false, emit: 120, every: 500, skipFirst: false }),
@@ -34,14 +35,13 @@ class Explosion extends GameObject {
                     return initial.LerpTo(color, factor)
                 },
                 gravityForceScale: 0.1,
-                rotationOverLifeTime: factor => Maths.Lerp(0, -3, factor),
-                initialVelocity: () => Vector.Of(Maths.RandomRange(-150, 150), Maths.RandomRange(-150, 150)),
-                initialSize: () => Maths.RandomRange(10, 30),
+                rotationOverLifeTime: factor => Maths.Lerp(0, -10, factor),
+                initialVelocity: () => new PolarCoordinates({ r: Maths.RandomRange(0, 350),angle: Maths.RandomRange(0, 2*Math.PI) }).ToCartesian().ToVector(),//Vector.Of(Maths.RandomRange(-150, 150), Maths.RandomRange(-150, 150)),
+                initialSize: () => Maths.RandomRange(15, 35),
                 scaleOverLifeTime: factor => ({ x: Maths.Clamp(1 - factor, 0.1, 1.5), y: Maths.Clamp(1 - factor, 0.1, 1.5)}),
                 initialPosition: Vector.Zero
             },
         });
-        // this.particleSystem.Pause();
     }
 
     Update() {

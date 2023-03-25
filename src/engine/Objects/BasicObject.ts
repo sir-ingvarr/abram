@@ -1,5 +1,5 @@
 import {IBasicObject, ITransform} from '../../types/GameObject';
-import {Dictionary, ICoordinates} from '../../types/common';
+import {ICoordinates} from '../../types/common';
 import Module, {ModuleConstructorParams} from '../Modules/Module';
 import {Vector} from '../Classes';
 import CanvasContext2D from '../Canvas/Context2d';

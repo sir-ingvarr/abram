@@ -11,11 +11,10 @@ class Smoke extends GameObject {
         this.particleSystem = new ParticleSystem({
             parent: this,
             params: {
-                layer: 3,
                 occlusionCulling: true,
                 particleBuffering: true,
                 graphic: () => new GraphicPrimitive({
-                    layer:3,
+                    layer: 2,
                     type: PrimitiveType.Rect,
                     shape: new Rect(new Point(), new Point(10, 10)),
                     parent: this.Transform,

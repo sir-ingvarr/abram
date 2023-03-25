@@ -21,8 +21,4 @@ class ManTwo extends Man {
             this.rigidBody.AddForce(Vector.MultiplyCoordinates(100, Vector.Down));
         }
     }
-
-    Update() {
-        super.Update();
-    }
 }

@@ -79,6 +79,7 @@ class RigidBody extends Module {
 	}
 
 	private ApplyGravity() {
+		if(!this.useGravity) return;
 		this.AddForce(Vector.MultiplyCoordinates(G_CONSTANT * this.gravityScale, Vector.Up));
 	}
 
@@ -103,7 +104,7 @@ class RigidBody extends Module {
 	}
 
 	Update(): void {
-		if(this.useGravity) this.ApplyGravity();
+		this.ApplyGravity();
 		this.ApplyDrag();
 		this.CalcVelocityByForces();
 	}

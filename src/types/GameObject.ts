@@ -2,8 +2,7 @@ import {ICoordinates, IShape, Nullable} from './common';
 import {Vector} from '../engine/Classes';
 import CanvasContext2D from '../engine/Canvas/Context2d';
 import Rigidbody from '../engine/Modules/Rigidbody';
-import BasicObject, {BasicObjectsConstructorParams} from '../engine/Objects/BasicObject';
-import {ModuleConstructorParams} from '../engine/Modules/Module';
+import {BasicObjectsConstructorParams} from '../engine/Objects/BasicObject';
 
 interface IWithLifeCycle {
     Start(): void;

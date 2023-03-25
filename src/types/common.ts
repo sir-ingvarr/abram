@@ -4,7 +4,7 @@ export type Nullable<T> = T | null;
 
 export type Dictionary<V> = { [key: string]: V };
 
-export type AnyFunc = (...args: any) => any;
+export type AnyFunc<T = any> = (...args: any) => T;
 
 export enum ColorSpace {
     SRGB='srgb',

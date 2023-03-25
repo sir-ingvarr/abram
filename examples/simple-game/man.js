@@ -39,7 +39,7 @@ class Man extends GameObject {
         this.RegisterModule(graphic);
         this.RegisterModule(this.animator);
 
-        this.gun = new GameObject({ position: new Vector(10,30), name: `${this.name}_gun`});
+        this.gun = new GameObject({ position: new Vector(15,0), name: `${this.name}_gun`});
 
         const gunImage = new ImageWrapper('./assets/gun.png');
 

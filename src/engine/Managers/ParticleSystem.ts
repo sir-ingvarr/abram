@@ -4,16 +4,19 @@ import Particle, {IFollower, ParticleConstructorOptions} from '../Objects/Partic
 import {Maths, PolarCoordinates, RGBAColor, Stack, Vector} from '../Classes';
 import Sprite from '../Modules/Sprite';
 import {ICoordinates, Nullable} from '../../types/common';
-import Rigidbody from '../Modules/Rigidbody';
 import ImageWrapper from '../Modules/ImageWrapper';
 import Collider2D from '../Modules/Collider';
-import {GraphicPrimitive, IGraphicPrimitive, PrimitiveType} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
+import {GraphicPrimitive, IGraphicPrimitive} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
 import Engine from '../Engine';
 import {BasicObjectsConstructorParams} from '../Objects/BasicObject';
 
 export enum RenderingStyle {
     Local,
     World,
+}
+
+export interface IParticleRb {
+	velocity: Vector,
 }
 
 type PureFunction<T> = (...args: any) => T;
@@ -31,9 +34,9 @@ export type ParticleSystemOptions = {
 	layer: number;
     gravityForceScale?: number,
     timeLastEmitted?: number;
-    attachedRigidbody?: Rigidbody;
+    attachedRigidbody?: IParticleRb;
     renderingStyle?: RenderingStyle,
-    graphic?: ValueOrFunction<ImageWrapper | GraphicPrimitive<any>>,
+    graphic?: ValueOrFunction<ImageWrapper | IGraphicPrimitive<any>>,
     lifeTime?: ValueOrFunction<number>,
 	drag?: ValueOrFunction<number>,
 	emitOverTime?: ValueOrFunction<number>,
@@ -66,8 +69,8 @@ class ParticleSystem extends ExecutableManager {
 	protected layer: number;
 	protected gravityForceScale: number;
 	protected renderingStyle: RenderingStyle;
-	protected attachedRigidbody?: Rigidbody;
-	protected graphic: Nullable<ValueOrFunction<ImageWrapper | GraphicPrimitive<any>>>;
+	protected attachedRigidbody?: IParticleRb;
+	protected graphic: Nullable<ValueOrFunction<ImageWrapper | IGraphicPrimitive<any>>>;
 	protected lifeTime: ValueOrFunction<number>;
 	protected drag?: ValueOrFunction<number>;
 	protected initialVelocity: ValueOrFunction<Vector>;
@@ -105,7 +108,7 @@ class ParticleSystem extends ExecutableManager {
 			maxParticles = 10,
 			gravityForceScale = 1,
 			graphic = null,
-			layer = 0,
+			layer,
 			renderingStyle = RenderingStyle.Local,
 			lifeTime = 5000,
 			emitOverTime = 10,
@@ -135,7 +138,6 @@ class ParticleSystem extends ExecutableManager {
 			particleFollowers
 		} } = params;
 		this.inheritVelocity = inheritVelocity;
-		if(this.inheritVelocity && !attachedRigidbody) throw 'attached rigidbbody is required for the inherit velocity usage';
 		this.attachedRigidbody = attachedRigidbody;
 		this.isPlaying = isPlaying;
 		this.drag = drag;
@@ -328,14 +330,17 @@ class ParticleSystem extends ExecutableManager {
 	GetParticleInitialProps(graphic: Nullable<Sprite | ImageWrapper | IGraphicPrimitive<any>>): ParticleConstructorOptions {
 		const size = this.SetOrExecute(this.initialSize);
 
+		const layer = this.layer || (graphic as Sprite).layer || 0;
+
 		const props: ParticleConstructorOptions = {
 			initialColor: this.SetOrExecute(this.initialColor),
-			layer: this.layer,
+			layer,
 			drag: this.SetOrExecute(this.drag),
 			lifeTime: this.SetOrExecute(this.lifeTime),
 			size: this.SetOrExecute(this.initialSize),
 			OnCollide: this.onParticleCollision,
-			initialVelocity: this.SetOrExecute(this.initialVelocity),
+			initialVelocity: this.SetOrExecute(this.initialVelocity)
+				.Add(Vector.Zero),
 			graphic: null,
 		};
 

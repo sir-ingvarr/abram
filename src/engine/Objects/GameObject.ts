@@ -15,7 +15,17 @@ class GameObject<T extends BasicObjectsConstructorParams = BasicObjectsConstruct
 		this.needDestroy = false;
 	}
 
+	Update() {
+		super.Update();
+		this.modulesManager.Update();
+		this.childManager.Update();
+	}
 
+	Destroy() {
+		super.Destroy();
+		this.modulesManager.Destroy();
+		this.childManager.Destroy();
+	}
 
 	RegisterModule(module: IExecutable) {
 		this.modulesManager.RegisterModule(module);
@@ -45,17 +55,6 @@ class GameObject<T extends BasicObjectsConstructorParams = BasicObjectsConstruct
 
 	RemoveChildById(id: string) {
 		return this.childManager.UnregisterModuleById(id);
-	}
-
-	Update() {
-		this.modulesManager.Update();
-		this.childManager.Update();
-	}
-
-	Destroy() {
-		this.needDestroy = true;
-		this.modulesManager.Destroy();
-		this.childManager.Destroy();
 	}
 }
 

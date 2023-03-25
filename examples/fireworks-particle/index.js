@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const { Engine, Classes: { RGBAColor, Vector } } = window.Abram;
 
-    const engine = new Engine(root, { width: 1280, height: 800, debug: false, drawFps: true, adaptiveFrameDelay: false, pauseOnBlur: false });
+    const engine = new Engine(root, { width: 1280, height: 800, targetFps: 60, debug: false, drawFps: true, adaptiveFrameDelay: false, pauseOnBlur: false });
 
     const bgColor = new RGBAColor(30,0,130);
     engine.SetBackgroundColor(bgColor);
@@ -11,15 +11,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const camera = new CameraMovement({}, engine.Canvas.Context2D);
     engine.AppendGameObject(camera);
 
-    // const bgSprite = new Sprite({
-    //     height: 800,
-    //     width: 1280,
-    //     image: new ImageWrapper('./assets/nightsky.png'),
-    //     layer: 1,
-    // });
-    //
-    // const bg = new Bg({sprite: bgSprite, position: new Point()});
-    // engine.AppendGameObject(bg);
+    const bgSprite = new Sprite({
+        height: 800,
+        width: 1280,
+        image: new ImageWrapper('./assets/nightsky.png'),
+        layer: 0,
+    });
+
+    const bg = new Bg({sprite: bgSprite, position: new Point()});
+    engine.AppendGameObject(bg);
 
     const colors = [
         new RGBAColor(255),
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function SpawnTheExplosion(pos) {
         engine.AppendGameObject(
             new Explosion({
-                position: new Vector(pos.x, pos.y), lifetime: 5000,
+                position: new Vector(pos.x, pos.y), lifetime: 1000,
                 color: Math.random() < 0.35
                     ? () => colors[Maths.RandomRange(0, colors.length - 1, true)]
                     : colors[Maths.RandomRange(0, colors.length - 1, true)],
