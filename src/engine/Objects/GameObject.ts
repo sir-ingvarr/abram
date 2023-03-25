@@ -20,6 +20,7 @@ class GameObject<T extends BasicObjectsConstructorParams = BasicObjectsConstruct
 	RegisterModule(module: IExecutable) {
 		this.modulesManager.RegisterModule(module);
 		module.SetGameObject(this);
+		module.parent = this.transform;
 	}
 
 	get Context() {

@@ -29,6 +29,7 @@ export interface IExecutable extends IWithLifeCycle {
     name: string;
     active: boolean;
     gameObject?: IBasicObject;
+    parent?: ITransform;
     set Active(value: boolean);
     get Active(): boolean;
     SetGameObject(gameObject: IBasicObject): void;
@@ -37,7 +38,6 @@ export interface IExecutable extends IWithLifeCycle {
 export interface ICollider2D extends IExecutable {
     rigidbody: Rigidbody;
     shape: IShape;
-    parent: ITransform;
     Collide(other: ICollider2D): void;
     Leave(other: ICollider2D): void
 }

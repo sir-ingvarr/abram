@@ -256,8 +256,6 @@ export class Segment {
 		return Math.abs(this.from.y - this.to.y);
 	}
 
-
-
 	getIntersection(other: Segment): Nullable<Point> {
 		const { x: x1, y: y1 } = this.from;
 		const { x: x2, y: y2 } = this.to;
@@ -383,12 +381,14 @@ export class RGBAColor {
 	}
 
 	static FromHex(hex: string) {
+		if(!hex) return;
+		if(hex[0] === '#') hex = hex.slice(1);
 		if(!/[0-9A-F]{6}/i.test(hex)) throw 'invalid hex format';
 		try {
-			const red = parseInt(hex.slice(1, 3), 16);
-			const green = parseInt(hex.slice(3, 5), 16);
-			const blue = parseInt(hex.slice(5, 7), 16);
-			const alpha = parseInt(hex.slice(7, 9), 16);
+			const red = parseInt(hex.slice(0, 2), 16);
+			const green = parseInt(hex.slice(2, 4), 16);
+			const blue = parseInt(hex.slice(4, 6), 16);
+			const alpha = parseInt(hex.slice(6, 8), 16);
 			return new RGBAColor(
 				red, green, blue,
 				Number.isNaN(alpha) ? 255 : alpha

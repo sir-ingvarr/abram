@@ -7,7 +7,7 @@ import {ICoordinates, Nullable} from '../../types/common';
 import Rigidbody from '../Modules/Rigidbody';
 import ImageWrapper from '../Modules/ImageWrapper';
 import Collider2D from '../Modules/Collider';
-import {GraphicPrimitive, IGraphicPrimitive} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
+import {GraphicPrimitive, IGraphicPrimitive, PrimitiveType} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
 import Engine from '../Engine';
 import {BasicObjectsConstructorParams} from '../Objects/BasicObject';
 
@@ -79,6 +79,7 @@ class ParticleSystem extends ExecutableManager {
 	protected burstEmit?: ValueOrFunction<{ repeat: boolean, every: number, emit: ValueOrFunction<number>, skipFirst?: boolean }>;
 	protected emitEachTimeFrame: ValueOrFunction<number>;
 	protected emitOverDistance: ValueOrFunction<number>;
+	protected emitOverDistanceKeeper: number;
 	protected particleFollowers?: ValueOrFunction<Array<IGameObjectConstructable<any>>>;
 	protected lastPointEmitted: Vector;
 	protected timeLastEmitted: number;
@@ -170,6 +171,7 @@ class ParticleSystem extends ExecutableManager {
 			this.buffer = new Stack<Particle>({ data: [] });
 		}
 
+		if(emitOverDistance) this.emitOverDistanceKeeper = 0;
 		if(this.burstEmit) {
 			this.timeLastBurstEmitted = Date.now();
 			const { skipFirst, emit } = this.SetOrExecute(this.burstEmit);
@@ -197,6 +199,7 @@ class ParticleSystem extends ExecutableManager {
 		super.PostModuleRegister(module);
 		if(this.parent) {
 			module.context = this.parent.Context;
+			if(this.renderingStyle !== RenderingStyle.Local) return;
 			module.transform.Parent = this.parent.transform;
 		}
 	}
@@ -224,8 +227,13 @@ class ParticleSystem extends ExecutableManager {
 
 	private ExecuteEmitOverDistance() {
 		if(!this.emitOverDistance || !this.parent) return;
-		const amountForDist = this.SetOrExecute(this.emitOverTime);
-		this.EmitNParticles(amountForDist * Vector.Distance(this.parent.transform.WorldPosition, this.lastPointEmitted));
+		const amountForDist = this.SetOrExecute(this.emitOverDistance);
+		const amountToEmit = amountForDist * Vector.Distance(this.parent.transform.WorldPosition, this.lastPointEmitted) / 10;
+		this.emitOverDistanceKeeper += amountToEmit;
+		if(this.emitOverDistanceKeeper < 1) return;
+		const toEmit = Math.floor(this.emitOverDistanceKeeper);
+		this.emitOverDistanceKeeper -= toEmit;
+		this.EmitNParticles(toEmit);
 		this.lastPointEmitted = this.parent.transform.WorldPosition;
 	}
 
@@ -250,6 +258,7 @@ class ParticleSystem extends ExecutableManager {
 	}
 
 	private async EmitNParticles(n: number) {
+		if(n < 1) return;
 		for(let i = 0; i < n; i++) {
 			this.RegisterModule(await this.CreateOrObtainParticle());
 		}
@@ -311,30 +320,37 @@ class ParticleSystem extends ExecutableManager {
 			particle = new Particle(props);
 		}
 		const initialPosVal = this.SetOrExecute(this.initialPosition);
-		particle.transform.LocalPosition = this.parent?.transform?.LocalPosition.Add(initialPosVal) || initialPosVal;
+		particle.transform.LocalPosition = (this.renderingStyle === RenderingStyle.World && this.parent) ? this.parent.transform.WorldPosition.Add(initialPosVal) : initialPosVal;
 		particle.transform.LocalRotationDeg = this.SetOrExecute(this.initialRotation);
 		return particle;
 	}
 
 	GetParticleInitialProps(graphic: Nullable<Sprite | ImageWrapper | IGraphicPrimitive<any>>): ParticleConstructorOptions {
 		const size = this.SetOrExecute(this.initialSize);
-		let graphicObj;
-		if(graphic instanceof Sprite || graphic instanceof GraphicPrimitive) graphicObj = graphic;
-		else graphicObj = new Sprite({
-			image: graphic as ImageWrapper,
-			width: size,
-			height: size
-		});
-		return {
+
+		const props: ParticleConstructorOptions = {
 			initialColor: this.SetOrExecute(this.initialColor),
-			graphic: graphicObj,
 			layer: this.layer,
 			drag: this.SetOrExecute(this.drag),
 			lifeTime: this.SetOrExecute(this.lifeTime),
 			size: this.SetOrExecute(this.initialSize),
 			OnCollide: this.onParticleCollision,
 			initialVelocity: this.SetOrExecute(this.initialVelocity),
+			graphic: null,
 		};
+
+		if(graphic instanceof ImageWrapper) {
+			props.graphic = new Sprite({
+				image: graphic as ImageWrapper,
+				width: size,
+				height: size
+			});
+			return props as ParticleConstructorOptions;
+		} else if(graphic instanceof GraphicPrimitive) {
+			graphic.shape.SetSize(size);
+		}
+		props.graphic = graphic;
+		return props;
 	}
 }
 

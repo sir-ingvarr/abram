@@ -2,9 +2,9 @@ import CanvasContext2D from '../Canvas/Context2d';
 import {RGBAColor, Stack} from '../Classes';
 import Sprite from '../Modules/Sprite';
 import {IStack} from '../../types/Iterators';
-import {GraphicPrimitive} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
+import {IGraphicPrimitive} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
 
-type Graphic = Sprite | GraphicPrimitive<any>
+type Graphic = Sprite | IGraphicPrimitive<any>
 
 class SpriteRenderer {
 	private context: CanvasContext2D;
@@ -60,17 +60,11 @@ class SpriteRenderer {
 		if(graphic instanceof Sprite) {
 			if (!graphic.image.Data) return;
 		}
-		console.log(graphic);
-		console.log(x, y, anchoredX, anchoredY);
 		this.context
 			.Translate(x, y)
 			.Rotate(rotation * dir.x * dir.y)
+			.SetScale(scale.x, scale.y)
 			.Translate(-anchoredX, -anchoredY)
-			.SetScale(scale.x, scale.y);
-
-
-
-
 
 		if(graphic instanceof Sprite) {
 			this.context.DrawImage(graphic.image.Data, 0, 0, width, height);

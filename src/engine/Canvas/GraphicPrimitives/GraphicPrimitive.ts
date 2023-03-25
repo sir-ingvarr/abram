@@ -26,7 +26,7 @@ export enum ShapeDrawMethod {
 	Stroke
 }
 
-export type PrimitiveShape = Segment | Rect | PolygonalChain | Circle | Polygon;
+export type PrimitiveShape = Rect | Circle | Polygon | PolygonalChain | Segment;
 
 export interface IGraphicPrimitive<T extends PrimitiveShape> {
     layer: number,

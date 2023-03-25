@@ -9,6 +9,7 @@ import CanvasContext2D from './engine/Canvas/Context2d';
 import Camera from './engine/Modules/Camera';
 import Time from './engine/Globals/Time';
 import ParticleSystem from './engine/Managers/ParticleSystem';
+import * as ParticleSystemAssets from './engine/Managers/ParticleSystem';
 import ImageWrapper from './engine/Modules/ImageWrapper';
 import * as Shapes from './engine/Canvas/GraphicPrimitives/Shapes';
 import * as GraphicPrimitives from './engine/Canvas/GraphicPrimitives/GraphicPrimitive';
@@ -20,5 +21,5 @@ export default Engine;
 export {
 	GameObject, InputSystem, Animator, Sprite, CanvasContext2D,
 	Camera, Classes, Time, RigidBody, ParticleSystem, ImageWrapper,
-	GraphicPrimitives, Shapes, Collision, Collider2D
+	GraphicPrimitives, Shapes, Collision, Collider2D, ParticleSystemAssets
 };

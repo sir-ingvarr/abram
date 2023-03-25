@@ -222,18 +222,18 @@ class CanvasContext2D {
 			.Restore();
 	}
 
-	Draw<T extends PrimitiveShape>(any: GraphicPrimitive<T>, offsetX = 0, offsetY = 0, fillStroke = 0) {
+	Draw<T extends PrimitiveShape>(any: IGraphicPrimitive<T>, offsetX = 0, offsetY = 0, fillStroke = 0) {
 		const { type, options, dash } = any;
 		this.SetOptions(options)
 			.LineDash(dash)
 			.BeginPath();
-		if(type === PrimitiveType.Circle) return this.DrawCircle(any as GraphicPrimitive<Circle>, offsetX, offsetY, fillStroke);
-		if(type === PrimitiveType.Polygon) return this.DrawLines(any as GraphicPrimitive<PolygonalChain>, offsetX, offsetY);
-		if(type === PrimitiveType.Line) return this.DrawLine(any as GraphicPrimitive<Segment>, offsetX, offsetY);
-		if(type === PrimitiveType.Rect) return this.DrawRect(any as GraphicPrimitive<Segment>, offsetX, offsetY, fillStroke);
+		if(type === PrimitiveType.Circle) return this.DrawCircle(any as IGraphicPrimitive<Circle>, offsetX, offsetY, fillStroke);
+		if(type === PrimitiveType.Polygon) return this.DrawLines(any as IGraphicPrimitive<PolygonalChain>, offsetX, offsetY);
+		if(type === PrimitiveType.Line) return this.DrawLine(any as IGraphicPrimitive<Segment>, offsetX, offsetY);
+		if(type === PrimitiveType.Rect) return this.DrawRect(any as IGraphicPrimitive<Segment>, offsetX, offsetY, fillStroke);
 	}
 
-	DrawLine(line: GraphicPrimitive<Segment>, offsetX: number, offsetY: number): CanvasContext2D {
+	DrawLine(line: IGraphicPrimitive<Segment>, offsetX: number, offsetY: number): CanvasContext2D {
 		const { shape: { from, to } } = line;
 		return this
 			.MoveTo(from.x + offsetX, from.y + offsetY)
@@ -243,7 +243,7 @@ class CanvasContext2D {
 			.Restore();
 	}
 
-	DrawLines(lines: GraphicPrimitive<PolygonalChain>, offsetX: number, offsetY: number) {
+	DrawLines(lines: IGraphicPrimitive<PolygonalChain>, offsetX: number, offsetY: number) {
 		for(const line of lines.shape.Segments) {
 			const { from, to } = line;
 			this
@@ -253,7 +253,7 @@ class CanvasContext2D {
 		this.Stroke().ClosePath().Restore();
 	}
 
-	DrawRect(rect: GraphicPrimitive<Segment>, offsetX: number, offsetY: number, type = 0) {
+	DrawRect(rect: IGraphicPrimitive<Segment>, offsetX: number, offsetY: number, type = 0) {
 		const { shape: {from, to} } = rect;
 		this.Rect(from.x + offsetX, from.y + offsetY, to.x + offsetX, to.y + offsetY);
 		if(type === 0) {

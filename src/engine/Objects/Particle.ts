@@ -4,7 +4,7 @@ import {Sprite, Time} from '../../index';
 import {Maths, RGBAColor, Vector} from '../Classes';
 import Collider2D, {Collider2DEvent, Collider2DType} from '../Modules/Collider';
 import {CircleArea} from '../Canvas/GraphicPrimitives/Shapes';
-import {GraphicPrimitive} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
+import {GraphicPrimitive, IGraphicPrimitive} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
 import SpriteRenderer from '../Managers/SpriteRenderer';
 
 export interface IFollower {
@@ -13,7 +13,7 @@ export interface IFollower {
 }
 
 export type ParticleConstructorOptions = BasicObjectsConstructorParams & {
-    graphic: Nullable<GraphicPrimitive<any> | Sprite>;
+    graphic: Nullable<IGraphicPrimitive<any> | Sprite>;
     size?: number;
 	layer: number;
 	drag?: number;
@@ -26,7 +26,7 @@ export type ParticleConstructorOptions = BasicObjectsConstructorParams & {
 }
 
 class Particle extends BasicObject {
-	public graphic: Nullable<GraphicPrimitive<any> | Sprite>;
+	public graphic: Nullable<IGraphicPrimitive<any> | Sprite>;
 	private layer: number;
 	private size: number;
 	public drag: number;
@@ -104,7 +104,6 @@ class Particle extends BasicObject {
 		SpriteRenderer.GetInstance().AddToRenderQueue(this.graphic);
 		if(this.followers) {
 			const {x, y} = this.transform.WorldPosition;
-			console.log(`now x: ${x} y: ${y}`);
 
 			for (const follower of this.followers) {
 				follower.UpdateFollowedPosition.bind(follower)(x,y);

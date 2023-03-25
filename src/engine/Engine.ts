@@ -82,7 +82,7 @@ class Engine {
 		this.CreateCanvas(width, height, canvasContextAttributes, bgColor);
 		this.gameObjectManager = new GameObjectManager({ modules: [], context: this.canvas.Context2D });
 		this.collisionsManager = new CollisionsManager({ modules: [] });
-		this.graphicRenderer = SpriteRenderer.GetInstance(this.canvas.Context2D);
+		this.graphicRenderer = SpriteRenderer.GetInstance(this.canvas.Context2D, this.debug);
 		this.frameDelay = this.targetFps && this.targetFps < 60 ? 1000 / this.targetFps : 0;
 		if(!drawFps) return;
 		this.fpsProvider = new FpsProvider({

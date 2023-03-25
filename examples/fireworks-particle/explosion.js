@@ -1,18 +1,13 @@
-const { GameObject,Time, GraphicPrimitives: { GraphicPrimitive, PrimitiveType, ShapeDrawMethod }, Shapes: { Circle, Rect }, ImageWrapper, Classes: {RGBAColor, Vector, Maths, PolarCoordinates}, ParticleSystem } = window.Abram;
-
-const colors = [
-    new RGBAColor(255),
-    new RGBAColor(0, 255),
-    new RGBAColor(252, 235, 3),
-    new RGBAColor(140, 3, 252),
-    new RGBAColor(250, 170, 20),
-]
+const { GameObject,Time, GraphicPrimitives: { GraphicPrimitive, PrimitiveType, ShapeDrawMethod }, Shapes: { Rect, Circle }, Sprite, ImageWrapper, Classes: {RGBAColor, Vector, Maths}, ParticleSystem } = window.Abram;
 
 class Explosion extends GameObject {
     lifetime;
+    color
+
     constructor(params) {
         super(params);
         this.lifetime = params.lifetime || 5;
+        this.color = params.color || new RGBAColor();
     }
 
     Start() {
@@ -22,25 +17,26 @@ class Explosion extends GameObject {
                 occlusionCulling: true,
                 particleBuffering: true,
                 graphic: () => new GraphicPrimitive({
+                    layer: 10,
                     type: PrimitiveType.Rect,
-                    shape: new Rect(new Point, new Point(10, 10)),
+                    shape: new Rect(new Point(), new Point(10, 10)),
                     parent: this.Transform,
                     drawMethod: ShapeDrawMethod.Fill,
                 }),
-                lifeTime: () => Maths.RandomRange(1.5, 2) * 1000,
+                lifeTime: () => Maths.RandomRange(1, 2) * 1000,
                 emitOverTime: 0,
                 maxParticles: 20000,
                 burstEmit: () => ({ repeat: false, emit: 120, every: 500, skipFirst: false }),
-                initialColor: () => colors[Maths.RandomRange(0, colors.length - 1, true)],
+                initialColor: this.color,
                 colorOverLifeTime: (initial, factor) => {
                     const color = initial.Copy();
                     color.Alpha = 180;
                     return initial.LerpTo(color, factor)
                 },
-                gravityForceScale: 0.3,
-                rotationOverLifeTime: factor => Maths.Lerp(0, -20, factor),
-                initialVelocity: () => Vector.Of(Maths.RandomRange(-300, 300), Maths.RandomRange(-300, 300)),
-                initialSize: () => Maths.RandomRange(2, 4),
+                gravityForceScale: 0.1,
+                rotationOverLifeTime: factor => Maths.Lerp(0, -3, factor),
+                initialVelocity: () => Vector.Of(Maths.RandomRange(-150, 150), Maths.RandomRange(-150, 150)),
+                initialSize: () => Maths.RandomRange(10, 30),
                 scaleOverLifeTime: factor => ({ x: Maths.Clamp(1 - factor, 0.1, 1.5), y: Maths.Clamp(1 - factor, 0.1, 1.5)}),
                 initialPosition: Vector.Zero
             },
