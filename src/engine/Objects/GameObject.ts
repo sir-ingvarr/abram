@@ -15,13 +15,13 @@ class GameObject<T extends BasicObjectsConstructorParams = BasicObjectsConstruct
 		this.needDestroy = false;
 	}
 
-	Update() {
+	override Update() {
 		super.Update();
 		this.modulesManager.Update();
 		this.childManager.Update();
 	}
 
-	Destroy() {
+	override Destroy() {
 		super.Destroy();
 		this.modulesManager.Destroy();
 		this.childManager.Destroy();
@@ -33,11 +33,11 @@ class GameObject<T extends BasicObjectsConstructorParams = BasicObjectsConstruct
 		module.parent = this.transform;
 	}
 
-	get Context() {
+	override  get Context() {
 		return this.context as CanvasContext2D;
 	}
 
-	set Context(ctx: CanvasContext2D) {
+	override set Context(ctx: CanvasContext2D) {
 		this.context = ctx;
 	}
 

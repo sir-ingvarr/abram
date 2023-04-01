@@ -17,8 +17,7 @@ class Animator extends Module {
 	private playing: boolean;
 	private stateMap: Map<string, Iterator<HTMLImageElement>>;
 	private availableStates: Array<string>;
-	private currentFrame: number;
-	private controlledGraphic: Sprite;
+	// private controlledGraphic: Sprite;
 	private elapsedTime: number;
 	private currentStateData?: Iterator<HTMLImageElement>;
 
@@ -34,8 +33,7 @@ class Animator extends Module {
 		this.state = state;
 		this.playing = playing;
 		this.availableStates = Array.from(stateMap.keys());
-		this.currentFrame = 0;
-		this.controlledGraphic = graphicElement;
+		// this.controlledGraphic = graphicElement;
 		this.SetStateMap(stateMap);
 		this.currentStateData = this.stateMap.get(state);
 	}
@@ -53,15 +51,12 @@ class Animator extends Module {
 		if(!this.availableStates.includes(newState)) throw 'invalid state';
 		this.state = newState;
 		this.currentStateData = this.stateMap.get(newState);
-		this.currentFrame = 0;
 		this.UpdateFrame();
 	}
 
-
 	UpdateFrame() {
 		if(!this.currentStateData) return;
-		const image = this.currentStateData.Next.value;
-		this.controlledGraphic.image.SetImageContent(image);
+		// this.controlledGraphic.image.Data = this.currentStateData.Next.value;
 	}
 
 	SetStateMap(stateMap: Map<string, Array<string>>) {
@@ -82,7 +77,7 @@ class Animator extends Module {
 		});
 	}
 
-	Update() {
+	override Update() {
 		super.Update();
 		if(!this.playing) return;
 		this.elapsedTime += Time.deltaTime;

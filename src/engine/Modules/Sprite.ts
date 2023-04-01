@@ -1,20 +1,21 @@
 import Module from './Module';
-import SpriteRenderer from '../Managers/SpriteRenderer';
-import ImageWrapper from './ImageWrapper';
 import {ITransform} from '../../types/GameObject';
+import SpriteRendererManager from '../Managers/SpriteRendererManager';
 
 class Sprite extends Module {
 	private width: number;
 	private height: number;
-	public image: ImageWrapper;
+	public contentType: 0 | 1;
+	private imageId: string;
 	public parent: ITransform;
 	public layer: number;
 
-	constructor(params: { image: ImageWrapper, width?: number, height?: number, layer?: number}) {
-		super({name: 'SpriteRenderer'});
-		const { width = 100, height = 100, layer = 0, image } = params;
+	constructor(params: { ImageId: string, width?: number, height?: number, layer?: number}) {
+		super({name: 'Sprite'});
+		const { width = 100, height = 100, layer = 0, ImageId } = params;
 		this.layer = layer;
-		this.image = image;
+		this.imageId = ImageId;
+		this.contentType = 0;
 		this.width = width;
 		this.height = height;
 	}
@@ -27,12 +28,12 @@ class Sprite extends Module {
 		return this.height;
 	}
 
-	get Image(): HTMLImageElement {
-		return this.image.Data;
+	get ImageId(): string {
+		return this.imageId;
 	}
 
-	Update(): void {
-		SpriteRenderer.GetInstance().AddToRenderQueue(this);
+	override Update(): void {
+		SpriteRendererManager.GetInstance()?.AddToRenderQueue(this);
 	}
 }
 

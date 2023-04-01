@@ -5,11 +5,13 @@ import {Maths, RGBAColor, Vector} from '../Classes';
 import Collider2D, {Collider2DEvent, Collider2DType} from '../Modules/Collider';
 import {CircleArea} from '../Canvas/GraphicPrimitives/Shapes';
 import {GraphicPrimitive, IGraphicPrimitive} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
-import SpriteRenderer from '../Managers/SpriteRenderer';
+import {ITransform} from '../../types/GameObject';
+import SpriteRendererManager from '../Managers/SpriteRendererManager';
 
 export interface IFollower {
-	UpdateFollowedPosition(x: number, y: number): void
-	Destroy(): void
+	UpdateFollowedPosition(x: number, y: number): void;
+	Destroy(): void;
+	transform: ITransform
 }
 
 export type ParticleConstructorOptions = BasicObjectsConstructorParams & {
@@ -27,7 +29,6 @@ export type ParticleConstructorOptions = BasicObjectsConstructorParams & {
 
 class Particle extends BasicObject {
 	public graphic: Nullable<IGraphicPrimitive<any> | Sprite>;
-	private layer: number;
 	private size: number;
 	public drag: number;
 	public initialScale: ICoordinates;
@@ -54,13 +55,16 @@ class Particle extends BasicObject {
 		if(graphic) {
 			graphic.layer = layer;
 			this.graphic = graphic;
-			this.layer = layer;
 		}
 		this.drag = Maths.Clamp(drag, -1 ,1);
 		this.lifeTime = lifeTime;
 		this.size = size;
 		this.age = 0;
-		this.followers = followers;
+		// dirty hack
+		this.followers = followers?.map(follower => {
+			follower.transform.Parent = this.transform;
+			return follower;
+		}) || [];
 		this.initialColor = initialColor?.Copy();
 		this.initialScale = this.transform.Scale;
 		this.velocity = initialVelocity.Copy();
@@ -76,12 +80,12 @@ class Particle extends BasicObject {
 		this.collider.On(Collider2DEvent.OnCollision2DEnter, this.OnCollide);
 	}
 
-	Start() {
+	override Start() {
 		super.Start();
 		this.collider?.Start();
 	}
 
-	Destroy() {
+	override Destroy() {
 		if(this.followers) {
 			this.followers.forEach(val => val.Destroy());
 		}
@@ -93,7 +97,7 @@ class Particle extends BasicObject {
 		if(this.age > this.lifeTime) return this.Destroy();
 	}
 
-	Update() {
+	override Update() {
 		this.collider?.Update();
 		this.transform.Translate(Vector.MultiplyCoordinates(Time.deltaTime / 1000, this.velocity));
 
@@ -101,14 +105,7 @@ class Particle extends BasicObject {
 		if(this.graphic instanceof GraphicPrimitive) {
 			this.graphic.options.fillStyle = this.color.ToHex();
 		}
-		SpriteRenderer.GetInstance().AddToRenderQueue(this.graphic);
-		if(this.followers) {
-			const {x, y} = this.transform.WorldPosition;
-
-			for (const follower of this.followers) {
-				follower.UpdateFollowedPosition.bind(follower)(x,y);
-			}
-		}
+		SpriteRendererManager.GetInstance()?.AddToRenderQueue(this.graphic);
 	}
 }
 

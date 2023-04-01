@@ -13,7 +13,7 @@ abstract class Module implements IExecutable {
 	public name: string;
 	public active: boolean;
 	public gameObject?: IBasicObject;
-	public context?: CanvasContext2D;
+	protected context?: CanvasContext2D;
 
 	constructor(params: ModuleConstructorParams) {
 		this.name = params.name || this.constructor.name;
@@ -35,8 +35,12 @@ abstract class Module implements IExecutable {
 		return this.active;
 	}
 
+	set Context (ctx: CanvasContext2D) {
+		this.context = ctx;
+	}
+
 	get Context() {
-		return this.context || this.gameObject?.Context;
+		return (this.context || this.gameObject?.Context) as CanvasContext2D;
 	}
 
 	GenerateId(name: string) {

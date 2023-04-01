@@ -1,34 +1,42 @@
-class ImageWrapper {
-	private image: HTMLImageElement;
-	public isReady: boolean;
+import SpriteRendererManager from '../Managers/SpriteRendererManager';
 
-	constructor(url: string) {
+class ImageWrapper {
+	private readonly imageId: string;
+	public isReady: boolean;
+	public image?: HTMLImageElement;
+
+	constructor(urlOrImageId: string) {
 		this.isReady = false;
-		this.SetImageContent(url);
+		if(!urlOrImageId) return;
+		this.imageId = urlOrImageId;
+		const imageLoaded = SpriteRendererManager.GetInstance()?.HasImageData(urlOrImageId);
+		if(imageLoaded) return;
+		this.LoadImageContent();
 	}
 
-	SetImageContent(image: HTMLImageElement | string) {
-		if(image instanceof Image) {
-			this.image = image;
-			this.isReady = true;
-			return;
-		}
-		if(typeof image !== 'string') throw 'unacceptable image content provided';
+	get ImageId() {
+		return this.imageId;
+	}
+
+	private async SetImageContent(image: HTMLImageElement) {
+		this.isReady = true;
+		// SpriteRendererManager.GetInstance()?.RegisterImageData(this.imageId, image);
+		this.image = image;
+	}
+
+	private LoadImageContent() {
 		const newImage = new Image();
 		newImage.onload = () => {
-			this.image = newImage;
 			this.isReady = true;
+			this.SetImageContent(newImage);
 		};
 
 		newImage.onerror = e => {
 			console.log(e);
 		};
-		newImage.src = image;
+		newImage.src = this.imageId;
 	}
 
-	get Data() {
-		return this.image;
-	}
 }
 
 export default ImageWrapper;

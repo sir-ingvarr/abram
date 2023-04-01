@@ -1,44 +1,77 @@
-import CanvasContext2D from './Context2d';
+import CanvasContext2D, {AnyCanvas, CanvasRenderingCtx2D} from './Context2d';
 import {RGBAColor} from '../Classes';
 import {CanvasContext2DAttributes} from '../../types/common';
 
-export type CanvasConstructorParams = {
+export type ContextType = '2d' | 'bitmaprenderer';
+
+export type CanvasConstructorParams<T extends AnyCanvas> = {
     width: number,
     height: number,
     canvasContextAttributes?: CanvasContext2DAttributes,
-    canvas?: HTMLCanvasElement,
-    context2d?: CanvasContext2D,
+    canvas?: T,
+	type?: ContextType,
+    context2d?: CanvasContext2D<T>,
     bgColor?: RGBAColor,
+	transferToOffscreen?: boolean,
+	allowGetContext?: boolean,
 }
 
-class Canvas {
+class Canvas<T extends AnyCanvas> {
 	private canvas: HTMLCanvasElement;
-	private context2D: CanvasContext2D;
+	private offscreenCanvas: OffscreenCanvas;
+	private transferToOffscreen: boolean;
+	private context2D: CanvasContext2D<T>;
 	private width: number;
 	private height: number;
 
-	constructor(props: CanvasConstructorParams) {
-		const { width, height, canvas, context2d, bgColor = new RGBAColor(), canvasContextAttributes } = props;
+	constructor(props: CanvasConstructorParams<T>) {
+		const { width, height, canvas, bgColor = new RGBAColor(), type = '2d', transferToOffscreen = true, allowGetContext = true } = props;
+		this.transferToOffscreen = transferToOffscreen;
 		if(canvas) {
-			this.canvas = canvas;
-			this.context2D = new CanvasContext2D(
-                this.canvas.getContext('2d', canvasContextAttributes) as CanvasRenderingContext2D,
-                bgColor.ToHex(), width, height
-			);
-		} else if(context2d) {
-			this.context2D = context2d;
-			this.context2D.BgColor = bgColor;
+			if (canvas instanceof OffscreenCanvas) {
+				this.offscreenCanvas = canvas;
+				this.offscreenCanvas.width = width;
+				this.offscreenCanvas.height = height;
+			} else {
+				this.canvas = canvas;
+				if (transferToOffscreen) {
+					this.offscreenCanvas = canvas.transferControlToOffscreen();
+					this.offscreenCanvas.width = width;
+					this.offscreenCanvas.height = height;
+				} else {
+					this.canvas.width = width;
+					this.canvas.height = height;
+				}
+			}
+			if(allowGetContext)
+				this.context2D = new CanvasContext2D<T>(
+					(this.transferToOffscreen ? this.offscreenCanvas.getContext(type) : this.canvas.getContext(type)) as CanvasRenderingCtx2D<T>,
+					typeof bgColor === 'string' ? bgColor : bgColor.ToHex(), width, height
+				);
 		}
 		this.width = width;
 		this.height = height;
 	}
 
-	get Context2D(): CanvasContext2D {
+	get Context2D(): CanvasContext2D<T> {
 		return this.context2D;
+	}
+
+	GetOrCreateContext(type: ContextType) {
+		if(!this.context2D) this.context2D =
+			new CanvasContext2D<T>(
+				(this.transferToOffscreen ? this.offscreenCanvas.getContext(type) : this.canvas.getContext(type)) as CanvasRenderingCtx2D<T>,
+				'#000000', 1280, 800
+			);
+		return this.Context2D;
 	}
 
 	get CanvasElement(): HTMLCanvasElement {
 		return this.canvas;
+	}
+
+	get OffscreenCanvas(): OffscreenCanvas {
+		return this.offscreenCanvas;
 	}
 
 	get Width(): number {
@@ -58,7 +91,6 @@ class Canvas {
 		this.height = val;
 		this.context2D.Height = val;
 	}
-
 
 	SetSize(width: number, height?: number) {
 		this.width = width;

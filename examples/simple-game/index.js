@@ -1,22 +1,25 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     const { Engine, Classes: { RGBAColor, Vector } } = window.Abram;
 
     const root = document.getElementById('root');
     const bgColor = new RGBAColor(150,0,0, 150);
-    const engine = new Engine(root, { width: 1280, height: 800, bgColor, debug: true, adaptiveFrameDelay: false });
+    const engine = new Engine(root, { width: 1280, occlusionCulling: true, bgColor, height: 800, drawFps: true, debug: true, adaptiveFrameDelay: true, pauseOnBlur: false });
 
-    engine.SetBackgroundColor(bgColor);
+    await engine.RegisterGameScript('./man.js');
+    await engine.RegisterGameScript('./man2.js');
+    await engine.RegisterGameScript('./camera-movement.js');
 
-    const camera = new CameraMovement({ position: new Vector(0, 0)}, engine.Canvas.Context2D);
+
+    const camera = new CameraMovement({ position: Vector.Zero});
     engine.AppendGameObject(camera);
 
     const gameObject = new Man({
-        position: new Vector(10, 20), name: 'Man', layer: 1
+        position: new Vector(-5, 0), name: 'Man', layer: 1, scale: Vector.Left.Add(Vector.Up)
     }, camera);
     engine.AppendGameObject(gameObject);
 
     const gameObject2 = new ManTwo({
-        position: new Vector(30, 30), name: 'Man2', layer: 3
+        position: new Vector(5, 0), name: 'Man2', layer: 3, scale: Vector.One
     });
     engine.AppendGameObject(gameObject2);
 
