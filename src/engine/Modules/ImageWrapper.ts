@@ -9,34 +9,17 @@ class ImageWrapper {
 		this.isReady = false;
 		if(!urlOrImageId) return;
 		this.imageId = urlOrImageId;
-		const imageLoaded = SpriteRendererManager.GetInstance()?.HasImageData(urlOrImageId);
-		if(imageLoaded) return;
-		this.LoadImageContent();
+		this.SetImageContent();
 	}
 
 	get ImageId() {
 		return this.imageId;
 	}
 
-	private async SetImageContent(image: HTMLImageElement) {
+	private SetImageContent() {
 		this.isReady = true;
-		// SpriteRendererManager.GetInstance()?.RegisterImageData(this.imageId, image);
-		this.image = image;
+		SpriteRendererManager.GetInstance()?.LoadImage(this.imageId);
 	}
-
-	private LoadImageContent() {
-		const newImage = new Image();
-		newImage.onload = () => {
-			this.isReady = true;
-			this.SetImageContent(newImage);
-		};
-
-		newImage.onerror = e => {
-			console.log(e);
-		};
-		newImage.src = this.imageId;
-	}
-
 }
 
 export default ImageWrapper;

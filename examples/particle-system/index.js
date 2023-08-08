@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     const bgColor = RGBAColor.FromHex('3396FF');
 
-    const engine = new Engine(root, { width: 1280, occlusionCulling: true, bgColor, height: 800, drawFps: true, debug: false, adaptiveFrameDelay: true, pauseOnBlur: false });
+    const engine = new Engine(root, { width: 1280, enableWorkers: true, occlusionCulling: true, bgColor, height: 800, drawFps: true, debug: false, adaptiveFrameDelay: true, pauseOnBlur: false });
 
     await engine.RegisterGameScript('./particle-system.js');
     await engine.RegisterGameScript('./particle-system-2.js');

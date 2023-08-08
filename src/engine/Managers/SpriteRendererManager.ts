@@ -11,11 +11,9 @@ class SpriteRendererManager {
 	private readonly workerMode: boolean;
 	private context?: CanvasContext2D;
 	private worker?: Worker;
-	private imageStorage: Map<string, ImageBitmap>;
 
 	private constructor(workerMode: boolean, ctxOpts: IContextOpts, canvas: Canvas<OffscreenCanvas>) {
 		this.workerMode = workerMode;
-		this.imageStorage = new Map();
 		if(this.workerMode) {
 			this.worker = new Worker(new URL('./SpriteRenderer.ts', `file://${__filename}`));
 			this.worker.postMessage({canvas: canvas.OffscreenCanvas}, [canvas.OffscreenCanvas]);
@@ -26,16 +24,11 @@ class SpriteRendererManager {
 	}
 
 	LoadImage(imageId: string) {
-		if(this.imageStorage.has(imageId)) return;
-		if(global.location.protocol !== 'file:') {
+		if(global.location.protocol !== 'file:' && this.workerMode) {
 			this.PostWorkerMessage(SpriteRendererWorkerActions.RegisterImage, { ImageId: imageId });
 			return;
 		}
 		return SpriteRenderer.GetInstance(this.context).LoadImage(imageId);
-	}
-
-	public HasImageData(id: string): boolean {
-		return SpriteRenderer.GetInstance(this.context).HasImage(id);
 	}
 
 	public static GetInstance(workerMode?: boolean, ctxOpts?: IContextOpts, canvas?: Canvas<OffscreenCanvas>) {

@@ -90,17 +90,23 @@ class SpriteRenderer {
 	}
 
 	async LoadImage(imageId: string) {
+		if(this.HasImage(imageId)) return;
 		if(typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
-			if(this.HasImage(imageId)) return;
 			const response = await fetch(imageId);
 			const fileBlob = await response.blob();
 			this.RegisterImage(imageId, await createImageBitmap(fileBlob));
+		} else {
+			const image = new Image();
+			image.addEventListener('load', async () => {
+				this.RegisterImage(imageId, await createImageBitmap(image));
+			});
+			image.src = imageId;
 		}
 	}
 
 	private RegisterImage(imageId: string, bitmap: ImageBitmap) {
 		this.imageStorage.set(imageId, bitmap);
-		console.log(imageId, ' registered');
+		console.info(imageId, ' registered');
 	}
 
 	ReadImage(imageId: string) {
@@ -185,7 +191,6 @@ class SpriteRenderer {
 			const image = canvas.OffscreenCanvas.transferToImageBitmap();
 			this.mainCanvasContext
 				.DrawImage(image, 0, 0, this.mainCanvasContext.Width, this.mainCanvasContext.Height);
-			//.Restore();
 			canvas.Context2D
 				.Reset()
 				.ContextRespectivePosition(true)
