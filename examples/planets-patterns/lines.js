@@ -106,6 +106,6 @@ class Lines extends GameObject {
 
 	Update() {
 		super.Update();
-		this.AddLine(this.planet1.transform.LocalPosition, this.planet2.transform.LocalPosition);
+		this.AddLine(this.planet1.transform.WorldPosition, this.planet2.transform.WorldPosition);
 	}
 }
