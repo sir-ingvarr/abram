@@ -31,6 +31,10 @@ export interface TextOptions {
     direction?: TextDirection;
 }
 
-export type CtxOptions = StrokeOptions & ShadowOptions & FillOptions & TextOptions;
+export interface OtherOptions {
+    contextRespectivePosition?: boolean,
+}
+
+export type CtxOptions = StrokeOptions & ShadowOptions & FillOptions & TextOptions & OtherOptions;
 
 export interface LineOptions extends StrokeOptions, ShadowOptions {}

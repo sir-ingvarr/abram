@@ -21,16 +21,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const bg = new Bg({sprite: bgSprite, position: new Point()});
     engine.AppendGameObject(bg);
 
-    const sun = new Planet({ radius: 30, color: new RGBAColor(200, 200, 0) });
+    const sun = new Planet({ radius: 40, color: new RGBAColor(200, 200, 0) });
     engine.AppendGameObject(sun);
 
-    const planet1 = new Planet({ radius: 20, rotateRadius: 150, speed: 0.001, color: new RGBAColor(150, 20, 30) });
+    const planet1 = new Planet({ radius: 25, rotateRadius: 150, speed: 0.002, color: new RGBAColor(150, 20, 30) });
     engine.AppendGameObject(planet1);
 
-    const planet2 = new Planet({ radius: 23, rotateRadius: 250, speed: 0.0015, color: new RGBAColor(0, 100, 30) });
+    const planet2 = new Planet({ radius: 30, rotateRadius: 350, speed: 0.0004, color: new RGBAColor(0, 100, 30) });
     engine.AppendGameObject(planet2);
 
-    const lines = new Lines({ planet1, planet2, limit: 1 });
+    const lines = new Lines({ planet1, planet2, limit: 10000 });
     engine.AppendGameObject(lines);
 
 

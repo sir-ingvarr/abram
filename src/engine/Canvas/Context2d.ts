@@ -65,6 +65,7 @@ class CanvasContext2D {
 			// @ts-ignore-next-line
 			this.ctx[key] = opts[key];
 		}
+		this.ContextRespectivePosition(opts.contextRespectivePosition || false);
 		return this;
 	}
 

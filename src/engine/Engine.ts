@@ -195,7 +195,7 @@ class Engine {
 		}
 		this.canvas.Context2D
 			.Reset()
-			.ContextRespectivePosition(true)
+			// .ContextRespectivePosition(true)
 			.Clear()
 			.DrawBg();
 
