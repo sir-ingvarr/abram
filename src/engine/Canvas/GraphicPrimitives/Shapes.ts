@@ -201,6 +201,7 @@ export class Polygon extends PolygonalChain implements IShape {
 		// TODO
 	}
 }
+
 export class Circle {
 	constructor(
         public radius: number,

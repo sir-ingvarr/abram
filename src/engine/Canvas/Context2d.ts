@@ -235,12 +235,13 @@ class CanvasContext2D {
 
 	DrawLine(line: IGraphicPrimitive<Segment>, offsetX: number, offsetY: number): CanvasContext2D {
 		const { shape: { from, to } } = line;
-		return this
-			.MoveTo(from.x + offsetX, from.y + offsetY)
-			.LineTo(to.x + offsetX, to.y + offsetY)
-			.Stroke()
-			.ClosePath()
-			.Restore();
+		return this.Line(from.x + offsetX, from.y + offsetY, to.x + offsetX, to.y + offsetY);
+		// return this
+		// 	.MoveTo(from.x + offsetX, from.y + offsetY)
+		// 	.LineTo(to.x + offsetX, to.y + offsetY)
+		// 	.Stroke()
+		// 	.ClosePath()
+		// 	.Restore();
 	}
 
 	DrawLines(lines: IGraphicPrimitive<PolygonalChain>, offsetX: number, offsetY: number) {
@@ -313,12 +314,11 @@ class CanvasContext2D {
 
 	Line(x1: number, y1: number, x2: number, y2: number): CanvasContext2D {
 		const initialPos = this.contextRespectivePosition ? this.Position : new Point();
-		this.Save()
-			.BeginPath()
-			.MoveTo(x1 + initialPos.x, y1 + initialPos.y)
-			.LineTo(x2 + initialPos.x, y2 + initialPos.y)
-			.ClosePath()
+		this
+			.MoveTo(x1 - initialPos.x, y1 - initialPos.y)
+			.LineTo(x2 - initialPos.x, y2 - initialPos.y)
 			.Stroke()
+			.ClosePath()
 			.Restore();
 		return this;
 	}
