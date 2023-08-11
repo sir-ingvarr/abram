@@ -5,13 +5,21 @@ class Lines extends GameObject {
 		this.limit = params.limit || 100;
 		this.current = 0;
 		this.color = (params.color || new RGBAColor(255, 255, 255, 50)).ToHex();
-		this.segments = [];
+		this.segmentsList = new SegmentList([]);
 		this.planet1 = params.planet1;
 		this.planet2 = params.planet2;
 	}
 
 	Start() {
 		this.transform.anchors = { x: 0, y: 0 };
+		this.RegisterModule(new GraphicPrimitive({
+			layer: 2,
+			type: PrimitiveType.Lines,
+			shape: this.segmentsList,
+			parent: this.Transform,
+			drawMethod: ShapeDrawMethod.Stroke,
+			options: {strokeStyle: this.color, contextRespectivePosition: false}
+		}));
 		// this.RegisterModule(new GraphicPrimitive({
 		// 	layer: 3,
 		// 	type: PrimitiveType.Line,
@@ -86,18 +94,10 @@ class Lines extends GameObject {
 	}
 
 	AddLine(from, to) {
-		if(this.segments.length < this.limit) {
-			this.segments[this.current] = new GraphicPrimitive({
-				layer: 2,
-				type: PrimitiveType.Line,
-				shape: new Segment(from, to),
-				parent: this.Transform,
-				drawMethod: ShapeDrawMethod.Stroke,
-				options: {strokeStyle: this.color, contextRespectivePosition: false}
-			});
-			this.RegisterModule(this.segments[this.current]);
+		if(this.segmentsList.SegmentsUnsafe.length < this.limit) {
+			this.segmentsList.AddSegment(new Segment(from, to));
 		} else {
-			const shape = this.segments[this.current].shape;
+			const shape = this.segmentsList.SegmentsUnsafe[this.current];
 			shape.from = from;
 			shape.to = to;
 		}
