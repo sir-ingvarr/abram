@@ -36,7 +36,6 @@ class Collider2D extends EventEmitterModule {
 	private type: Collider2DType;
 	private colliderGraphic: GraphicPrimitive<any>;
 
-
 	constructor(params: Collider2DParams) {
 		super({name: 'Collider2D'});
 		this.parent = params.parent;
@@ -55,6 +54,10 @@ class Collider2D extends EventEmitterModule {
 		});
 		this.type = type;
 		CollisionsManager.GetInstance().RegisterModule(this);
+	}
+
+	get IsColliding() {
+		return this.isColliding;
 	}
 
 	Collide(other: Collider2D) {
@@ -92,18 +95,18 @@ class Collider2D extends EventEmitterModule {
 		return this.shape.IsIntersectingOther(shape);
 	}
 
-	Destroy() {
+	override Destroy() {
 		super.Destroy();
 		this.Emit(Collider2DEvent.Destroy);
 	}
 
-	Update() {
+	override  Update() {
 		super.Update();
 		this.shape.Offset = this.parent.WorldPosition;
 		SpriteRenderer.GetInstance().AddToRenderQueue(this.colliderGraphic);
 	}
 
-	Start() {
+	override Start() {
 		super.Start();
 	}
 }

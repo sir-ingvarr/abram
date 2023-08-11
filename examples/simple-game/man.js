@@ -1,4 +1,4 @@
-const { GameObject, Sprite, ImageWrapper, Animator, InputSystem, Time, Classes: {Vector}, RigidBody } = window.Abram;
+const { GameObject, Sprite, ImageWrapper, Animator, InputSystem, Time, Classes: {Vector, RGBAColor}, RigidBody, TrailRenderer } = window.Abram;
 
 class Man extends GameObject {
     constructor(params, cam) {
@@ -33,7 +33,18 @@ class Man extends GameObject {
             graphicElement: graphic,
         });
 
-        this.rigidBody = new RigidBody({useGravity: true, gravityScale: 0.4, drag: 0.4});
+        this.rigidBody = new RigidBody({useGravity: true, gravityScale: 0.4, angularDrag: 0.2, drag: 0.4, centerOfMass: new Vector(0, 10)});
+
+        // const trailRenderer = new TrailRenderer({
+        //     layer: this.layer,
+        //     width: 10,
+        //     color: new RGBAColor(0, 0, 200, 255),
+        //     lifeTime: 1000,
+        //     resolution: 50,
+        //     max: 100,
+        // });
+        //
+        // this.RegisterModule(trailRenderer);
 
         this.RegisterModule(this.rigidBody);
         this.RegisterModule(graphic);
@@ -77,12 +88,12 @@ class Man extends GameObject {
         this.verticalDir = this.CheckVerticalInputs();
         const pos = this.transform.WorldPosition;
         if(this.cam) this.cam.SetPosition(pos);
-        const shouldStand = pos.y >= 250;
+        const shouldStand = pos.y >= 0;
         this.rigidBody.UseGravity = !shouldStand
         if(shouldStand) {
             this.rigidBody.collidedRb = this.ground;
             this.rigidBody.velocity.y = 0;
-            this.transform.LocalPosition = new Vector(pos.x, 250);
+            this.transform.LocalPosition = new Vector(pos.x, 0);
         } else {
             this.rigidBody.collidedRb = null;
         }
@@ -104,13 +115,15 @@ class Man extends GameObject {
         // this.worldPosition.Translate(delta * 100 * this.horizontalDir, delta * 100 * this.verticalDir);
         if(shouldStand) {
             this.rigidBody.AddForce(Vector.MultiplyCoordinates(3, new Vector(this.horizontalDir, 0)));
+            this.rigidBody.AngularVelocity = 0;
             if(this.size > 1) this.size -= delta;
-            if(this.transform.RotationDeg !== 0) this.transform.RotateDeg(1)
+            this.transform.LocalRotation = 0;
+            this.gun.Active = true;
 
         } else {
-            // this.gun.SetActive(false);
-            if(this.transform.RotationDeg > -10) this.transform.RotateDeg(-1);
-
+            // this.gun.Active = false;
+            // if(this.transform.RotationDeg > -10) this.transform.RotateDeg(-1);
+            this.rigidBody.AddForceToPoint(new Vector(0, -10), new Vector(10, 0));
             if(this.size < 1.1)
             this.size += delta;
         }

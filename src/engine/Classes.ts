@@ -77,6 +77,10 @@ export class Point implements ICoordinates {
 		return new Point(this.x, this.y);
 	}
 
+	ToArray(): [number, number] {
+		return [this.x, this.y];
+	}
+
 	ToVector(): Vector {
 		return new Vector(this.x, this.y);
 	}
@@ -87,11 +91,11 @@ export class Vector extends Point {
 		super(x, y);
 	}
 
-	static From(source: ICoordinates): Vector {
+	static override From(source: ICoordinates): Vector {
 		return new Vector(source.x, source.y);
 	}
 
-	static Of(x: number, y?: number): Vector {
+	static override Of(x: number, y?: number): Vector {
 		return new Vector(x, y || x);
 	}
 
@@ -119,14 +123,28 @@ export class Vector extends Point {
 		return Vector.Of(1, 1);
 	}
 
-	static Add(...args: Array<ICoordinates>): Vector {
-		return args.reduce((acc: Vector, val) => {
-			return acc.Add(val);
-		}, new Vector());
+	static Dot(v1: Vector, v2: Vector) {
+		return v1.x * v2.x  +  v1.y * v2.y;
+	}
+
+	static Add(first: ICoordinates, ...args: Array<ICoordinates>): Vector {
+		const result = Vector.From(first);
+		for(let i = 0; i < args.length; i++) {
+			result.Add(args[i]);
+		}
+		return result;
+	}
+
+	static Subtract(first: ICoordinates, ...args: Array<ICoordinates>): Vector {
+		const result = Vector.From(first);
+		for(let i = 0; i < args.length; i++) {
+			result.Subtract(args[i]);
+		}
+		return result;
 	}
 
 	static LerpBetween(p1: ICoordinates, p2: ICoordinates, factor: number): Vector {
-		return new Vector(
+		return Vector.Of(
 			Maths.Lerp(p1.x, p2.x, factor),
 			Maths.Lerp(p1.y, p2.y, factor)
 		);
@@ -137,15 +155,15 @@ export class Vector extends Point {
 	}
 
 	static MultiplyCoordinates(base: ICoordinates | number, other: ICoordinates): Vector {
-		return new Vector(other.x, other.y).MultiplyCoordinates(base);
+		return Vector.From(other).MultiplyCoordinates(base);
 	}
 
 	static DivideCoordinates(base: ICoordinates | number, other: ICoordinates): Vector {
-		return new Vector(other.x, other.y).DivideCoordinates(base);
+		return Vector.From(other).DivideCoordinates(base);
 	}
 
 	static Distance(from: ICoordinates, to: ICoordinates):number {
-		return new Vector(from.x - to.x, from.y - to.y).Magnitude;
+		return Vector.Of(from.x - to.x, from.y - to.y).Magnitude;
 	}
 
 	static Angle(from: Vector, to: Vector): number {
@@ -209,7 +227,7 @@ export class Vector extends Point {
 		return this;
 	}
 
-	Mirror(x: boolean, y: boolean): Vector {
+	Mirror(x = true, y = true): Vector {
 		if(x) this.x *= -1;
 		if(y) this.y *= -1;
 		return this;
@@ -232,8 +250,8 @@ export class Vector extends Point {
 		return new Point(this.x, this.y);
 	}
 
-	Copy(): Vector {
-		return new Vector(this.x, this.y);
+	override Copy(): Vector {
+		return Vector.From(this);
 	}
 }
 
@@ -279,7 +297,7 @@ export class Segment {
 }
 
 export class Ray {
-	private to: ICoordinates;
+	private to: Vector;
 	constructor(public from: ICoordinates, public angle: number) {
 		this.to = this.ToUnitVector().Add(this.from);
 	}
@@ -289,6 +307,10 @@ export class Ray {
 
 	ToUnitVector(): Vector {
 		return CoordinatesConverter.ConvertToCartesian(1, this.angle).ToVector();
+	}
+
+	get Direction(): Vector {
+		return this.to;
 	}
 
 	IsPointOnRay(point: ICoordinates): boolean {
@@ -380,6 +402,14 @@ export class RGBAColor {
 		this.onUpdated = onUpdated.bind(this);
 	}
 
+	toString(): string {
+		return `rgba(${this.red},${this.green},${this.blue},${this.alpha})`;
+	}
+
+	static Transparent(): RGBAColor {
+		return new RGBAColor(0,0,0,0,);
+	}
+
 	static FromHex(hex: string) {
 		if(!hex) return;
 		if(hex[0] === '#') hex = hex.slice(1);
@@ -434,11 +464,6 @@ export class RGBAColor {
 	valueOf() {
 		return this.colorHex;
 	}
-
-	toString() {
-		return this.colorHex;
-	}
-
 	ComponentToHex(c: number) {
 		const hex = c.toString(16);
 		return hex.length === 1 ? `0${hex}` : hex;

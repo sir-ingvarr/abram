@@ -1,4 +1,3 @@
-
 class Rocket extends GameObject {
     onParticleDestroy;
     childParticleSystemGO;
@@ -10,7 +9,6 @@ class Rocket extends GameObject {
     }
 
     Start() {
-
         this.particleSystem = new ParticleSystem({
             parent: this,
             params: {

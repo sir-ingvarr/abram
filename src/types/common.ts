@@ -1,8 +1,9 @@
 import {BoundingBox} from '../engine/Canvas/GraphicPrimitives/Shapes';
+import {Vector} from '../engine/Classes';
 
 export type Nullable<T> = T | null;
 
-export type Dictionary<V> = { [key: string]: V };
+export type Dictionary<V> = { [key: string | number]: V };
 
 export type AnyFunc<T = any> = (...args: any) => T;
 
@@ -21,8 +22,16 @@ export type CanvasContext2DAttributes = {
 export interface ICoordinates {
     x: number,
     y: number,
+
     Set(x: number, y?: number): ICoordinates,
+
     Copy(): ICoordinates,
+
+    ToArray(): [number, number],
+
+    ToVector(): Vector,
+
+    SetFrom(other: ICoordinates): ICoordinates,
 }
 
 export interface IShape {

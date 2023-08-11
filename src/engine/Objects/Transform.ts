@@ -3,8 +3,8 @@ import {IBasicObject, IGameObject, ITransform} from '../../types/GameObject';
 import {ICoordinates, Nullable} from '../../types/common';
 
 type TransformOptions = {
-    localPosition?: ICoordinates,
-    localScale?: ICoordinates,
+    localPosition?: Vector,
+    localScale?: Vector,
     localRotation?: number,
     localRotationDegrees?: number,
     parent?: ITransform,
@@ -12,12 +12,10 @@ type TransformOptions = {
 }
 
 class Transform implements ITransform {
-	private localPosition: ICoordinates;
-	private localScale: ICoordinates;
+	private localPosition: Vector;
+	private localScale: Vector;
 	private localRotationDeg: number;
 	private localRotation: number;
-	private rotation: number;
-	private rotationDeg: number;
 	private parent: Nullable<ITransform>;
 	public gameObject: IGameObject | IBasicObject;
 	public anchors: { x: number, y: number };
@@ -84,16 +82,6 @@ class Transform implements ITransform {
 		const radians = newRotation * Math.PI / 180;
 		this.localRotationDeg = newRotation;
 		this.localRotation = radians;
-	}
-
-	get Rotation(): number {
-		if(this.parent) return this.parent.Rotation + this.localRotation;
-		return this.localRotation;
-	}
-
-	get RotationDeg(): number {
-		if(this.parent) return this.parent.RotationDeg + this.localRotationDeg;
-		return this.localRotationDeg;
 	}
 
 	public Translate(amount: ICoordinates): ITransform {

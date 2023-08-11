@@ -2,8 +2,8 @@ import {CtxOptions, ShadowOptions} from '../../../types/GraphicPrimitives';
 import {RGBAColor, Segment} from '../../Classes';
 import {Circle, Polygon, PolygonalChain, Rect, SegmentList} from './Shapes';
 import {ITransform} from '../../../types/GameObject';
-import SpriteRenderer from '../../Managers/SpriteRenderer';
 import Module from '../../Modules/Module';
+import SpriteRendererManager from '../../Managers/SpriteRendererManager';
 
 const defaultOpts: CtxOptions = {
 	dash: [],
@@ -55,6 +55,7 @@ export class GraphicPrimitive<Shape extends PrimitiveShape> extends Module imple
 	public options: CtxOptions;
 	public dash: Array<number> = [];
 	public type: PrimitiveType;
+	public contentType: 0 | 1;
 	public shape: Shape;
 	public layer: number;
 	public parent: ITransform;
@@ -66,6 +67,7 @@ export class GraphicPrimitive<Shape extends PrimitiveShape> extends Module imple
 		this.type = type;
 		this.layer = layer;
 		this.shape = shape;
+		this.contentType = 1;
 		this.HandleOptions(options, shadow);
 		this.parent = parent;
 		this.drawMethod = drawMethod;
@@ -87,8 +89,8 @@ export class GraphicPrimitive<Shape extends PrimitiveShape> extends Module imple
 		this.options = opts;
 	}
 
-	Update() {
-		SpriteRenderer.GetInstance().AddToRenderQueue(this);
+	override Update() {
+		SpriteRendererManager.GetInstance()?.AddToRenderQueue(this);
 	}
 }
 

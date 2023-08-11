@@ -6,10 +6,9 @@ const yellow = RGBAColor.FromHex('#FFF96E');
 const red = RGBAColor.FromHex('FF4F4D');
 const purple = RGBAColor.FromHex('#8940FF');
 const lime = RGBAColor.FromHex('#93FF70');
-const black = new RGBAColor(10,10,20);
 const white = new RGBAColor(240, 240, 240);
 
-const colors = [orange, yellow, red, purple, lime, black, white];
+const colors = [orange, yellow, red, purple, lime, white];
 
 class ParticleSystemTest extends GameObject {
     constructor(cam, params) {
@@ -21,8 +20,9 @@ class ParticleSystemTest extends GameObject {
         this.particleSystem = new ParticleSystem({
             parent: this,
             params: {
-                occlusionCulling: true,
+                occlusionCulling: false,
                 particleBuffering: true,
+                layer: 3,
                 graphic: () => {
                     const random = Math.random();
                     return new GraphicPrimitive({
@@ -34,7 +34,7 @@ class ParticleSystemTest extends GameObject {
                 },
                 lifeTime: () => Maths.RandomRange(3.5, 6.5) * 1000,
                 maxParticles: 5000,
-                emitOverTime: 35,
+                emitOverTime: 40,
                 emitEachTimeFrame: 30,
                 initialColor: () => {
                     const random = Maths.RandomRange(0, colors.length - 1, true)

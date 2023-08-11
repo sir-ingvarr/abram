@@ -1,3 +1,4 @@
+const { SpriteRendererManager } = window.Abram;
 class ParticleSystemTest2 extends GameObject {
     constructor(cam, params) {
         super(params);
@@ -6,19 +7,25 @@ class ParticleSystemTest2 extends GameObject {
 
     Start() {
         const imageArray = [];
-        imageArray.push(new ImageWrapper('./assets/triangle_red.png'));
-        imageArray.push(new ImageWrapper('./assets/poly_orange.png'));
-        imageArray.push(new ImageWrapper('./assets/sun_yellow.png'));
+        imageArray.push('./assets/triangle_red.png');
+        imageArray.push('./assets/poly_orange.png');
+        imageArray.push('./assets/sun_yellow.png');
+
+        SpriteRendererManager.GetInstance().LoadImage('./assets/triangle_red.png');
+        SpriteRendererManager.GetInstance().LoadImage('./assets/poly_orange.png');
+        SpriteRendererManager.GetInstance().LoadImage('./assets/sun_yellow.png');
+
 
         this.particleSystem = new ParticleSystem({
             parent: this,
             params: {
-                occlusionCulling: true,
+                occlusionCulling: false,
                 particleBuffering: true,
                 graphic: () => imageArray[Math.round(Maths.RandomRange(0, imageArray.length - 1))],
                 lifeTime: () => Maths.RandomRange(10, 20)*1000,
                 maxParticles: 5000,
                 emitOverTime: 10,
+                layer: 1,
                 emitEachTimeFrame: 200,
                 initialColor: new RGBAColor(120, 140, 240),
                 gravityForceScale: 0.1,

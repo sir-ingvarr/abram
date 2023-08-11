@@ -14,7 +14,6 @@ export class FpsProvider extends GameObject<FpsProviderConstructorOptions> {
 	private targetFps: number;
 	private frameDelay: number;
 	private realFps = 0;
-	private threshold: number;
 	private realFpsFramesBuffer = 10;
 	private framesSinceRealFps = 0;
 	private startCountTime = 0;
@@ -26,16 +25,15 @@ export class FpsProvider extends GameObject<FpsProviderConstructorOptions> {
 
 	constructor(params: FpsProviderConstructorOptions) {
 		super(params);
-		const { realFpsFramesBuffer, threshold = 10, targetFps = 0, onFrameDelaySet = () => null, frameDelay = 0 } = params;
+		const { realFpsFramesBuffer, targetFps = 0, onFrameDelaySet = () => null, frameDelay = 0 } = params;
 		this.realFpsFramesBuffer = realFpsFramesBuffer || targetFps;
 		this.startCountTime = Date.now();
 		this.targetFps = targetFps;
-		this.threshold = threshold;
 		if(targetFps) this.frameDelay = frameDelay >= 0 ? frameDelay : 1000 / targetFps;
 		this.OnFrameDelaySet = onFrameDelaySet;
 	}
 
-	Update() {
+	override Update() {
 		super.Update();
 		if(this.framesSinceRealFps < this.realFpsFramesBuffer) {
 			this.framesSinceRealFps++;

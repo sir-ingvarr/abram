@@ -4,11 +4,11 @@ import Particle, {IFollower, ParticleConstructorOptions} from '../Objects/Partic
 import {Maths, PolarCoordinates, RGBAColor, Stack, Vector} from '../Classes';
 import Sprite from '../Modules/Sprite';
 import {ICoordinates, Nullable} from '../../types/common';
-import ImageWrapper from '../Modules/ImageWrapper';
 import Collider2D from '../Modules/Collider';
 import {GraphicPrimitive, IGraphicPrimitive} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
-import Engine from '../Engine';
 import {BasicObjectsConstructorParams} from '../Objects/BasicObject';
+import GameLoop from '../GameLoop';
+import {Time} from '../../index';
 
 export enum RenderingStyle {
     Local,
@@ -36,7 +36,7 @@ export type ParticleSystemOptions = {
     timeLastEmitted?: number;
     attachedRigidbody?: IParticleRb;
     renderingStyle?: RenderingStyle,
-    graphic?: ValueOrFunction<ImageWrapper | IGraphicPrimitive<any>>,
+    graphic?: ValueOrFunction<string | IGraphicPrimitive<any>>,
     lifeTime?: ValueOrFunction<number>,
 	drag?: ValueOrFunction<number>,
 	emitOverTime?: ValueOrFunction<number>,
@@ -70,7 +70,7 @@ class ParticleSystem extends ExecutableManager {
 	protected gravityForceScale: number;
 	protected renderingStyle: RenderingStyle;
 	protected attachedRigidbody?: IParticleRb;
-	protected graphic: Nullable<ValueOrFunction<ImageWrapper | IGraphicPrimitive<any>>>;
+	protected graphic: Nullable<ValueOrFunction<string | IGraphicPrimitive<any>>>;
 	protected lifeTime: ValueOrFunction<number>;
 	protected drag?: ValueOrFunction<number>;
 	protected initialVelocity: ValueOrFunction<Vector>;
@@ -197,16 +197,16 @@ class ParticleSystem extends ExecutableManager {
 		return val;
 	}
 
-	protected PostModuleRegister(module: Particle) {
+	protected override PostModuleRegister(module: Particle) {
 		super.PostModuleRegister(module);
 		if(this.parent) {
-			module.context = this.parent.Context;
+			module.Context = this.parent.Context;
 			if(this.renderingStyle !== RenderingStyle.Local) return;
 			module.transform.Parent = this.parent.transform;
 		}
 	}
 
-	protected PreUpdate(module: Particle): boolean {
+	protected override PreUpdate(module: Particle): boolean {
 		if(!super.PreUpdate(module)) return false;
 		module.UpdateAge();
 		if(module.IsWaitingDestroy) {
@@ -214,11 +214,12 @@ class ParticleSystem extends ExecutableManager {
 			return false;
 		}
 		this.ExecuteLifeTimeCalculations(module);
+		// this.context?.D;
 		if(!this.occlusionCulling || this.modules.size === 0) return true;
-		return (module.age < 1000 || !!this.parent?.Context?.TrueBoundingBox.IsPointInside(module.transform.WorldPosition));
+		return (module.age < 1000 || !!this.parent?.Context?.ContextRespectiveBoundingBox.IsPointInside(module.transform.WorldPosition));
 	}
 
-	Update() {
+	override Update() {
 		super.Update();
 		if(!this.isPlaying) return;
 		if(this.TotalParticles < this.maxParticles) {
@@ -288,7 +289,7 @@ class ParticleSystem extends ExecutableManager {
 		if(this.rotationOverLifeTime) particle.transform.LocalRotationDeg += this.rotationOverLifeTime(lifetimeFactor);
 		if(this.velocityOverLifeTime) particle.velocity.Add(this.velocityOverLifeTime(lifetimeFactor));
 		if(this.gravityForceScale) particle.velocity.Add(new Vector(0, 9.8 * this.gravityForceScale));
-		if(this.drag) particle.velocity.MultiplyCoordinates((1 - particle.drag));
+		if(this.drag) particle.velocity.MultiplyCoordinates((1 - particle.drag / Time.deltaTime));
 		if(this.scaleOverLifeTime) {
 			const scale = this.scaleOverLifeTime(lifetimeFactor);
 			particle.transform.LocalScale = new Vector(
@@ -306,17 +307,20 @@ class ParticleSystem extends ExecutableManager {
 
 			const followersConstructs = this.SetOrExecute(this.particleFollowers);
 			if(followersConstructs) {
-				const followerPromises = followersConstructs.map(follower => Engine.Instantiate<IFollower & BasicObjectsConstructorParams>({gameObject: follower, params: {}}));
+				const followerPromises = followersConstructs.map(follower => GameLoop.Instantiate<IFollower & BasicObjectsConstructorParams>({gameObject: follower, params: {}}));
 				props.followers = await Promise.all(followerPromises);
 			}
 			particle.SetParams(props);
 			particle.initialScale = Vector.One;
 		} else {
 			const graphic = this.SetOrExecute(this.graphic);
-			const props = this.GetParticleInitialProps(graphic);
+			const props = this.GetParticleInitialProps(
+				typeof graphic === 'string'
+					? new Sprite({ImageId: graphic, layer: this.layer})
+					: graphic);
 			const followersConstructs = this.SetOrExecute(this.particleFollowers);
 			if(followersConstructs) {
-				const followerPromises = followersConstructs.map(follower => Engine.Instantiate<IFollower & BasicObjectsConstructorParams>({gameObject: follower, params: {}}));
+				const followerPromises = followersConstructs.map(follower => GameLoop.Instantiate<IFollower & BasicObjectsConstructorParams>({gameObject: follower, params: {}}));
 				props.followers = await Promise.all(followerPromises);
 			}
 			particle = new Particle(props);
@@ -327,10 +331,10 @@ class ParticleSystem extends ExecutableManager {
 		return particle;
 	}
 
-	GetParticleInitialProps(graphic: Nullable<Sprite | ImageWrapper | IGraphicPrimitive<any>>): ParticleConstructorOptions {
+	GetParticleInitialProps(graphic: Nullable<Sprite | IGraphicPrimitive<any>>): ParticleConstructorOptions {
 		const size = this.SetOrExecute(this.initialSize);
 
-		const layer = this.layer || (graphic as Sprite).layer || 0;
+		const layer = this.layer || 1;
 
 		const props: ParticleConstructorOptions = {
 			initialColor: this.SetOrExecute(this.initialColor),
@@ -344,15 +348,10 @@ class ParticleSystem extends ExecutableManager {
 			graphic: null,
 		};
 
-		if(graphic instanceof ImageWrapper) {
-			props.graphic = new Sprite({
-				image: graphic as ImageWrapper,
-				width: size,
-				height: size
-			});
-			return props as ParticleConstructorOptions;
-		} else if(graphic instanceof GraphicPrimitive) {
+		if(graphic instanceof GraphicPrimitive) {
 			graphic.shape.SetSize(size);
+			props.graphic = graphic;
+			return props;
 		}
 		props.graphic = graphic;
 		return props;

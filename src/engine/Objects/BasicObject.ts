@@ -1,13 +1,12 @@
 import {IBasicObject, ITransform} from '../../types/GameObject';
-import {ICoordinates} from '../../types/common';
 import Module, {ModuleConstructorParams} from '../Modules/Module';
 import {Vector} from '../Classes';
 import CanvasContext2D from '../Canvas/Context2d';
 import Transform from './Transform';
 
 export type BasicObjectsConstructorParams = ModuleConstructorParams & {
-	position?: ICoordinates,
-	scale?: ICoordinates,
+	position?: Vector,
+	scale?: Vector,
 	rotation?: number,
 	rotationDeg?: number,
 }
@@ -28,13 +27,13 @@ abstract class BasicObject extends Module implements IBasicObject {
 		this.needDestroy = false;
 	}
 
-	Update() { return; }
+	override Update() { return; }
 
-	set Context(ctx: CanvasContext2D) {
+	override set Context(ctx: CanvasContext2D) {
 		this.context = ctx;
 	}
 
-	get Context() {
+	override get Context() {
 		return this.context || this.transform.Parent?.gameObject?.Context as CanvasContext2D;
 	}
 
@@ -46,7 +45,7 @@ abstract class BasicObject extends Module implements IBasicObject {
 		this.needDestroy = val;
 	}
 
-	Destroy() {
+	override Destroy() {
 		this.needDestroy = true;
 	}
 }

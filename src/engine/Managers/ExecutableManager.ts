@@ -9,8 +9,9 @@ export class ExecutableManager {
 
 	constructor(props: { modules?: Array<IExecutable>, parent?: IGameObject, context?: CanvasContext2D }) {
 		this.modules = new Map();
-		const { modules = [], parent } = props;
+		const { modules = [], parent, context } = props;
 		this.parent = parent;
+		this.context = context;
 		for(const module of modules) {
 			this.RegisterModule(module);
 		}
@@ -19,7 +20,7 @@ export class ExecutableManager {
 	protected PreUpdate(module: IExecutable): boolean {
 		return module.Active;
 	}
-	protected PostUpdate(module: IExecutable) { return; }
+	protected PostUpdate() { return; }
 
 	protected PreModuleRegister(module: IExecutable): boolean {
 		if(this.parent) module.gameObject = this.parent;
@@ -33,6 +34,7 @@ export class ExecutableManager {
 		if(!this.PreModuleRegister(module)) {
 			throw `Unable to register the module ${module.Id} object does not pass pre-register check`;
 		}
+		module.Context = this.context as CanvasContext2D;
 		this.modules.set(module.Id, module);
 		this.PostModuleRegister(module);
 		return module.Id;
@@ -60,14 +62,14 @@ export class ExecutableManager {
 		for (const [_, module] of this.modules) {
 			if(!this.PreUpdate(module)) continue;
 			module.Update();
-			if(this.PostUpdate) this.PostUpdate(module);
+			if(this.PostUpdate) this.PostUpdate();
 		}
 	}
 
 	Destroy() {
 		for(const [_, module] of this.modules) {
 			module.Destroy();
-			this.modules.clear();
 		}
+		this.modules.clear();
 	}
 }

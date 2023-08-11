@@ -24,7 +24,7 @@ interface IScalable {
     set LocalScale(value: Vector);
 }
 
-export interface IExecutable extends IWithLifeCycle {
+export interface IExecutable extends IWithLifeCycle, IWithContext {
     name: string;
     active: boolean;
     gameObject?: IBasicObject;
@@ -52,8 +52,6 @@ export interface ITransform extends IScalable {
     get LocalPosition(): Vector;
     set LocalPosition(value: Vector);
 
-    get Rotation(): number;
-    get RotationDeg(): number;
     RotateDeg(amount: number): ITransform;
 
     get LocalRotation(): number;
@@ -65,7 +63,7 @@ export interface ITransform extends IScalable {
     Translate(amount: ICoordinates): ITransform;
 }
 
-export interface IBasicObject extends IExecutable, IWithContext {
+export interface IBasicObject extends IExecutable {
     transform: ITransform;
     get IsWaitingDestroy(): boolean;
 }
