@@ -79,6 +79,74 @@ export class BoundingBox extends Rect implements IShape {
 
 }
 
+export class SegmentList {
+	protected segments: Array<Segment>;
+	protected boundingBox: BoundingBox;
+	protected offset: ICoordinates;
+
+	constructor(segments: Array<Segment>, offset: ICoordinates = new Vector() ) {
+		this.offset = offset;
+		this.segments = segments.map(segment => segment.Copy());
+		if(!this.segments.length) return;
+		let minX = segments[0].from.x;
+		let maxX = segments[0].from.x;
+		let minY = segments[0].from.y;
+		let maxY = segments[0].from.y;
+		for(let index = 1; index < this.Count; index++) {
+			const {from, to} = segments[index];
+			if(minX > from.x) minX = from.x;
+			if(minX > to.x) minX = to.x;
+			if(minY > from.y) minY = from.y;
+			if(minY > to.y) minY = to.y;
+			if(maxX < from.x) maxX = from.x;
+			if(maxX < to.x) maxX = to.x;
+			if(maxY < from.y) maxY = from.y;
+			if(maxY < to.y) maxY = to.y;
+
+		}
+		this.boundingBox = new BoundingBox(new Point(minX, maxY), new Point(maxX, minY), this.offset);
+	}
+
+
+	get Width() {
+		return 0;
+		return this.boundingBox.Width;
+	}
+
+	get Height() {
+		return 0;
+		return this.boundingBox.Height;
+	}
+
+	set Offset(val: ICoordinates) {
+		this.offset = val.Copy();
+	}
+
+	get Offset(): ICoordinates {
+		return this.offset.Copy();
+	}
+
+	private AddSegment(segment: Segment) {
+		this.segments.push(segment);
+	}
+
+	private RemoveSegment(index: number) {
+		this.segments.splice(index, 1);
+	}
+
+	get SegmentsUnsafe(): Array<Segment> {
+		return this.segments;
+	}
+
+	get Segments(): Array<Segment> {
+		return this.segments.map(val => val.Copy());
+	}
+
+	get Count(): number {
+		return this.segments.length;
+	}
+}
+
 export class PolygonalChain {
 	protected points: Array<ICoordinates>;
 	protected segments: Array<Segment>;
@@ -160,6 +228,10 @@ export class PolygonalChain {
 		return Array.from(this.points.values());
 	}
 
+	get SegmentsUnsafe(): Array<Segment> {
+		return this.segments;
+	}
+
 	get Segments(): Array<Segment> {
 		return this.segments.map(val => val.Copy());
 	}
@@ -201,6 +273,7 @@ export class Polygon extends PolygonalChain implements IShape {
 		// TODO
 	}
 }
+
 export class Circle {
 	constructor(
         public radius: number,

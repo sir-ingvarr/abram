@@ -5,10 +5,10 @@ import Engine,
 	ParticleSystem, Collision, Collider2D, ParticleSystemAssets
 } from './index';
 
-const Abram =  Object.assign({}, {
+const Abram =  {
 	Engine, GameObject, InputSystem, Animator, Sprite,
 	Classes, Camera, Time, RigidBody, ParticleSystem, ImageWrapper,
 	GraphicPrimitives, Shapes, Collision, Collider2D, ParticleSystemAssets
-});
+};
 
 Object.assign(window, { Abram });

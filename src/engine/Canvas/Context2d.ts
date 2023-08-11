@@ -2,11 +2,11 @@ import {CtxOptions} from '../../types/GraphicPrimitives';
 import {
 	IGraphicPrimitive,
 	PrimitiveType,
-	GraphicPrimitive, PrimitiveShape,
+	PrimitiveShape,
 } from './GraphicPrimitives/GraphicPrimitive';
 import {Point, RGBAColor, Segment} from '../Classes';
 import {ICoordinates} from '../../types/common';
-import {BoundingBox, Circle, PolygonalChain, Rect} from './GraphicPrimitives/Shapes';
+import {BoundingBox, Circle, PolygonalChain, Rect, SegmentList} from './GraphicPrimitives/Shapes';
 
 class CanvasContext2D {
 	private contextRespectivePositionBackup = false;
@@ -65,6 +65,7 @@ class CanvasContext2D {
 			// @ts-ignore-next-line
 			this.ctx[key] = opts[key];
 		}
+		this.ContextRespectivePosition(opts.contextRespectivePosition || false);
 		return this;
 	}
 
@@ -229,22 +230,24 @@ class CanvasContext2D {
 			.BeginPath();
 		if(type === PrimitiveType.Circle) return this.DrawCircle(any as IGraphicPrimitive<Circle>, offsetX, offsetY, fillStroke);
 		if(type === PrimitiveType.Polygon) return this.DrawLines(any as IGraphicPrimitive<PolygonalChain>, offsetX, offsetY);
+		if(type === PrimitiveType.Lines) return this.DrawLines(any as IGraphicPrimitive<SegmentList>, offsetX, offsetY);
 		if(type === PrimitiveType.Line) return this.DrawLine(any as IGraphicPrimitive<Segment>, offsetX, offsetY);
 		if(type === PrimitiveType.Rect) return this.DrawRect(any as IGraphicPrimitive<Segment>, offsetX, offsetY, fillStroke);
 	}
 
 	DrawLine(line: IGraphicPrimitive<Segment>, offsetX: number, offsetY: number): CanvasContext2D {
 		const { shape: { from, to } } = line;
-		return this
-			.MoveTo(from.x + offsetX, from.y + offsetY)
-			.LineTo(to.x + offsetX, to.y + offsetY)
-			.Stroke()
-			.ClosePath()
-			.Restore();
+		return this.Line(from.x + offsetX, from.y + offsetY, to.x + offsetX, to.y + offsetY);
+		// return this
+		// 	.MoveTo(from.x + offsetX, from.y + offsetY)
+		// 	.LineTo(to.x + offsetX, to.y + offsetY)
+		// 	.Stroke()
+		// 	.ClosePath()
+		// 	.Restore();
 	}
 
-	DrawLines(lines: IGraphicPrimitive<PolygonalChain>, offsetX: number, offsetY: number) {
-		for(const line of lines.shape.Segments) {
+	DrawLines(lines: IGraphicPrimitive<SegmentList | PolygonalChain>, offsetX: number, offsetY: number) {
+		for(const line of lines.shape.SegmentsUnsafe) {
 			const { from, to } = line;
 			this
 				.MoveTo(from.x + offsetX, from.y + offsetY)
@@ -313,12 +316,11 @@ class CanvasContext2D {
 
 	Line(x1: number, y1: number, x2: number, y2: number): CanvasContext2D {
 		const initialPos = this.contextRespectivePosition ? this.Position : new Point();
-		this.Save()
-			.BeginPath()
-			.MoveTo(x1 + initialPos.x, y1 + initialPos.y)
-			.LineTo(x2 + initialPos.x, y2 + initialPos.y)
-			.ClosePath()
+		this
+			.MoveTo(x1 - initialPos.x, y1 - initialPos.y)
+			.LineTo(x2 - initialPos.x, y2 - initialPos.y)
 			.Stroke()
+			.ClosePath()
 			.Restore();
 		return this;
 	}
