@@ -70,8 +70,8 @@ class Transform implements ITransform {
 
 	set LocalRotation(newRotation: number) {
 		const degrees = newRotation / Math.PI * 180;
-		this.localRotationDeg = newRotation;
-		this.localRotation = degrees;
+		this.localRotationDeg = degrees;
+		this.localRotation = newRotation;
 	}
 
 	get LocalRotationDeg() {

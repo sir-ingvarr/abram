@@ -1,6 +1,6 @@
 import {CtxOptions, ShadowOptions} from '../../../types/GraphicPrimitives';
 import {RGBAColor, Segment} from '../../Classes';
-import {Circle, Polygon, PolygonalChain, Rect} from './Shapes';
+import {Circle, Polygon, PolygonalChain, Rect, SegmentList} from './Shapes';
 import {ITransform} from '../../../types/GameObject';
 import Module from '../../Modules/Module';
 import SpriteRendererManager from '../../Managers/SpriteRendererManager';
@@ -18,7 +18,8 @@ export enum PrimitiveType {
     Circle,
     Rect,
     Polygon,
-    Line
+    Line,
+	Lines
 }
 
 export enum ShapeDrawMethod {
@@ -26,7 +27,7 @@ export enum ShapeDrawMethod {
 	Stroke
 }
 
-export type PrimitiveShape = Rect | Circle | Polygon | PolygonalChain | Segment;
+export type PrimitiveShape = Rect | Circle | Polygon | PolygonalChain | Segment | SegmentList;
 
 export interface IGraphicPrimitive<T extends PrimitiveShape> {
     layer: number,

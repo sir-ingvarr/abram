@@ -372,7 +372,7 @@ export class Maths {
      */
 
 	static IsValidNumber(variable: unknown): boolean {
-		return !!variable && typeof variable === 'number' && !Number.isNaN(variable);
+		return typeof variable === 'number' && !Number.isNaN(variable);
 	}
 
 }

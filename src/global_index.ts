@@ -1,7 +1,7 @@
 import Engine, * as Contents from './index';
 
-const Abram =  Object.assign({}, {
+const Abram =  {
 	Engine, ...Contents
-});
+};
 
 Object.assign(global, { Abram });
