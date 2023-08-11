@@ -1,14 +1,19 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
 	const root = document.getElementById('root');
 
 	const { Engine, Classes: { RGBAColor, Vector, Point } } = window.Abram;
 
-	const engine = new Engine(root, { width: 1280, height: 800, targetFps: 60, debug: false, drawFps: true, adaptiveFrameDelay: false, pauseOnBlur: false });
-
 	const bgColor = new RGBAColor(30,0,130);
-	engine.SetBackgroundColor(bgColor);
+	const engine = new Engine(root, { width: 1280, height: 800, targetFps: 60, bgColor, debug: false, drawFps: true, adaptiveFrameDelay: false, pauseOnBlur: false });
 
-	const camera = new CameraMovement({}, engine.Canvas.Context2D);
+	await engine.RegisterGameScript('./camera-movement.js');
+	await engine.RegisterGameScript('./planet.js');
+	await engine.RegisterGameScript('./lines.js');
+	await engine.RegisterGameScript('./bg.js');
+
+
+
+	const camera = new CameraMovement({});
 	engine.AppendGameObject(camera);
 
 	const bgSprite = new Sprite({

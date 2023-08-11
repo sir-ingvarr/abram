@@ -145,11 +145,11 @@ export class SegmentList {
 		return this.offset.Copy();
 	}
 
-	private AddSegment(segment: Segment) {
+	public AddSegment(segment: Segment) {
 		this.segments.push(segment);
 	}
 
-	private RemoveSegment(index: number) {
+	public RemoveSegment(index: number) {
 		this.segments.splice(index, 1);
 	}
 

@@ -4,4 +4,4 @@ const Abram =  {
 	Engine, ...Contents
 };
 
-Object.assign(global, { Abram });
+Object.assign(window, { Abram });

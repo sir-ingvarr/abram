@@ -5,7 +5,7 @@ import {
 } from './GraphicPrimitives/GraphicPrimitive';
 import {Point, RGBAColor, Segment} from '../Classes';
 import {ICoordinates} from '../../types/common';
-import {BoundingBox, Circle, PolygonalChain, Rect, SegmentList} from './GraphicPrimitives/Shapes';
+import {BoundingBox, Circle, PolygonalChain, SegmentList} from './GraphicPrimitives/Shapes';
 
 export type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
 export type CanvasRenderingCtx2D<T extends AnyCanvas> = T extends HTMLCanvasElement ? CanvasRenderingContext2D : OffscreenCanvasRenderingContext2D
