@@ -16,7 +16,7 @@ class ParticleSystemTest2 extends GameObject {
                 occlusionCulling: true,
                 particleBuffering: true,
                 graphic: () => imageArray[Math.round(Maths.RandomRange(0, imageArray.length - 1))],
-                lifeTime: () => Maths.RandomRange(10, 20)*1000,
+                lifeTime: () => Maths.RandomRange(10, 15) * 1000,
                 maxParticles: 5000,
                 emitOverTime: 10,
                 emitEachTimeFrame: 200,
@@ -25,11 +25,10 @@ class ParticleSystemTest2 extends GameObject {
                 rotationOverLifeTime: factor => Maths.Lerp(0, 10, factor),
                 initialVelocity: () => new Vector(Maths.RandomRange(100, 350), Maths.RandomRange(50, -200)),
                 initialSize: () => Maths.RandomRange(30, 70),
-                scaleOverLifeTime: factor => ({ x: Maths.Clamp(1 - factor, 0.1, 1), y: 1 }),
-                initialPosition: () => new Vector(Maths.RandomRange(-50, 50), Maths.RandomRange(-400, 400))
+                scaleOverLifeTime: factor => ({ x: Maths.Clamp(1 - factor, 0.1, 1), y: Maths.Clamp(1 - factor, 0.1, 1) }),
+                initialPosition: () => new Vector(Maths.RandomRange(-50, 50), Maths.RandomRange(-400, 400)),
             },
         });
-        // this.particleSystem.Pause();
     }
 
     Update() {

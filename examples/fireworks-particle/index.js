@@ -1,14 +1,17 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     const root = document.getElementById('root');
 
     const { Engine, Classes: { RGBAColor, Vector } } = window.Abram;
 
-    const engine = new Engine(root, { width: 1280, height: 800, targetFps: 60, debug: false, drawFps: true, adaptiveFrameDelay: false, pauseOnBlur: false });
+    const engine = new Engine(root, { width: 1280, height: 800, targetFps: 60, debug: false, drawFps: true, pauseOnBlur: false });
 
-    const bgColor = new RGBAColor(30,0,130);
-    engine.SetBackgroundColor(bgColor);
+    await engine.RegisterGameScript('./camera-movement.js')
+    await engine.RegisterGameScript('./explosion.js');
+    await engine.RegisterGameScript('./smoke.js')
+    await engine.RegisterGameScript('./rocket.js')
+    await engine.RegisterGameScript('./bg.js');
 
-    const camera = new CameraMovement({}, engine.Canvas.Context2D);
+    const camera = new CameraMovement({});
     engine.AppendGameObject(camera);
 
     const bgSprite = new Sprite({
@@ -22,15 +25,15 @@ document.addEventListener('DOMContentLoaded', function() {
     engine.AppendGameObject(bg);
 
     const colors = [
-        new RGBAColor(255),
-        new RGBAColor(0, 255),
-        new RGBAColor(252, 235, 3),
-        new RGBAColor(140, 3, 252),
-        new RGBAColor(250, 170, 20),
+        new RGBAColor(230),
+        new RGBAColor(0, 200),
+        new RGBAColor(220, 190, 5),
+        new RGBAColor(110, 10, 230),
+        new RGBAColor(230, 140, 20),
     ];
 
     function SpawnTheExplosion(pos) {
-        engine.AppendGameObject(
+        rocket.AppendChild(
             new Explosion({
                 position: new Vector(pos.x, pos.y), lifetime: 1000,
                 color: Math.random() < 0.35
@@ -48,4 +51,3 @@ document.addEventListener('DOMContentLoaded', function() {
 
     engine.Start();
 });
-

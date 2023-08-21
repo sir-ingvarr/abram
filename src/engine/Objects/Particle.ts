@@ -13,7 +13,7 @@ export interface IFollower {
 }
 
 export type ParticleConstructorOptions = BasicObjectsConstructorParams & {
-    graphic: Nullable<IGraphicPrimitive<any> | Sprite>;
+    graphic?: IGraphicPrimitive<any> | Sprite;
     size?: number;
 	layer: number;
 	drag?: number;
@@ -27,7 +27,7 @@ export type ParticleConstructorOptions = BasicObjectsConstructorParams & {
 
 class Particle extends BasicObject {
 	public graphic: Nullable<IGraphicPrimitive<any> | Sprite>;
-	private layer: number;
+	// private layer: number;
 	private size: number;
 	public drag: number;
 	public initialScale: ICoordinates;
@@ -54,7 +54,6 @@ class Particle extends BasicObject {
 		if(graphic) {
 			graphic.layer = layer;
 			this.graphic = graphic;
-			this.layer = layer;
 		}
 		this.drag = Maths.Clamp(drag, -1 ,1);
 		this.lifeTime = lifeTime;
@@ -76,12 +75,12 @@ class Particle extends BasicObject {
 		this.collider.On(Collider2DEvent.OnCollision2DEnter, this.OnCollide);
 	}
 
-	Start() {
+	override Start() {
 		super.Start();
 		this.collider?.Start();
 	}
 
-	Destroy() {
+	override Destroy() {
 		if(this.followers) {
 			this.followers.forEach(val => val.Destroy());
 		}
@@ -93,7 +92,7 @@ class Particle extends BasicObject {
 		if(this.age > this.lifeTime) return this.Destroy();
 	}
 
-	Update() {
+	override Update() {
 		this.collider?.Update();
 		this.transform.Translate(Vector.MultiplyCoordinates(Time.deltaTime / 1000, this.velocity));
 

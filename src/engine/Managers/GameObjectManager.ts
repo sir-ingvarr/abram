@@ -8,7 +8,7 @@ export class GameObjectManager extends ExecutableManager {
 		super(params);
 	}
 
-	protected PostModuleRegister(module: GameObject) {
+	protected override PostModuleRegister(module: GameObject) {
 		super.PostModuleRegister(module);
 		if(this.parent) {
 			module.context = this.parent.Context;
@@ -16,7 +16,7 @@ export class GameObjectManager extends ExecutableManager {
 		}
 	}
 
-	protected PreUpdate(module: GameObject): boolean {
+	protected override PreUpdate(module: GameObject): boolean {
 		if(!super.PreUpdate(module)) return false;
 		if(module.IsWaitingDestroy) {
 			this.UnregisterModuleById(module.Id);

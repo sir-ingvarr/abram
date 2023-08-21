@@ -12,6 +12,7 @@ const white = new RGBAColor(240, 240, 240);
 const colors = [orange, yellow, red, purple, lime, black, white];
 
 class ParticleSystemTest extends GameObject {
+
     constructor(cam, params) {
         super(params);
         this.cam = cam;

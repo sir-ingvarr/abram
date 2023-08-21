@@ -3,8 +3,8 @@ import {Maths, Point, Segment, Vector} from '../../Classes';
 
 export class Rect {
 	constructor(
-        public from: ICoordinates,
-        public to: ICoordinates
+        protected from: ICoordinates,
+        protected to: ICoordinates
 	) {}
 
 	SetSize(size: number) {
@@ -14,6 +14,14 @@ export class Rect {
 		this.to.x *= factorX;
 		this.from.y *= factorY;
 		this.to.y *= factorY;
+	}
+
+	get From() {
+		return this.from;
+	}
+
+	get To() {
+		return this.to;
 	}
 
 	get Width() {
@@ -28,7 +36,7 @@ export class Rect {
 export class BoundingBox extends Rect implements IShape {
 	private offset: ICoordinates;
 
-	constructor(from: ICoordinates, to: ICoordinates, offset: ICoordinates) {
+	constructor(from: ICoordinates, to: ICoordinates, offset: ICoordinates = new Point()) {
 		super(from, to);
 		this.Offset = offset;
 	}
@@ -72,7 +80,7 @@ export class BoundingBox extends Rect implements IShape {
 		return BoundingBox.Overlap(this, other);
 	}
 
-	GetIntersectionPoints(other: BoundingBox): Array<ICoordinates> {
+	GetIntersectionPoints(): Array<ICoordinates> {
 		// TODO
 		return [];
 	}
@@ -126,11 +134,11 @@ export class SegmentList {
 		return this.offset.Copy();
 	}
 
-	private AddSegment(segment: Segment) {
+	public AddSegment(segment: Segment) {
 		this.segments.push(segment);
 	}
 
-	private RemoveSegment(index: number) {
+	public RemoveSegment(index: number) {
 		this.segments.splice(index, 1);
 	}
 
@@ -242,8 +250,6 @@ export class PolygonalChain {
 }
 
 export class Polygon extends PolygonalChain implements IShape {
-	protected boundingBox: BoundingBox;
-
 	constructor(points: Array<[number, number]>, offset: ICoordinates = new Vector()) {
 		super(points, true, offset);
 	}
@@ -263,12 +269,12 @@ export class Polygon extends PolygonalChain implements IShape {
 		return false;
 	}
 
-	IsIntersectingOther(other: CircleArea): boolean {
+	IsIntersectingOther(): boolean {
 		return false;
 		// TODO
 	}
 
-	GetIntersectionPoints(other: CircleArea): Array<ICoordinates> {
+	GetIntersectionPoints(): Array<ICoordinates> {
 		return [];
 		// TODO
 	}

@@ -1,33 +1,35 @@
-class ImageWrapper {
-	private image: HTMLImageElement;
+import SpriteRendererManager from '../Managers/SpriteRendererManager';
+import SpriteRenderer from '../Managers/SpriteRenderer';
+import {IWithImageId} from './Animator';
+
+class ImageWrapper implements IWithImageId {
+	private imageId: string;
 	public isReady: boolean;
 
-	constructor(url: string) {
+	constructor(urlOrImageId: string) {
 		this.isReady = false;
-		this.SetImageContent(url);
+		if(!urlOrImageId) return;
+		this.imageId = urlOrImageId;
+		this.SetImageContent();
 	}
 
-	SetImageContent(image: HTMLImageElement | string) {
-		if(image instanceof Image) {
-			this.image = image;
-			this.isReady = true;
-			return;
-		}
-		if(typeof image !== 'string') throw 'unacceptable image content provided';
-		const newImage = new Image();
-		newImage.onload = () => {
-			this.image = newImage;
-			this.isReady = true;
-		};
-
-		newImage.onerror = e => {
-			console.log(e);
-		};
-		newImage.src = image;
+	get ImageId() {
+		return this.imageId;
 	}
 
-	get Data() {
-		return this.image;
+	set ImageId(newId: string) {
+		this.imageId = newId;
+		this.SetImageContent();
+	}
+
+	get Image() {
+		if(!this.isReady) return;
+		return SpriteRenderer.GetInstance()?.GetImage(this.imageId);
+	}
+
+	private async SetImageContent() {
+		await SpriteRendererManager.GetInstance()?.LoadImage(this.imageId);
+		this.isReady = true;
 	}
 }
 

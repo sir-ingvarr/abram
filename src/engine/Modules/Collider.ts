@@ -32,7 +32,7 @@ export enum Collider2DType {
 class Collider2D extends EventEmitterModule {
 	public parent: ITransform;
 	public shape: IShape;
-	private isColliding = false;
+	// private isColliding = false;
 	private type: Collider2DType;
 	private colliderGraphic: GraphicPrimitive<any>;
 
@@ -68,22 +68,22 @@ class Collider2D extends EventEmitterModule {
 	}
 
 	OnCollision2DEnter(other: Collider2D) {
-		this.isColliding = true;
+		// this.isColliding = true;
 		this.Emit(Collider2DEvent.OnCollision2DEnter, this, other);
 	}
 
 	OnCollision2DLeave() {
-		this.isColliding = true;
+		// this.isColliding = true;
 		this.Emit(Collider2DEvent.OnCollision2DLeave, this);
 	}
 
 	OnTriggerEnter(other: Collider2D) {
-		this.isColliding = true;
+		// this.isColliding = true;
 		this.Emit(Collider2DEvent.OnCollision2DEnter, this, other);
 	}
 
 	OnTriggerLeave(other: Collider2D) {
-		this.isColliding = false;
+		// this.isColliding = false;
 		this.Emit(Collider2DEvent.OnCollision2DLeave, this, other);
 	}
 
@@ -92,20 +92,17 @@ class Collider2D extends EventEmitterModule {
 		return this.shape.IsIntersectingOther(shape);
 	}
 
-	Destroy() {
+	override Destroy() {
 		super.Destroy();
 		this.Emit(Collider2DEvent.Destroy);
 	}
 
-	Update() {
+	override Update() {
 		super.Update();
 		this.shape.Offset = this.parent.WorldPosition;
 		SpriteRenderer.GetInstance().AddToRenderQueue(this.colliderGraphic);
 	}
 
-	Start() {
-		super.Start();
-	}
 }
 
 export default Collider2D;

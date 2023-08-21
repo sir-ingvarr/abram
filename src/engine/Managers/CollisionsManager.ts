@@ -3,7 +3,7 @@ import {ICollider2D} from '../../types/GameObject';
 import Collider2D, {Collider2DEvent} from '../Modules/Collider';
 
 class CollisionsManager extends ExecutableManager {
-	protected readonly modules: Map<string, ICollider2D>;
+	protected override readonly modules: Map<string, ICollider2D>;
 	private static instance: CollisionsManager;
 
 	constructor(params: { modules: Array<ICollider2D> }) {
@@ -18,13 +18,13 @@ class CollisionsManager extends ExecutableManager {
 		return CollisionsManager.instance;
 	}
 
-	RegisterModule(module: Collider2D): string {
+	override RegisterModule(module: Collider2D): string {
 		super.RegisterModule(module);
 		module.On(Collider2DEvent.Destroy, () => this.UnregisterModuleById(module.Id));
 		return module.Id;
 	}
 
-	Update() {
+	override Update() {
 		super.Update();
 		const arr = Array.from(this.modules);
 		for(let i = 0; i < arr.length; i++) {

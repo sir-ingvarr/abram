@@ -14,7 +14,7 @@ class CameraMovement extends GameObject {
 
     Update() {
         super.Update();
-        this.cam.CenterTo(this.pos);
+        this.cam.Center = this.pos;
     }
 
 }

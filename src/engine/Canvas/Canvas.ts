@@ -2,38 +2,43 @@ import CanvasContext2D from './Context2d';
 import {RGBAColor} from '../Classes';
 import {CanvasContext2DAttributes} from '../../types/common';
 
+export type ContextType = '2d' | 'bitmaprenderer';
+
 export type CanvasConstructorParams = {
-    width: number,
-    height: number,
-    canvasContextAttributes?: CanvasContext2DAttributes,
-    canvas?: HTMLCanvasElement,
-    context2d?: CanvasContext2D,
-    bgColor?: RGBAColor,
+	width: number,
+	height: number,
+	canvas?: HTMLCanvasElement,
+	bgColor?: RGBAColor,
+	canvasContextAttributes?: CanvasContext2DAttributes,
 }
 
 class Canvas {
-	private canvas: HTMLCanvasElement;
+	private readonly canvas: HTMLCanvasElement;
 	private context2D: CanvasContext2D;
 	private width: number;
 	private height: number;
+	private bgColor: RGBAColor;
+
 
 	constructor(props: CanvasConstructorParams) {
-		const { width, height, canvas, context2d, bgColor = new RGBAColor(), canvasContextAttributes } = props;
-		if(canvas) {
-			this.canvas = canvas;
-			this.context2D = new CanvasContext2D(
-                this.canvas.getContext('2d', canvasContextAttributes) as CanvasRenderingContext2D,
-                bgColor.ToHex(), width, height
-			);
-		} else if(context2d) {
-			this.context2D = context2d;
-			this.context2D.BgColor = bgColor;
-		}
+		const { width, height, canvas, bgColor = new RGBAColor() } = props;
+		this.bgColor = bgColor;
+		if(!canvas) throw 'canvas is required';
+		this.canvas = canvas;
+		this.canvas.width = width;
+		this.canvas.height = height;
+
 		this.width = width;
 		this.height = height;
+		this.context2D =
+			new CanvasContext2D(
+				this.canvas.getContext('2d') as CanvasRenderingContext2D,
+				this.bgColor.ToHex(), this.width, this.height
+			);
 	}
 
-	get Context2D(): CanvasContext2D {
+
+	get Context2D() {
 		return this.context2D;
 	}
 
@@ -58,7 +63,6 @@ class Canvas {
 		this.height = val;
 		this.context2D.Height = val;
 	}
-
 
 	SetSize(width: number, height?: number) {
 		this.width = width;

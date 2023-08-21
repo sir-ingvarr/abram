@@ -30,9 +30,9 @@ class Rocket extends GameObject {
                 emitEachTimeFrame: 1500,
                 gravityForceScale: 0.2,
                 initialColor: new RGBAColor(20, 20, 20, 210),
-                initialVelocity: () => new Vector(Maths.RandomRange(-200, 200), Maths.RandomRange(-290, -450)),
+                initialVelocity: () => Vector.Of(Maths.RandomRange(-200, 200), Maths.RandomRange(-290, -450)),
                 initialSize: () => Maths.RandomRange(10, 10),
-                initialPosition: () => new Vector(Maths.RandomRange(-540, 540), 350),
+                initialPosition: () => Vector.Of(Maths.RandomRange(-540, 540), 350),
                 onParticleDestroy: this.onParticleDestroy,
             },
         });
