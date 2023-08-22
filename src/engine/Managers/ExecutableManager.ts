@@ -57,7 +57,8 @@ export class ExecutableManager {
 	}
 
 	Update() {
-		for (const [_, module] of this.modules) {
+		for (const item of this.modules) {
+			const module = item[1];
 			if(!this.PreUpdate(module)) continue;
 			module.Update();
 			if(this.PostUpdate) this.PostUpdate();

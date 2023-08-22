@@ -9,8 +9,6 @@ import {BoundingBox, Circle, PolygonalChain, SegmentList} from './GraphicPrimiti
 
 class CanvasContext2D {
 	private contextRespectivePositionBackup;
-	// @ts-ignore-next-line
-	private boundingBox: BoundingBox;
 	constructor(
 		private readonly ctx: CanvasRenderingContext2D,
 		public bgColor: string,
@@ -25,7 +23,6 @@ class CanvasContext2D {
 
 	set Height(val: number) {
 		this.height = val;
-		this.GenerateBoundingBox();
 	}
 
 	get Height() {
@@ -42,21 +39,11 @@ class CanvasContext2D {
 
 	set Width(val: number) {
 		this.width = val;
-		this.GenerateBoundingBox();
 	}
 
 	SetSize(width: number, height?: number) {
 		this.Width = width;
 		if(height) this.Height = height;
-		this.GenerateBoundingBox();
-	}
-
-	private GenerateBoundingBox() {
-		this.boundingBox = new BoundingBox(
-			new Point(),
-			new Point(this.width, this.height),
-			this.Position
-		);
 	}
 
 	get ContextRespectiveBoundingBox() {
