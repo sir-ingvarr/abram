@@ -46,11 +46,11 @@ class ParticleSystemTest extends GameObject {
                     color.Alpha = 60;
                     return initial.LerpTo(color, factor)
                 },
-                gravityForceScale: 0.2,
+                gravityForceScale: 0.3,
                 rotationOverLifeTime: factor => Maths.Lerp(-10, 0, factor),
                 initialVelocity: () => Vector.Zero,
                 initialSize: () => Maths.RandomRange(20, 80),
-                scaleOverLifeTime: factor => ({ x:  Math.sin(factor * Math.PI), y:  Math.cos((factor) * Math.PI) }),
+                scaleOverLifeTime: factor => ({ x:  Math.cos(factor * Math.PI), y:  Math.cos(factor * Math.PI) }),
                 initialPosition: () => new Vector(Maths.RandomRange(-650, 650), Maths.RandomRange(-10, 50))
             },
         });

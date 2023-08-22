@@ -19,7 +19,7 @@ class Animator extends Module {
 	public frameDelay: number;
 	private state: string;
 	private playing: boolean;
-	private stateMap: { [state: string]: Iterator<string> };
+	private readonly stateMap: { [state: string]: Iterator<string> };
 	private controlledGraphic: Sprite;
 	private elapsedTime: number;
 	private currentStateData?: Iterator<string>;

@@ -212,7 +212,7 @@ class CanvasContext2D {
 
 	DrawBg(offset?: ICoordinates): CanvasContext2D {
 		const { x = 0, y = 0 } = offset || {};
-		return this.FillStyle(this.bgColor)
+		return this.BeginPath().FillStyle(this.bgColor)
 			.Rect(x, y,	this.width,	this.height)
 			.Fill();
 	}
@@ -313,6 +313,7 @@ class CanvasContext2D {
 
 	DrawImage(imageData: CanvasImageSource, x: number, y: number, w: number, h: number): CanvasContext2D {
 		const initialPos = this.contextRespectivePosition ? this.Position : new Point();
+		this.BeginPath();
 		this.ctx.drawImage(imageData, x - initialPos.x, y - initialPos.y, w, h);
 		return this;
 	}

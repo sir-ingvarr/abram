@@ -54,8 +54,6 @@ class Man extends GameObject {
 
         this.gun.RegisterModule(gunGraphic);
         this.AppendChild(this.gun);
-
-        // this.initialScale = this.transform.Scale;
     }
 
     CheckHorizontalInputs() {
@@ -105,7 +103,6 @@ class Man extends GameObject {
         }
         this.transform.LocalScale = new Vector((this.horizontalDir || this.prevHorDir) * this.size, this.size);
         const delta = Time.deltaTime / 1000;
-        // this.worldPosition.Translate(delta * 100 * this.horizontalDir, delta * 100 * this.verticalDir);
         if(shouldStand) {
             this.rigidBody.AddForce(Vector.MultiplyCoordinates(3, new Vector(this.horizontalDir, 0)));
             this.rigidBody.AngularVelocity = 0;
@@ -114,11 +111,8 @@ class Man extends GameObject {
             this.gun.Active = true;
 
         } else {
-            // this.gun.Active = false;
-            // if(this.transform.RotationDeg > -10) this.transform.RotateDeg(-1);
             this.rigidBody.AddForceToPoint(new Vector(0, -10), new Vector(10, 0));
-            if(this.size < 1.1)
-                this.size += delta;
+            if(this.size < 1.5) this.size += delta;
         }
         super.Update();
     }

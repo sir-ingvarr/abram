@@ -103,7 +103,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if(j < FLAG_RESOLUTION / 2 - 5) factor = 0;
         else if(j > FLAG_RESOLUTION / 2 + 5) factor = 1;
         else factor = (j - (FLAG_RESOLUTION / 2 - 5)) / 10;
-        console.log(factor);
         drawColorSectionVertical(
             startOfSection,
             endOfSection,

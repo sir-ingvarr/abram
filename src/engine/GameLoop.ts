@@ -115,6 +115,11 @@ class GameLoop {
 			return;
 		}
 		Time.FrameRendered();
+		this.Canvas.Context2D
+			.Reset()
+			.Clear()
+			.DrawBg()
+			.ContextRespectivePosition(false);
 		this.gameObjectManager.Update();
 		this.spriteRendererManager.SetCameraPosition(Camera.GetInstance({}).Position);
 		this.spriteRendererManager.DrawCallsFinished();
@@ -129,7 +134,7 @@ class GameLoop {
 				.FillText(`FPS: ${Math.floor(this.fpsProvider.FPS)}`, this.canvas.Width - 90, 30);
 		}
 		this.prevFrameTime = Date.now();
-		requestAnimationFrame(() => this.Render());
+		requestAnimationFrame(this.Render.bind(this));
 		// this.frameTime = this.prevFrameTime - timeFrameBegin;
 		// this.frameDelay = 1000 / this.targetFps - this.frameTime;
 	}

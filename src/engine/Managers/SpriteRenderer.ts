@@ -40,7 +40,7 @@ export interface IContextOpts {
 
 class SpriteRenderer {
 	private static instance: SpriteRenderer;
-	private readonly imageStorage: Map<string, ImageBitmap> = new Map<string, ImageBitmap>();
+	private readonly imageStorage: Map<string, ImageBitmap>;
 	private contextPosition: ICoordinates;
 	private readonly debugStrokeColor: string;
 
@@ -161,13 +161,6 @@ class SpriteRenderer {
 	}
 
 	public Render() {
-		this.mainCanvasContext
-			.Reset()
-			.Clear()
-			.DrawBg()
-			.ContextRespectivePosition(false)
-			.Reset();
-		this.mainCanvasContext.Save();
 		for (let i = 0; i < this.renderingStackList.length; i++) {
 			const layerStack = this.renderingStackList[i];
 			if (!layerStack) continue;
