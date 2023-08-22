@@ -6,10 +6,9 @@ const yellow = RGBAColor.FromHex('#FFF96E');
 const red = RGBAColor.FromHex('FF4F4D');
 const purple = RGBAColor.FromHex('#8940FF');
 const lime = RGBAColor.FromHex('#93FF70');
-const black = new RGBAColor(10,10,20);
 const white = new RGBAColor(240, 240, 240);
 
-const colors = [orange, yellow, red, purple, lime, black, white];
+const colors = [orange, yellow, red, purple, lime, white];
 
 class ParticleSystemTest extends GameObject {
 
@@ -34,8 +33,8 @@ class ParticleSystemTest extends GameObject {
                     })
                 },
                 lifeTime: () => Maths.RandomRange(3.5, 6.5) * 1000,
-                maxParticles: 5000,
-                emitOverTime: 35,
+                maxParticles: 2000,
+                emitOverTime: 20,
                 emitEachTimeFrame: 30,
                 initialColor: () => {
                     const random = Maths.RandomRange(0, colors.length - 1, true)
@@ -43,14 +42,14 @@ class ParticleSystemTest extends GameObject {
                 },
                 colorOverLifeTime: (initial, factor) => {
                     const color = initial.Copy();
-                    color.Alpha = 60;
+                    color.Alpha = 150;
                     return initial.LerpTo(color, factor)
                 },
-                gravityForceScale: 0.3,
+                gravityForceScale: () => Maths.RandomRange(0.1, 0.8),
                 rotationOverLifeTime: factor => Maths.Lerp(-10, 0, factor),
                 initialVelocity: () => Vector.Zero,
                 initialSize: () => Maths.RandomRange(20, 80),
-                scaleOverLifeTime: factor => ({ x:  Math.cos(factor * Math.PI), y:  Math.cos(factor * Math.PI) }),
+                scaleOverLifeTime: factor => ({ x:  Math.cos(factor * Math.PI), y:  Math.sin(factor * Math.PI) }),
                 initialPosition: () => new Vector(Maths.RandomRange(-650, 650), Maths.RandomRange(-10, 50))
             },
         });

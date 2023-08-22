@@ -18,6 +18,7 @@ export type ParticleConstructorOptions = BasicObjectsConstructorParams & {
 	layer: number;
 	drag?: number;
     lifeTime?: number;
+	gravityScale?: number;
     initialColor?: RGBAColor;
     initialVelocity?: Vector;
     OnCollide?: (self: Collider2D, other: Collider2D) => void;
@@ -27,12 +28,12 @@ export type ParticleConstructorOptions = BasicObjectsConstructorParams & {
 
 class Particle extends BasicObject {
 	public graphic: Nullable<IGraphicPrimitive<any> | Sprite>;
-	// private layer: number;
 	private size: number;
 	public drag: number;
 	public initialScale: ICoordinates;
 	public age: number;
 	public lifeTime: number;
+	public gravityScale: number;
 	public initialColor: RGBAColor;
 	public color: RGBAColor;
 	public velocity: Vector;
@@ -49,7 +50,7 @@ class Particle extends BasicObject {
 		const {
 			graphic, lifeTime = 10, layer, drag = 0,
 			initialColor = new RGBAColor(), followers,
-			size = 10, initialVelocity = new Vector(), OnCollide, collider
+			size = 10, initialVelocity = new Vector(), OnCollide, collider, gravityScale = 1
 		} = params;
 		if(graphic) {
 			graphic.layer = layer;
@@ -58,6 +59,7 @@ class Particle extends BasicObject {
 		this.drag = Maths.Clamp(drag, -1 ,1);
 		this.lifeTime = lifeTime;
 		this.size = size;
+		this.gravityScale = gravityScale;
 		this.age = 0;
 		this.followers = followers;
 		this.initialColor = initialColor?.Copy();

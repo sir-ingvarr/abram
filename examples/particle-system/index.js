@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const engine = new Engine(root, {
         width: 1280, occlusionCulling: true, height: 800,
         drawFps: true, debug: false, adaptiveFrameDelay: true,
-        pauseOnBlur: false, bgColor: new RGBAColor(10, 150, 250)
+        pauseOnBlur: false, bgColor: new RGBAColor(50, 50, 50)
     });
 
     await engine.RegisterGameScript('./particle-system.js')

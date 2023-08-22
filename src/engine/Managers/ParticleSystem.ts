@@ -34,7 +34,7 @@ export type ParticleSystemOptions = {
 	inheritVelocity?: boolean
 	maxParticles?: number,
 	layer: number;
-	gravityForceScale?: number,
+	gravityForceScale?: ValueOrFunction<number>,
 	timeLastEmitted?: number;
 	attachedRigidbody?: IParticleRb;
 	renderingStyle?: RenderingStyle,
@@ -70,7 +70,7 @@ class ParticleSystem extends ExecutableManager {
 	protected maxParticles: number;
 	protected layer: number;
 	protected override parent: IGameObject;
-	protected gravityForceScale: number;
+	protected gravityForceScale: ValueOrFunction<number>;
 	protected renderingStyle: RenderingStyle;
 	protected attachedRigidbody?: IParticleRb;
 	protected graphic: Nullable<ValueOrFunction<ImageWrapper | IGraphicPrimitive<any>>>;
@@ -291,7 +291,7 @@ class ParticleSystem extends ExecutableManager {
 		if(this.colorOverLifeTime) particle.color = this.colorOverLifeTime(particle.initialColor, lifetimeFactor);
 		if(this.rotationOverLifeTime) particle.transform.LocalRotationDeg += this.rotationOverLifeTime(lifetimeFactor);
 		if(this.velocityOverLifeTime) particle.velocity.Add(this.velocityOverLifeTime(lifetimeFactor));
-		if(this.gravityForceScale) particle.velocity.Add(new Vector(0, 9.8 * this.gravityForceScale));
+		if(this.gravityForceScale) particle.velocity.Add(new Vector(0, 9.8 * particle.gravityScale));
 		if(this.drag) particle.velocity.MultiplyCoordinates((1 - particle.drag / Time.deltaTime));
 		if(this.scaleOverLifeTime) {
 			const scale = this.scaleOverLifeTime(lifetimeFactor);
@@ -340,6 +340,7 @@ class ParticleSystem extends ExecutableManager {
 			initialColor: this.SetOrExecute(this.initialColor),
 			layer,
 			drag: this.SetOrExecute(this.drag),
+			gravityScale: this.SetOrExecute(this.gravityForceScale),
 			lifeTime: this.SetOrExecute(this.lifeTime),
 			size: this.SetOrExecute(this.initialSize),
 			OnCollide: this.onParticleCollision,
