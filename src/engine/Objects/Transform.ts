@@ -16,8 +16,6 @@ class Transform implements ITransform {
 	private localScale: ICoordinates;
 	private localRotationDeg: number;
 	private localRotation: number;
-	private rotation: number;
-	private rotationDeg: number;
 	private parent: Nullable<ITransform>;
 	public gameObject: IGameObject | IBasicObject;
 	public anchors: { x: number, y: number };

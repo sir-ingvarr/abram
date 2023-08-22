@@ -1,5 +1,5 @@
 
-const { GameObject,Time, GraphicPrimitives: { GraphicPrimitive, PrimitiveType, ShapeDrawMethod }, Shapes: { Rect, Circle }, Sprite, ImageWrapper, Classes: {RGBAColor, Vector, Maths, PolarCoordinates}, ParticleSystem } = window.Abram;
+const { Time, GraphicPrimitives: { GraphicPrimitive, PrimitiveType, ShapeDrawMethod }, Shapes: { Rect, Circle }, Sprite, ImageWrapper, Classes: {RGBAColor, Vector, Maths, PolarCoordinates}, ParticleSystem } = window.Abram;
 
 class Explosion extends GameObject {
     lifetime;
@@ -26,7 +26,7 @@ class Explosion extends GameObject {
                 }),
                 lifeTime: () => Maths.RandomRange(0.7, 1.2) * 1000,
                 emitOverTime: 0,
-                maxParticles: 20000,
+                maxParticles: 1000,
                 burstEmit: () => ({ repeat: false, emit: 120, every: 500, skipFirst: false }),
                 initialColor: this.color,
                 colorOverLifeTime: (initial, factor) => {

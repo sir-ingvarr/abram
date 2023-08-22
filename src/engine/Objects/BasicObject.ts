@@ -28,13 +28,11 @@ abstract class BasicObject extends Module implements IBasicObject {
 		this.needDestroy = false;
 	}
 
-	Update() { return; }
-
-	set Context(ctx: CanvasContext2D) {
+	override set Context(ctx: CanvasContext2D) {
 		this.context = ctx;
 	}
 
-	get Context() {
+	override get Context() {
 		return this.context || this.transform.Parent?.gameObject?.Context as CanvasContext2D;
 	}
 
@@ -46,7 +44,7 @@ abstract class BasicObject extends Module implements IBasicObject {
 		this.needDestroy = val;
 	}
 
-	Destroy() {
+	override Destroy() {
 		this.needDestroy = true;
 	}
 }

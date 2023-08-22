@@ -4,15 +4,17 @@ import Particle, {IFollower, ParticleConstructorOptions} from '../Objects/Partic
 import {Maths, PolarCoordinates, RGBAColor, Stack, Vector} from '../Classes';
 import Sprite from '../Modules/Sprite';
 import {ICoordinates, Nullable} from '../../types/common';
-import ImageWrapper from '../Modules/ImageWrapper';
 import Collider2D from '../Modules/Collider';
-import {GraphicPrimitive, IGraphicPrimitive} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
-import Engine from '../Engine';
+import {IGraphicPrimitive} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
 import {BasicObjectsConstructorParams} from '../Objects/BasicObject';
+import GameLoop from '../GameLoop';
+import {Time} from '../../index';
+import SpriteRendererManager from './SpriteRendererManager';
+import ImageWrapper from '../Modules/ImageWrapper';
 
 export enum RenderingStyle {
-    Local,
-    World,
+	Local,
+	World,
 }
 
 export interface IParticleRb {
@@ -21,40 +23,40 @@ export interface IParticleRb {
 
 type PureFunction<T> = (...args: any) => T;
 type ValueOrFunction<T> =
-    | T
-    | PureFunction<T>;
+	| T
+	| PureFunction<T>;
 
 export type ParticleSystemOptions = {
-    isPlaying?: boolean,
-    particleBuffering?: boolean,
-    occlusionCulling?: boolean,
-    particleBufferSize?: number,
-    inheritVelocity?: boolean
-    maxParticles?: number,
+	isPlaying?: boolean,
+	particleBuffering?: boolean,
+	occlusionCulling?: boolean,
+	particleBufferSize?: number,
+	inheritVelocity?: boolean
+	maxParticles?: number,
 	layer: number;
-    gravityForceScale?: number,
-    timeLastEmitted?: number;
-    attachedRigidbody?: IParticleRb;
-    renderingStyle?: RenderingStyle,
-    graphic?: ValueOrFunction<ImageWrapper | IGraphicPrimitive<any>>,
-    lifeTime?: ValueOrFunction<number>,
+	gravityForceScale?: ValueOrFunction<number>,
+	timeLastEmitted?: number;
+	attachedRigidbody?: IParticleRb;
+	renderingStyle?: RenderingStyle,
+	graphic?: ValueOrFunction<ImageWrapper | IGraphicPrimitive<any>>,
+	lifeTime?: ValueOrFunction<number>,
 	drag?: ValueOrFunction<number>,
 	emitOverTime?: ValueOrFunction<number>,
-    emitOverDistance?: ValueOrFunction<number>,
-    emitEachTimeFrame?: ValueOrFunction<number>;
+	emitOverDistance?: ValueOrFunction<number>,
+	emitEachTimeFrame?: ValueOrFunction<number>;
 	burstEmit?: ValueOrFunction<{ repeat: boolean, every: number, emit: ValueOrFunction<number>, skipFirst?: boolean }>
-    initialVelocity?: ValueOrFunction<Vector>,
-    initialPosition?: ValueOrFunction<Vector>,
-    initialRotation?: ValueOrFunction<number>,
-    initialColor?: ValueOrFunction<RGBAColor>,
-    initialSize?: ValueOrFunction<number>,
+	initialVelocity?: ValueOrFunction<Vector>,
+	initialPosition?: ValueOrFunction<Vector>,
+	initialRotation?: ValueOrFunction<number>,
+	initialColor?: ValueOrFunction<RGBAColor>,
+	initialSize?: ValueOrFunction<number>,
 	particleFollowers?: ValueOrFunction<Array<IGameObjectConstructable<any>>>,
-    colorOverLifeTime?: PureFunction<RGBAColor>,
-    velocityOverLifeTime?: PureFunction<Vector>,
-    rotationOverLifeTime?: PureFunction<number>,
-    scaleOverLifeTime?: PureFunction<{x: number, y: number}>;
-    subEmitter?: ParticleSystem,
-    onParticleCollision?: (self: Collider2D, other: Collider2D) => void,
+	colorOverLifeTime?: PureFunction<RGBAColor>,
+	velocityOverLifeTime?: PureFunction<Vector>,
+	rotationOverLifeTime?: PureFunction<number>,
+	scaleOverLifeTime?: PureFunction<{x: number, y: number}>;
+	subEmitter?: ParticleSystem,
+	onParticleCollision?: (self: Collider2D, other: Collider2D) => void,
 	onParticleDestroy?: (pos: ICoordinates) => void,
 }
 
@@ -67,7 +69,8 @@ class ParticleSystem extends ExecutableManager {
 	protected simulationTime: number;
 	protected maxParticles: number;
 	protected layer: number;
-	protected gravityForceScale: number;
+	protected override parent: IGameObject;
+	protected gravityForceScale: ValueOrFunction<number>;
 	protected renderingStyle: RenderingStyle;
 	protected attachedRigidbody?: IParticleRb;
 	protected graphic: Nullable<ValueOrFunction<ImageWrapper | IGraphicPrimitive<any>>>;
@@ -136,7 +139,8 @@ class ParticleSystem extends ExecutableManager {
 			onParticleCollision,
 			onParticleDestroy,
 			particleFollowers
-		} } = params;
+		}, parent } = params;
+		this.parent = parent;
 		this.inheritVelocity = inheritVelocity;
 		this.attachedRigidbody = attachedRigidbody;
 		this.isPlaying = isPlaying;
@@ -149,7 +153,7 @@ class ParticleSystem extends ExecutableManager {
 		this.lifeTime = lifeTime;
 		this.layer = layer;
 		this.particleFollowers = particleFollowers;
-		this.lastPointEmitted = this.parent?.transform.WorldPosition || new Vector();
+		this.lastPointEmitted = this.parent.transform.WorldPosition || new Vector();
 		this.simulationTime = 0;
 		this.initialVelocity = initialVelocity;
 		this.initialRotation = initialRotation;
@@ -197,16 +201,16 @@ class ParticleSystem extends ExecutableManager {
 		return val;
 	}
 
-	protected PostModuleRegister(module: Particle) {
+	protected override PostModuleRegister(module: Particle) {
 		super.PostModuleRegister(module);
 		if(this.parent) {
-			module.context = this.parent.Context;
+			module.Context = this.parent.Context;
 			if(this.renderingStyle !== RenderingStyle.Local) return;
 			module.transform.Parent = this.parent.transform;
 		}
 	}
 
-	protected PreUpdate(module: Particle): boolean {
+	protected override PreUpdate(module: Particle): boolean {
 		if(!super.PreUpdate(module)) return false;
 		module.UpdateAge();
 		if(module.IsWaitingDestroy) {
@@ -215,10 +219,10 @@ class ParticleSystem extends ExecutableManager {
 		}
 		this.ExecuteLifeTimeCalculations(module);
 		if(!this.occlusionCulling || this.modules.size === 0) return true;
-		return (module.age < 1000 || !!this.parent?.Context?.TrueBoundingBox.IsPointInside(module.transform.WorldPosition));
+		return !!SpriteRendererManager.GetInstance()?.Context?.ContextRespectiveBoundingBox.IsPointInside(module.transform.WorldPosition);
 	}
 
-	Update() {
+	override Update() {
 		super.Update();
 		if(!this.isPlaying) return;
 		if(this.TotalParticles < this.maxParticles) {
@@ -287,8 +291,8 @@ class ParticleSystem extends ExecutableManager {
 		if(this.colorOverLifeTime) particle.color = this.colorOverLifeTime(particle.initialColor, lifetimeFactor);
 		if(this.rotationOverLifeTime) particle.transform.LocalRotationDeg += this.rotationOverLifeTime(lifetimeFactor);
 		if(this.velocityOverLifeTime) particle.velocity.Add(this.velocityOverLifeTime(lifetimeFactor));
-		if(this.gravityForceScale) particle.velocity.Add(new Vector(0, 9.8 * this.gravityForceScale));
-		if(this.drag) particle.velocity.MultiplyCoordinates((1 - particle.drag));
+		if(this.gravityForceScale) particle.velocity.Add(new Vector(0, 9.8 * particle.gravityScale));
+		if(this.drag) particle.velocity.MultiplyCoordinates((1 - particle.drag / Time.deltaTime));
 		if(this.scaleOverLifeTime) {
 			const scale = this.scaleOverLifeTime(lifetimeFactor);
 			particle.transform.LocalScale = new Vector(
@@ -302,11 +306,11 @@ class ParticleSystem extends ExecutableManager {
 		let particle: Particle;
 		if(this.particleBuffering && this.buffer.Count > 0) {
 			particle = this.buffer.Pop() as Particle;
-			const props = this.GetParticleInitialProps(particle.graphic);
+			const props = this.GetParticleInitialProps(null);
 
 			const followersConstructs = this.SetOrExecute(this.particleFollowers);
 			if(followersConstructs) {
-				const followerPromises = followersConstructs.map(follower => Engine.Instantiate<IFollower & BasicObjectsConstructorParams>({gameObject: follower, params: {}}));
+				const followerPromises = followersConstructs.map(follower => GameLoop.Instantiate<IFollower & BasicObjectsConstructorParams>({gameObject: follower, params: {}}));
 				props.followers = await Promise.all(followerPromises);
 			}
 			particle.SetParams(props);
@@ -316,7 +320,7 @@ class ParticleSystem extends ExecutableManager {
 			const props = this.GetParticleInitialProps(graphic);
 			const followersConstructs = this.SetOrExecute(this.particleFollowers);
 			if(followersConstructs) {
-				const followerPromises = followersConstructs.map(follower => Engine.Instantiate<IFollower & BasicObjectsConstructorParams>({gameObject: follower, params: {}}));
+				const followerPromises = followersConstructs.map(follower => GameLoop.Instantiate<IFollower & BasicObjectsConstructorParams>({gameObject: follower, params: {}}));
 				props.followers = await Promise.all(followerPromises);
 			}
 			particle = new Particle(props);
@@ -327,34 +331,36 @@ class ParticleSystem extends ExecutableManager {
 		return particle;
 	}
 
-	GetParticleInitialProps(graphic: Nullable<Sprite | ImageWrapper | IGraphicPrimitive<any>>): ParticleConstructorOptions {
+	GetParticleInitialProps(graphic: Nullable<ImageWrapper | IGraphicPrimitive<any>>): ParticleConstructorOptions {
 		const size = this.SetOrExecute(this.initialSize);
 
-		const layer = this.layer || (graphic as Sprite).layer || 0;
+		const layer = this.layer || 1;
 
 		const props: ParticleConstructorOptions = {
 			initialColor: this.SetOrExecute(this.initialColor),
 			layer,
 			drag: this.SetOrExecute(this.drag),
+			gravityScale: this.SetOrExecute(this.gravityForceScale),
 			lifeTime: this.SetOrExecute(this.lifeTime),
 			size: this.SetOrExecute(this.initialSize),
 			OnCollide: this.onParticleCollision,
 			initialVelocity: this.SetOrExecute(this.initialVelocity)
 				.Add(Vector.Zero),
-			graphic: null,
 		};
+
+		if(!graphic) return props;
 
 		if(graphic instanceof ImageWrapper) {
 			props.graphic = new Sprite({
-				image: graphic as ImageWrapper,
-				width: size,
-				height: size
+				image: graphic,
+				width: props.size,
+				height: props.size,
+				layer
 			});
-			return props as ParticleConstructorOptions;
-		} else if(graphic instanceof GraphicPrimitive) {
+		} else {
 			graphic.shape.SetSize(size);
+			props.graphic = graphic;
 		}
-		props.graphic = graphic;
 		return props;
 	}
 }

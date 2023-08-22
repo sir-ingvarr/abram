@@ -1,65 +1,64 @@
 import {CtxOptions} from '../../types/GraphicPrimitives';
 import {
 	IGraphicPrimitive,
-	PrimitiveType,
-	PrimitiveShape,
+	PrimitiveType, PrimitiveShape,
 } from './GraphicPrimitives/GraphicPrimitive';
 import {Point, RGBAColor, Segment} from '../Classes';
 import {ICoordinates} from '../../types/common';
-import {BoundingBox, Circle, PolygonalChain, Rect, SegmentList} from './GraphicPrimitives/Shapes';
+import {BoundingBox, Circle, PolygonalChain, SegmentList} from './GraphicPrimitives/Shapes';
 
 class CanvasContext2D {
-	private contextRespectivePositionBackup = false;
-	private boundingBox: BoundingBox;
-	private halfWidth: number;
-	private halfHeight: number;
-
+	private contextRespectivePositionBackup;
 	constructor(
-        private ctx: CanvasRenderingContext2D,
-        public bgColor: string,
-        private width: number,
-        private height: number,
-        private contextRespectivePosition: boolean = false
+		private readonly ctx: CanvasRenderingContext2D,
+		public bgColor: string,
+		private width: number,
+		private height: number,
+		private contextRespectivePosition: boolean = false
 	) {
+		if(!this.ctx) throw 'ctx is required';
 		this.SetSize(width, height);
+		this.contextRespectivePositionBackup = this.contextRespectivePosition;
 	}
 
 	set Height(val: number) {
 		this.height = val;
-		this.halfHeight = val / 2;
-		this.GenerateBoundingBox();
+	}
 
+	get Height() {
+		return this.height;
+	}
+
+	get CTX() {
+		return this.ctx;
+	}
+
+	get Width() {
+		return this.width;
 	}
 
 	set Width(val: number) {
 		this.width = val;
-		this.halfWidth = val / 2;
-		this.GenerateBoundingBox();
 	}
 
 	SetSize(width: number, height?: number) {
 		this.Width = width;
 		if(height) this.Height = height;
-		this.GenerateBoundingBox();
 	}
 
-	private GenerateBoundingBox() {
+	get ContextRespectiveBoundingBox() {
 		const p = this.Position;
-		this.boundingBox = new BoundingBox(
-			new Point(p.x, p.y),
-			new Point(p.x + this.width, p.y + this.height), new Point());
-	}
-
-	get TrueBoundingBox() {
-		const p = this.Position;
+		const halfWidth = this.width / 2;
+		const halfHeight = this.height / 2;
 		return new BoundingBox(
-			new Point(- p.x, -p.y),
-			new Point(p.x, p.y), new Point());
+			new Point(p.x - halfWidth, p.y - halfHeight),
+			new Point(p.x + halfWidth, p.y + halfHeight)
+		);
 	}
 
 
 	SetOptions(opts: CtxOptions): CanvasContext2D {
-		this.Save();
+		if(!opts) return this;
 		for(const key of Object.keys(opts)) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore-next-line
@@ -74,18 +73,9 @@ class CanvasContext2D {
 		return this;
 	}
 
+
 	Clear(): CanvasContext2D {
-		const point = this.boundingBox.from;
-		const width = this.boundingBox.Width;
-		const height = this.boundingBox.Height;
-
-		this.ClearRect(point.x, point.y, width, height);
-		return this;
-	}
-
-	ClearRect(x: number, y: number, w: number, h: number): CanvasContext2D {
-		const initialPos = this.contextRespectivePosition ? this.Position : new Point();
-		this.ctx.clearRect(x - initialPos.x, y - initialPos.y, w, h);
+		this.ctx.clearRect(0, 0, this.width, this.height);
 		return this;
 	}
 
@@ -125,7 +115,7 @@ class CanvasContext2D {
 	}
 
 	LineDash(lineDash: Array<number>): CanvasContext2D {
-		this.ctx.setLineDash(lineDash);
+		this.ctx.setLineDash(lineDash || []);
 		return this;
 	}
 
@@ -133,7 +123,7 @@ class CanvasContext2D {
 		this.bgColor = color.toString();
 	}
 
-	get Position(): ICoordinates {
+	get Position(): Point {
 		const transform = this.ctx.getTransform();
 		return new Point(transform.e, transform.f);
 	}
@@ -149,7 +139,7 @@ class CanvasContext2D {
 	}
 
 	Reset(): CanvasContext2D {
-		this.ctx.setTransform(new DOMMatrix());
+		this.ctx.resetTransform();
 		return this;
 	}
 
@@ -208,19 +198,10 @@ class CanvasContext2D {
 	}
 
 	DrawBg(offset?: ICoordinates): CanvasContext2D {
-		const point = this.boundingBox.from;
-		const width = this.boundingBox.Width;
-		const height = this.boundingBox.Height;
 		const { x = 0, y = 0 } = offset || {};
-		return this
-			.Save()
-			.ContextRespectivePosition(true)
-			.BeginPath()
-			.FillStyle(this.bgColor)
-			.Rect(point.x + x, point.y + y, width + x, height + y)
-			.Fill()
-			.ClosePath()
-			.Restore();
+		return this.BeginPath().FillStyle(this.bgColor)
+			.Rect(x, y,	this.width,	this.height)
+			.Fill();
 	}
 
 	Draw<T extends PrimitiveShape>(any: IGraphicPrimitive<T>, offsetX = 0, offsetY = 0, fillStroke = 0) {
@@ -238,12 +219,6 @@ class CanvasContext2D {
 	DrawLine(line: IGraphicPrimitive<Segment>, offsetX: number, offsetY: number): CanvasContext2D {
 		const { shape: { from, to } } = line;
 		return this.Line(from.x + offsetX, from.y + offsetY, to.x + offsetX, to.y + offsetY);
-		// return this
-		// 	.MoveTo(from.x + offsetX, from.y + offsetY)
-		// 	.LineTo(to.x + offsetX, to.y + offsetY)
-		// 	.Stroke()
-		// 	.ClosePath()
-		// 	.Restore();
 	}
 
 	DrawLines(lines: IGraphicPrimitive<SegmentList | PolygonalChain>, offsetX: number, offsetY: number) {
@@ -253,7 +228,7 @@ class CanvasContext2D {
 				.MoveTo(from.x + offsetX, from.y + offsetY)
 				.LineTo(to.x + offsetX, to.y + offsetY);
 		}
-		this.Stroke().ClosePath().Restore();
+		this.Stroke();
 	}
 
 	DrawRect(rect: IGraphicPrimitive<Segment>, offsetX: number, offsetY: number, type = 0) {
@@ -264,7 +239,7 @@ class CanvasContext2D {
 		} else {
 			this.Stroke();
 		}
-		this.ClosePath().Restore();
+		// this.ClosePath();
 	}
 
 	DrawCircle(circle: IGraphicPrimitive<Circle>, offsetX: number, offsetY: number, type = 0) {
@@ -275,7 +250,7 @@ class CanvasContext2D {
 		} else {
 			this.Stroke();
 		}
-		return this.ClosePath().Restore();
+		// return this.ClosePath();
 	}
 
 	FillText(text: string, x: number, y: number, maxWidth?: number): CanvasContext2D {
@@ -319,14 +294,13 @@ class CanvasContext2D {
 		this
 			.MoveTo(x1 - initialPos.x, y1 - initialPos.y)
 			.LineTo(x2 - initialPos.x, y2 - initialPos.y)
-			.Stroke()
-			.ClosePath()
-			.Restore();
+			.Stroke();
 		return this;
 	}
 
 	DrawImage(imageData: CanvasImageSource, x: number, y: number, w: number, h: number): CanvasContext2D {
 		const initialPos = this.contextRespectivePosition ? this.Position : new Point();
+		this.BeginPath();
 		this.ctx.drawImage(imageData, x - initialPos.x, y - initialPos.y, w, h);
 		return this;
 	}

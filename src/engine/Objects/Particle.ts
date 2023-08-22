@@ -13,11 +13,12 @@ export interface IFollower {
 }
 
 export type ParticleConstructorOptions = BasicObjectsConstructorParams & {
-    graphic: Nullable<IGraphicPrimitive<any> | Sprite>;
+    graphic?: IGraphicPrimitive<any> | Sprite;
     size?: number;
 	layer: number;
 	drag?: number;
     lifeTime?: number;
+	gravityScale?: number;
     initialColor?: RGBAColor;
     initialVelocity?: Vector;
     OnCollide?: (self: Collider2D, other: Collider2D) => void;
@@ -27,12 +28,12 @@ export type ParticleConstructorOptions = BasicObjectsConstructorParams & {
 
 class Particle extends BasicObject {
 	public graphic: Nullable<IGraphicPrimitive<any> | Sprite>;
-	private layer: number;
 	private size: number;
 	public drag: number;
 	public initialScale: ICoordinates;
 	public age: number;
 	public lifeTime: number;
+	public gravityScale: number;
 	public initialColor: RGBAColor;
 	public color: RGBAColor;
 	public velocity: Vector;
@@ -49,16 +50,16 @@ class Particle extends BasicObject {
 		const {
 			graphic, lifeTime = 10, layer, drag = 0,
 			initialColor = new RGBAColor(), followers,
-			size = 10, initialVelocity = new Vector(), OnCollide, collider
+			size = 10, initialVelocity = new Vector(), OnCollide, collider, gravityScale = 1
 		} = params;
 		if(graphic) {
 			graphic.layer = layer;
 			this.graphic = graphic;
-			this.layer = layer;
 		}
 		this.drag = Maths.Clamp(drag, -1 ,1);
 		this.lifeTime = lifeTime;
 		this.size = size;
+		this.gravityScale = gravityScale;
 		this.age = 0;
 		this.followers = followers;
 		this.initialColor = initialColor?.Copy();
@@ -76,12 +77,12 @@ class Particle extends BasicObject {
 		this.collider.On(Collider2DEvent.OnCollision2DEnter, this.OnCollide);
 	}
 
-	Start() {
+	override Start() {
 		super.Start();
 		this.collider?.Start();
 	}
 
-	Destroy() {
+	override Destroy() {
 		if(this.followers) {
 			this.followers.forEach(val => val.Destroy());
 		}
@@ -93,7 +94,7 @@ class Particle extends BasicObject {
 		if(this.age > this.lifeTime) return this.Destroy();
 	}
 
-	Update() {
+	override Update() {
 		this.collider?.Update();
 		this.transform.Translate(Vector.MultiplyCoordinates(Time.deltaTime / 1000, this.velocity));
 

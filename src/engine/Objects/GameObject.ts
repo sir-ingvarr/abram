@@ -1,6 +1,5 @@
 import {IExecutable, IGameObject} from '../../types/GameObject';
 import {Nullable} from '../../types/common';
-import CanvasContext2D from '../Canvas/Context2d';
 import {ExecutableManager} from '../Managers/ExecutableManager';
 import {GameObjectManager} from '../Managers/GameObjectManager';
 import BasicObject, {BasicObjectsConstructorParams} from './BasicObject';
@@ -15,13 +14,13 @@ class GameObject<T extends BasicObjectsConstructorParams = BasicObjectsConstruct
 		this.needDestroy = false;
 	}
 
-	Update() {
+	override Update() {
 		super.Update();
 		this.modulesManager.Update();
 		this.childManager.Update();
 	}
 
-	Destroy() {
+	override Destroy() {
 		super.Destroy();
 		this.modulesManager.Destroy();
 		this.childManager.Destroy();
@@ -31,14 +30,6 @@ class GameObject<T extends BasicObjectsConstructorParams = BasicObjectsConstruct
 		this.modulesManager.RegisterModule(module);
 		module.SetGameObject(this);
 		module.parent = this.transform;
-	}
-
-	get Context() {
-		return this.context as CanvasContext2D;
-	}
-
-	set Context(ctx: CanvasContext2D) {
-		this.context = ctx;
 	}
 
 	GetModuleByName(name: string): Nullable<IExecutable> {

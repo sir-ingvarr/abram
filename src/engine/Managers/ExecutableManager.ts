@@ -19,7 +19,7 @@ export class ExecutableManager {
 	protected PreUpdate(module: IExecutable): boolean {
 		return module.Active;
 	}
-	protected PostUpdate(module: IExecutable) { return; }
+	protected PostUpdate() { return; }
 
 	protected PreModuleRegister(module: IExecutable): boolean {
 		if(this.parent) module.gameObject = this.parent;
@@ -57,17 +57,18 @@ export class ExecutableManager {
 	}
 
 	Update() {
-		for (const [_, module] of this.modules) {
+		for (const item of this.modules) {
+			const module = item[1];
 			if(!this.PreUpdate(module)) continue;
 			module.Update();
-			if(this.PostUpdate) this.PostUpdate(module);
+			if(this.PostUpdate) this.PostUpdate();
 		}
 	}
 
 	Destroy() {
 		for(const [_, module] of this.modules) {
 			module.Destroy();
-			this.modules.clear();
 		}
+		this.modules.clear();
 	}
 }

@@ -2,7 +2,7 @@ const path = require('path');
 
 module.exports = {
     entry: './src/global_index.ts',
-    devtool: "source-map",
+    devtool: 'source-map',
     mode: 'production',
     module: {
         rules: [

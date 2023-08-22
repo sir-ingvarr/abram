@@ -4,28 +4,30 @@ import {Iterator} from '../Classes';
 import Time from '../Globals/Time';
 
 interface AnimatorOptions {
-    frameDelay: number;
-    stateMap: Map<string, Array<string>>;
-    state: string;
-    graphicElement: Sprite;
-    playing?: boolean;
+	frameDelay: number;
+	stateMap: { [state: string]: Array<string> };
+	state: string;
+	graphicElement: Sprite;
+	playing?: boolean;
+}
+
+export interface IWithImageId {
+	get ImageId(): string,
 }
 
 class Animator extends Module {
 	public frameDelay: number;
 	private state: string;
 	private playing: boolean;
-	private stateMap: Map<string, Iterator<HTMLImageElement>>;
-	private availableStates: Array<string>;
-	private currentFrame: number;
+	private readonly stateMap: { [state: string]: Iterator<string> };
 	private controlledGraphic: Sprite;
 	private elapsedTime: number;
-	private currentStateData?: Iterator<HTMLImageElement>;
+	private currentStateData?: Iterator<string>;
 
 	constructor(options: AnimatorOptions) {
 		super({name: 'Animator'});
 		const {
-			frameDelay = 50, stateMap = new Map([['idle', []]]),
+			frameDelay = 50, stateMap = { idle: [] },
 			state = 'idle', graphicElement, playing = true
 		} = options;
 		if(!graphicElement) throw 'animator requires a graphic element';
@@ -33,11 +35,10 @@ class Animator extends Module {
 		this.elapsedTime = 0;
 		this.state = state;
 		this.playing = playing;
-		this.availableStates = Array.from(stateMap.keys());
-		this.currentFrame = 0;
 		this.controlledGraphic = graphicElement;
+		this.stateMap = {};
 		this.SetStateMap(stateMap);
-		this.currentStateData = this.stateMap.get(state);
+		this.currentStateData = this.stateMap[state];
 	}
 
 	Stop() {
@@ -48,41 +49,27 @@ class Animator extends Module {
 		this.playing = true;
 	}
 
+	private SetStateMap(data: { [state: string]: Array<string> }) {
+		for(const key in data) {
+			this.stateMap[key] = new Iterator<string>({infinite: true, data: data[key]});
+		}
+	}
+
 	SetState(newState: string) {
 		if(newState === this.state) return;
-		if(!this.availableStates.includes(newState)) throw 'invalid state';
+		if(!this.stateMap[newState]) throw 'invalid state';
 		this.state = newState;
-		this.currentStateData = this.stateMap.get(newState);
-		this.currentFrame = 0;
+		this.currentStateData = this.stateMap[newState];
 		this.UpdateFrame();
 	}
 
-
 	UpdateFrame() {
 		if(!this.currentStateData) return;
-		const image = this.currentStateData.Next.value;
-		this.controlledGraphic.image.SetImageContent(image);
+		this.controlledGraphic.image.ImageId = this.currentStateData.Next.value;
 	}
 
-	SetStateMap(stateMap: Map<string, Array<string>>) {
-		const { availableStates } = this;
-		const stateWithImages = new Map();
-		for(const state of availableStates) {
-			const images = this.LoadStateImages(stateMap.get(state) || []);
-			stateWithImages.set(state, new Iterator({ data: images, infinite: true }));
-		}
-		this.stateMap = stateWithImages;
-	}
 
-	LoadStateImages(urlArr: Array<string>) {
-		return urlArr.map(url => {
-			const img = new Image();
-			img.src = url;
-			return img;
-		});
-	}
-
-	Update() {
+	override Update() {
 		super.Update();
 		if(!this.playing) return;
 		this.elapsedTime += Time.deltaTime;
