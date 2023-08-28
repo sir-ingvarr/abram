@@ -19,10 +19,12 @@ export type CanvasContext2DAttributes = {
     colorSpace: ColorSpace,
 }
 
-export interface ICoordinates {
+export interface IPoint {
     x: number,
     y: number,
+}
 
+export interface ICoordinates extends IPoint {
     Set(x: number, y?: number): ICoordinates,
 
     Copy(): ICoordinates,

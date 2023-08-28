@@ -1,6 +1,5 @@
-import type {Graphic, IContextOpts} from './SpriteRenderer';
+import type {Graphic} from './SpriteRenderer';
 import SpriteRenderer from './SpriteRenderer';
-import Sprite from '../Modules/Sprite';
 import CanvasContext2D from '../Canvas/Context2d';
 import Canvas from '../Canvas/Canvas';
 import {ICoordinates} from '../../types/common';
@@ -27,31 +26,31 @@ class SpriteRendererManager {
 		return SpriteRendererManager.instance;
 	}
 
-	public AddToRenderQueue(graphic: Graphic, contentType: 0 | 1) {
-		const prepared: IContextOpts = {
-			Width: graphic.Width,
-			Height: graphic.Height,
-			layer: graphic.layer,
-			contentType,
-			parent: {
-				LocalPosition: graphic.parent.LocalPosition,
-				LocalRotation: graphic.parent.LocalRotation,
-				WorldPosition: graphic.parent.WorldPosition,
-				Scale: graphic.parent.Scale,
-				anchors: graphic.parent.anchors,
-				Parent: graphic.parent.Parent,
-			}
-		};
-		if(graphic instanceof Sprite) {
-			prepared.ImageId = graphic.ImageId;
-		} else {
-			prepared.shape = graphic.shape;
-			prepared.options = graphic.options;
-			prepared.type = graphic.type;
-			prepared.dash = graphic.dash;
-			prepared.drawMethod = graphic.drawMethod;
-		}
-		this.spriteRenderer.AddToRenderQueue(prepared);
+	public AddToRenderQueue(graphic: Graphic) {
+		// const prepared: IContextOpts = {
+		// 	Width: graphic.Width,
+		// 	Height: graphic.Height,
+		// 	layer: graphic.layer,
+		// 	contentType,
+		// 	parent: {
+		// 		LocalPosition: graphic.parent.LocalPosition,
+		// 		LocalRotation: graphic.parent.LocalRotation,
+		// 		WorldPosition: graphic.parent.WorldPosition,
+		// 		Scale: graphic.parent.Scale,
+		// 		anchors: graphic.parent.anchors,
+		// 		Parent: graphic.parent.Parent,
+		// 	}
+		// };
+		// if(graphic instanceof Sprite) {
+		// 	prepared.ImageId = graphic.ImageId;
+		// } else {
+		// 	prepared.shape = graphic.shape;
+		// 	prepared.options = graphic.options;
+		// 	prepared.type = graphic.type;
+		// 	prepared.dash = graphic.dash;
+		// 	prepared.drawMethod = graphic.drawMethod;
+		// }
+		this.spriteRenderer.AddToRenderQueue(graphic);
 	}
 
 	get Context() {

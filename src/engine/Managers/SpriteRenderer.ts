@@ -6,7 +6,7 @@ import {
 	PrimitiveType,
 	ShapeDrawMethod,
 } from '../Canvas/GraphicPrimitives/GraphicPrimitive';
-import {ICoordinates, Nullable} from '../../types/common';
+import {ICoordinates, IPoint, Nullable} from '../../types/common';
 import {CtxOptions} from '../../types/GraphicPrimitives';
 import ImageWrapper from '../Modules/ImageWrapper';
 import {RGBAColor, Stack} from '../Classes';
@@ -24,7 +24,7 @@ export interface IContextOpts {
 		Scale: ICoordinates,
 		LocalPosition: ICoordinates,
 		LocalRotation: number,
-		anchors: { x: number, y: number },
+		Anchors: IPoint,
 		Parent: Nullable<{ LocalRotation: number }>,
 	},
 	shape?: IGraphicPrimitive<any>,
@@ -119,7 +119,7 @@ class SpriteRenderer {
 				Scale: scale,
 				LocalPosition: localPosition,
 				LocalRotation: localRotation,
-				anchors,
+				Anchors: anchors,
 				Parent: parent,
 			},
 		} = graphic;

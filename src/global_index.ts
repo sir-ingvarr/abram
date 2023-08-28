@@ -11,4 +11,4 @@ const Abram =  {
 	GraphicPrimitives, Shapes, Collision, Collider2D, ParticleSystemAssets
 };
 
-Object.assign(window, { Abram });
+Object.assign(global, { Abram });
