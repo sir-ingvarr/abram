@@ -34,7 +34,7 @@ class Sprite extends Module {
 	}
 
 	override Update(): void {
-		SpriteRendererManager.GetInstance()?.AddToRenderQueue(this, this.contentType);
+		SpriteRendererManager.GetInstance()?.AddToRenderQueue(this);
 	}
 }
 

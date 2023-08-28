@@ -91,6 +91,6 @@ export class GraphicPrimitive<Shape extends PrimitiveShape> extends Module imple
 	}
 
 	override Update() {
-		SpriteRendererManager.GetInstance()?.AddToRenderQueue(this, this.contentType);
+		SpriteRendererManager.GetInstance()?.AddToRenderQueue(this);
 	}
 }

@@ -1,4 +1,4 @@
-import {ICoordinates, IShape, Nullable} from './common';
+import {ICoordinates, IPoint, IShape, Nullable} from './common';
 import {Vector} from '../engine/Classes';
 import CanvasContext2D from '../engine/Canvas/Context2d';
 import Rigidbody from '../engine/Modules/Rigidbody';
@@ -43,17 +43,17 @@ export interface ICollider2D extends IExecutable {
 
 export interface ITransform extends IScalable {
     gameObject: IGameObject | IBasicObject;
-    anchors: { x: number, y: number };
 
     get Parent(): Nullable<ITransform>
     set Parent(transform: Nullable<ITransform>);
+
+    set Anchors(newVal: IPoint);
+    get Anchors(): IPoint;
 
     get WorldPosition(): Vector;
     get LocalPosition(): Vector;
     set LocalPosition(value: Vector);
 
-    get Rotation(): number;
-    get RotationDeg(): number;
     RotateDeg(amount: number): ITransform;
 
     get LocalRotation(): number;

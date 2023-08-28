@@ -10,7 +10,7 @@ class Lines extends GameObject {
 	}
 
 	Start() {
-		this.transform.anchors = { x: 0, y: 0 };
+		this.transform.Anchors = { x: 0, y: 0 };
 		this.RegisterModule(new GraphicPrimitive({
 			layer: 2,
 			type: PrimitiveType.Lines,

@@ -1,6 +1,6 @@
 import {Vector} from '../Classes';
 import {IBasicObject, IGameObject, ITransform} from '../../types/GameObject';
-import {ICoordinates, Nullable} from '../../types/common';
+import {ICoordinates, IPoint, Nullable} from '../../types/common';
 
 type TransformOptions = {
     localPosition?: ICoordinates,
@@ -18,7 +18,7 @@ class Transform implements ITransform {
 	private localRotation: number;
 	private parent: Nullable<ITransform>;
 	public gameObject: IGameObject | IBasicObject;
-	public anchors: { x: number, y: number };
+	private anchors: { x: number, y: number };
 
 	constructor(go: IGameObject | IBasicObject, params: TransformOptions) {
 		const { localPosition = Vector.Zero, localScale = Vector.One, localRotation, localRotationDegrees, parent = null, anchors = { x: 0.5, y: 0.5 } } = params;
@@ -30,6 +30,15 @@ class Transform implements ITransform {
 		else if(typeof localRotation === 'number') this.LocalRotation = localRotation;
 		this.anchors = anchors;
 	}
+
+	get Anchors() {
+		return Object.assign({}, this.anchors);
+	}
+
+	set Anchors(newVal: IPoint) {
+		this.anchors = { x: newVal.x, y: newVal.y };
+	}
+
 	get Parent(): Nullable<ITransform> {
 		return this.parent;
 	}
@@ -82,16 +91,6 @@ class Transform implements ITransform {
 		const radians = newRotation * Math.PI / 180;
 		this.localRotationDeg = newRotation;
 		this.localRotation = radians;
-	}
-
-	get Rotation(): number {
-		if(this.parent) return this.parent.Rotation + this.localRotation;
-		return this.localRotation;
-	}
-
-	get RotationDeg(): number {
-		if(this.parent) return this.parent.RotationDeg + this.localRotationDeg;
-		return this.localRotationDeg;
 	}
 
 	public Translate(amount: ICoordinates): ITransform {
