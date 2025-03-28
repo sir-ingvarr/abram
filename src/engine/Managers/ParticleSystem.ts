@@ -1,16 +1,16 @@
 import {ExecutableManager} from './ExecutableManager';
 import {IGameObject, IGameObjectConstructable} from '../../types/GameObject';
-import Particle, {IFollower, ParticleConstructorOptions} from '../Objects/Particle';
+import Particle, {ParticleConstructorOptions} from '../Objects/Particle';
 import {Maths, PolarCoordinates, RGBAColor, Stack, Vector} from '../Classes';
 import Sprite from '../Modules/Sprite';
 import {ICoordinates, Nullable} from '../../types/common';
 import Collider2D from '../Modules/Collider';
 import {IGraphicPrimitive} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
 import {BasicObjectsConstructorParams} from '../Objects/BasicObject';
-import GameLoop from '../GameLoop';
 import {Time} from '../../index';
 import SpriteRendererManager from './SpriteRendererManager';
 import ImageWrapper from '../Modules/ImageWrapper';
+import Engine from '../Engine';
 
 export enum RenderingStyle {
 	Local,
@@ -310,7 +310,7 @@ class ParticleSystem extends ExecutableManager {
 
 			const followersConstructs = this.SetOrExecute(this.particleFollowers);
 			if(followersConstructs) {
-				const followerPromises = followersConstructs.map(follower => GameLoop.Instantiate<IFollower & BasicObjectsConstructorParams>({gameObject: follower, params: {}}));
+				const followerPromises = followersConstructs.map(follower => Engine.Instance.Instantiate<BasicObjectsConstructorParams>(follower, {}));
 				props.followers = await Promise.all(followerPromises);
 			}
 			particle.SetParams(props);
@@ -320,7 +320,7 @@ class ParticleSystem extends ExecutableManager {
 			const props = this.GetParticleInitialProps(graphic);
 			const followersConstructs = this.SetOrExecute(this.particleFollowers);
 			if(followersConstructs) {
-				const followerPromises = followersConstructs.map(follower => GameLoop.Instantiate<IFollower & BasicObjectsConstructorParams>({gameObject: follower, params: {}}));
+				const followerPromises = followersConstructs.map(follower => Engine.Instance.Instantiate<BasicObjectsConstructorParams>(follower, {}));
 				props.followers = await Promise.all(followerPromises);
 			}
 			particle = new Particle(props);
@@ -344,8 +344,7 @@ class ParticleSystem extends ExecutableManager {
 			lifeTime: this.SetOrExecute(this.lifeTime),
 			size: this.SetOrExecute(this.initialSize),
 			OnCollide: this.onParticleCollision,
-			initialVelocity: this.SetOrExecute(this.initialVelocity)
-				.Add(Vector.Zero),
+			initialVelocity: this.SetOrExecute(this.initialVelocity),
 		};
 
 		if(!graphic) return props;

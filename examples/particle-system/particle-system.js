@@ -1,12 +1,12 @@
 
 const { GameObject, GraphicPrimitives: { GraphicPrimitive, PrimitiveType, ShapeDrawMethod }, Shapes: { Circle, Rect }, ImageWrapper, Classes: {RGBAColor, Vector, Maths}, ParticleSystem } = window.Abram;
 
-const orange = RGBAColor.FromHex('#FFCD76');
-const yellow = RGBAColor.FromHex('#FFF96E');
-const red = RGBAColor.FromHex('FF4F4D');
-const purple = RGBAColor.FromHex('#8940FF');
-const lime = RGBAColor.FromHex('#93FF70');
-const white = new RGBAColor(240, 240, 240);
+const orange = RGBAColor.FromHex('#FFCD76BF');
+const yellow = RGBAColor.FromHex('#FFF96EC7');
+const red = RGBAColor.FromHex('#FF4F4DDA');
+const purple = RGBAColor.FromHex('#8940FFD3');
+const lime = RGBAColor.FromHex('#93FF70A9');
+const white = RGBAColor.FromHex('#FFFFFFDB');
 
 const colors = [orange, yellow, red, purple, lime, white];
 
@@ -33,9 +33,9 @@ class ParticleSystemTest extends GameObject {
                     })
                 },
                 lifeTime: () => Maths.RandomRange(3.5, 6.5) * 1000,
-                maxParticles: 2000,
-                emitOverTime: 20,
-                emitEachTimeFrame: 30,
+                maxParticles: 1000,
+                emitOverTime: 0,
+                emitEachTimeFrame: 20,
                 initialColor: () => {
                     const random = Maths.RandomRange(0, colors.length - 1, true)
                     return colors[random];

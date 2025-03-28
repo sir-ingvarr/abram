@@ -1,9 +1,10 @@
-import {IGameObject} from '../types/GameObject';
+import {IGameObject, IGameObjectConstructable, ITransform} from '../types/GameObject';
 import {RGBAColor} from './Classes';
 import InputSystem from './Globals/Input';
-import {CanvasContext2DAttributes, ColorSpace, Nullable} from '../types/common';
+import {AnyFunc, CanvasContext2DAttributes, ColorSpace, Nullable} from '../types/common';
 import Canvas from './Canvas/Canvas';
 import GameLoop from './GameLoop';
+import {BasicObjectsConstructorParams} from './Objects/BasicObject';
 
 export type EngineConfigOptions = {
 	width: number,
@@ -22,13 +23,13 @@ export type EngineConfigOptions = {
 	enableWorkers?: boolean,
 }
 
-
 class Engine {
 	private readonly root: HTMLElement;
 	private readonly gameLoopManager: GameLoop;
 	private fullScreen: boolean;
 	private loadScriptsPromises: Array<Promise<void>>;
 	private canvas: Canvas;
+	static instance: Engine;
 
 	constructor (root: HTMLElement, options: EngineConfigOptions = { width: 800, height: 600 }) {
 		const {
@@ -43,6 +44,7 @@ class Engine {
 				colorSpace: ColorSpace.SRGB,
 			}
 		} = options;
+		Engine.instance = this;
 		this.loadScriptsPromises = [];
 		this.fullScreen = fullscreen;
 		this.root = root;
@@ -98,6 +100,11 @@ class Engine {
 		return this.canvas.CanvasElement;
 	}
 
+	static get Instance(): Engine {
+		if(!Engine.instance) throw 'Engine not instantiated, call new Engine() first';
+		return Engine.instance;
+	}
+
 	get Canvas(): Nullable<Canvas> {
 		return this.canvas || null;
 	}
@@ -105,6 +112,11 @@ class Engine {
 	AppendGameObject(element: IGameObject) {
 		this.gameLoopManager.GameObjectManager.RegisterModule(element);
 	}
+
+	Instantiate<T extends BasicObjectsConstructorParams>(gameObject: IGameObjectConstructable<T>, params: T, parent?: ITransform, callOnDone?: AnyFunc): Promise<IGameObject> {
+		return this.gameLoopManager.Instantiate({ gameObject, params, parent, callOnDone });
+	}
+
 	async Start () {
 		await Promise.all(this.loadScriptsPromises);
 		this.loadScriptsPromises = [];

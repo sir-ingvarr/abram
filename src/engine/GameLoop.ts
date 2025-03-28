@@ -15,6 +15,7 @@ type InstantiateOpts = {
 	gameObject: IGameObjectConstructable<any>,
 	params: any,
 	parent?: ITransform,
+	callOnDone?: AnyFunc,
 }
 
 export type GameLoopOptions = {
@@ -38,7 +39,7 @@ class GameLoop {
 	// private collisionsManager: CollisionsManager;
 	private readonly fpsProvider: FpsProvider;
 	private readonly canvas: Canvas;
-	static instantiateQueue: Queue<InstantiateOpts & { callOnDone: AnyFunc }> = new Queue<InstantiateOpts & { callOnDone: AnyFunc }>({data: []});
+	private readonly instantiateQueue: Queue<InstantiateOpts & { callOnDone: AnyFunc }> = new Queue<InstantiateOpts & { callOnDone: AnyFunc }>({data: []});
 
 	constructor(
 		opts: GameLoopOptions
@@ -54,6 +55,8 @@ class GameLoop {
 		this.gameObjectManager = new GameObjectManager({ modules: [], context: this.canvas.Context2D});
 		this.spriteRendererManager = SpriteRendererManager.GetInstance(canvas, debug);
 		// this.collisionsManager = new CollisionsManager({ modules: [] });
+
+		this.instantiateQueue = new Queue<InstantiateOpts & { callOnDone: AnyFunc }>({data: []});
 
 		if (pauseOnBlur) {
 			global.addEventListener('blur', this.Pause.bind(this));
@@ -93,9 +96,9 @@ class GameLoop {
 		console.log(`target fps set to ${this.targetFps}, targetFrameDelay: ${this.frameDelay}`);
 	}
 
-	public static async Instantiate<T extends BasicObjectsConstructorParams>(opts: InstantiateOpts): Promise<T> {
+	public async Instantiate<T extends BasicObjectsConstructorParams>(opts: InstantiateOpts): Promise<T> {
 		return new Promise(resolve => {
-			GameLoop.instantiateQueue.Push({ ...opts, callOnDone: go => resolve(go) });
+			this.instantiateQueue.Push({ ...opts, callOnDone: go => resolve(go) });
 		});
 	}
 
@@ -106,9 +109,9 @@ class GameLoop {
 	Render () {
 		if(!this.isPlaying) return;
 		const timeFrameBegin = Date.now();
-		while(GameLoop.instantiateQueue.Count) {
-			const element = GameLoop.instantiateQueue.Shift();
-			this.Instantiate(element);
+		while(this.instantiateQueue.Count) {
+			const element = this.instantiateQueue.Shift();
+			this.Spawn(element);
 		}
 		if(this.frameDelay && timeFrameBegin - this.prevFrameTime < this.frameDelay) {
 			requestAnimationFrame(this.Render.bind(this));
@@ -139,10 +142,10 @@ class GameLoop {
 		// this.frameDelay = 1000 / this.targetFps - this.frameTime;
 	}
 
-	Instantiate<T extends BasicObjectsConstructorParams>(args:{
+	private Spawn<T extends BasicObjectsConstructorParams>(args:{
 		gameObject: IGameObjectConstructable<T>,
 		params: T, parent?: ITransform, callOnDone?: AnyFunc,
-	}): string {
+	}): IGameObject {
 		const gameObjectInstance = new args.gameObject(args.params);
 		if(!args.parent) {
 			this.AppendGameObject(gameObjectInstance);
@@ -151,12 +154,10 @@ class GameLoop {
 			args.parent.gameObject.AppendChild(gameObjectInstance);
 		}
 		if(args.callOnDone) args.callOnDone(gameObjectInstance);
-		return gameObjectInstance.Id;
+		return gameObjectInstance;
 	}
 
-	AppendGameObject(element: IGameObject) {
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-ignore
+	private AppendGameObject(element: IGameObject) {
 		this.gameObjectManager.RegisterModule(element);
 	}
 

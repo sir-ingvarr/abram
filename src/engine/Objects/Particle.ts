@@ -6,9 +6,9 @@ import Collider2D, {Collider2DEvent, Collider2DType} from '../Modules/Collider';
 import {CircleArea} from '../Canvas/GraphicPrimitives/Shapes';
 import {GraphicPrimitive, IGraphicPrimitive} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
 import SpriteRenderer from '../Managers/SpriteRenderer';
+import {IBasicObject} from '../../types/GameObject';
 
 export interface IFollower {
-	UpdateFollowedPosition(x: number, y: number): void
 	Destroy(): void
 }
 
@@ -23,7 +23,7 @@ export type ParticleConstructorOptions = BasicObjectsConstructorParams & {
     initialVelocity?: Vector;
     OnCollide?: (self: Collider2D, other: Collider2D) => void;
     collider?: Collider2D;
-	followers?: Array<IFollower>;
+	followers?: Array<IBasicObject>;
 }
 
 class Particle extends BasicObject {
@@ -39,7 +39,7 @@ class Particle extends BasicObject {
 	public velocity: Vector;
 	public OnCollide?: (self: Collider2D, other: Collider2D) => void;
 	public collider: Collider2D;
-	private followers?: Array<IFollower>;
+	private followers?: Array<IBasicObject>;
 
 	constructor(params: ParticleConstructorOptions) {
 		super(params);
@@ -107,7 +107,7 @@ class Particle extends BasicObject {
 			const {x, y} = this.transform.WorldPosition;
 
 			for (const follower of this.followers) {
-				follower.UpdateFollowedPosition.bind(follower)(x,y);
+				follower.transform.LocalPosition = new Vector(x,y);
 			}
 		}
 	}

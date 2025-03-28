@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const { Engine, Classes: { RGBAColor, Vector } } = window.Abram;
 
     const engine = new Engine(root, {
-        width: 1280, occlusionCulling: true, height: 800,
+        width: 1280, occlusionCulling: true, height: 800, targetFps: 60,
         drawFps: true, debug: false, adaptiveFrameDelay: true,
         pauseOnBlur: false, bgColor: new RGBAColor(50, 50, 50)
     });

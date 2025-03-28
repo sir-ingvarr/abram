@@ -106,13 +106,13 @@ class Man extends GameObject {
         if(shouldStand) {
             this.rigidBody.AddForce(Vector.MultiplyCoordinates(3, new Vector(this.horizontalDir, 0)));
             this.rigidBody.AngularVelocity = 0;
-            if(this.size > 1) this.size -= delta;
+            // if(this.size > 1) this.size -= delta;
             this.transform.LocalRotation = 0;
             this.gun.Active = true;
 
         } else {
-            this.rigidBody.AddForceToPoint(new Vector(0, -10), new Vector(10, 0));
-            if(this.size < 1.5) this.size += delta;
+            this.rigidBody.AddForceToPoint(new Vector(0, -10), new Vector(20, 0));
+            // if(this.size < 1.5) this.size += delta;
         }
         super.Update();
     }
