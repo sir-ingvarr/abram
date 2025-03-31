@@ -1,8 +1,9 @@
 class Lines extends GameObject {
 	constructor(params) {
 		super(params);
+		this.counter = 0;
 		this.limit = params.limit || 100;
-		this.current = 0;
+		this.current = 4;
 		this.color = (params.color || new RGBAColor(255, 255, 255, 25)).ToHex();
 		this.segmentsList = new SegmentList([]);
 		this.planet1 = params.planet1;
@@ -10,7 +11,7 @@ class Lines extends GameObject {
 	}
 
 	Start() {
-		this.transform.Anchors = { x: 0, y: 0 };
+		// this.transform.Anchors = { x: 0, y: 0 };
 		this.RegisterModule(new GraphicPrimitive({
 			layer: 2,
 			type: PrimitiveType.Lines,
@@ -34,6 +35,14 @@ class Lines extends GameObject {
 
 	Update() {
 		super.Update();
-		this.AddLine(this.planet1.transform.WorldPosition, this.planet2.transform.WorldPosition);
+		this.counter++;
+		if(this.counter < 20) {
+			return;
+		}
+		this.counter = 0;
+		this.AddLine(
+			this.planet1.transform.WorldPosition,
+			this.planet2.transform.WorldPosition
+		);
 	}
 }

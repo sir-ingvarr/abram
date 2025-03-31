@@ -10,19 +10,20 @@ document.addEventListener('DOMContentLoaded', async function() {
     await engine.RegisterGameScript('./smoke.js')
     await engine.RegisterGameScript('./rocket.js')
     await engine.RegisterGameScript('./bg.js');
+    await engine.RegisterGameScript('./golden_sparks.js');
 
-    const camera = new CameraMovement({});
-    engine.AppendGameObject(camera);
+    engine.Start();
+
+    await engine.Instantiate(CameraMovement, {})
 
     const bgSprite = new Sprite({
         height: 800,
         width: 1280,
-        image: new ImageWrapper('./assets/nightsky.png'),
+        image: new ImageWrapper('./assets/fireworks_bg.jpg'),
         layer: 0,
     });
 
-    const bg = new Bg({sprite: bgSprite, position: new Point()});
-    engine.AppendGameObject(bg);
+    await engine.Instantiate(Bg, {sprite: bgSprite, position: new Point()});
 
     const colors = [
         new RGBAColor(230),
@@ -32,22 +33,27 @@ document.addEventListener('DOMContentLoaded', async function() {
         new RGBAColor(230, 140, 20),
     ];
 
-    function SpawnTheExplosion(pos) {
-        rocket.AppendChild(
-            new Explosion({
-                position: new Vector(pos.x, pos.y), lifetime: 1000,
-                color: Math.random() < 0.35
-                    ? () => colors[Maths.RandomRange(0, colors.length - 1, true)]
-                    : colors[Maths.RandomRange(0, colors.length - 1, true)],
-
+    function SpawnTheSparks(pos) {
+        if(Math.random() < 0.05) {
+            engine.Instantiate(GoldenSparks, {
+                position: new Vector(pos.x, pos.y),
+                lifetime: 3000,
             })
-        );
+        }
     }
 
-    const smokeParticles = Smoke;
 
-    const rocket = new Rocket({ position: Vector.Zero, onParticleDestroy: SpawnTheExplosion, childParticleSystemGO: smokeParticles });
-    engine.AppendGameObject(rocket);
-
-    engine.Start();
+    function SpawnTheExplosion(pos) {
+        const isColorful = Math.random() < 0.35;
+        engine.Instantiate(Explosion, {
+            position: new Vector(pos.x, pos.y),
+            lifetime: 1200,
+            color: isColorful
+                ? () => colors[Maths.RandomRange(0, colors.length - 1, true)]
+                : colors[Maths.RandomRange(0, colors.length - 1, true)],
+            onParticleDestroy: pos => isColorful ? SpawnTheSparks(pos) : null,
+        })
+    }
+    await engine.Instantiate(Rocket, { position: Vector.Zero, onParticleDestroy: SpawnTheExplosion, childParticleSystemGO: Smoke });
+    await engine.RequestFullScreen();
 });

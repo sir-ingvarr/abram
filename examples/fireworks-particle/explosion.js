@@ -9,12 +9,14 @@ class Explosion extends GameObject {
         super(params);
         this.lifetime = params.lifetime || 500;
         this.color = params.color || new RGBAColor();
+        this.onParticleDestroy = params.onParticleDestroy || (() => {});
     }
 
     Start() {
         this.particleSystem = new ParticleSystem({
             parent: this,
             params: {
+                renderingStyle: RenderingStyle.World,
                 layer: 2,
                 occlusionCulling: true,
                 particleBuffering: true,
@@ -39,7 +41,10 @@ class Explosion extends GameObject {
                 initialVelocity: () => new PolarCoordinates({ r: Maths.RandomRange(0, 350),angle: Maths.RandomRange(0, 2*Math.PI) }).ToCartesian().ToVector(),//Vector.Of(Maths.RandomRange(-150, 150), Maths.RandomRange(-150, 150)),
                 initialSize: () => Maths.RandomRange(15, 35),
                 scaleOverLifeTime: factor => ({ x: Maths.Clamp(1 - factor, 0.1, 1.5), y: Maths.Clamp(1 - factor, 0.1, 1.5)}),
-                initialPosition: Vector.Zero
+                initialPosition: Vector.Zero,
+                onParticleDestroy: (pos) => {
+                    this.onParticleDestroy(pos);
+                },
             },
         });
     }

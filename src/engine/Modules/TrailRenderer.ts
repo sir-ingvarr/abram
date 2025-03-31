@@ -1,11 +1,13 @@
 import Module from './Module';
-import {ITransform} from '../../types/GameObject';
-import {RGBAColor} from '../Classes';
+import {IGameObject, ITransform} from '../../types/GameObject';
+import {RGBAColor, Segment} from '../Classes';
 import Time from '../Globals/Time';
-import {GraphicPrimitive, PrimitiveType} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
-import {PolygonalChain} from '../Canvas/GraphicPrimitives/Shapes';
+import {GraphicPrimitive, PrimitiveType, ShapeDrawMethod} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
+import {SegmentList} from '../Canvas/GraphicPrimitives/Shapes';
+import {ICoordinates} from '../../types/common';
 
 type TrailRendererConstructorParams = {
+	parentTransform: ITransform,
 	resolution?: number,
 	lifeTime?: number,
 	widthOverTrail?: (factor: number) => number,
@@ -17,89 +19,94 @@ type TrailRendererConstructorParams = {
 }
 
 class TrailRenderer extends Module {
-	#parentTransform?: ITransform;
-	#points: Array<[number, number]>;
-	#lifetimes: Array<number>;
-	#resolution: number;
-	#max: number;
-	#chain: GraphicPrimitive<PolygonalChain>;
-	#sinceSpawn: number;
-	#lifeTime: number;
-	#color: RGBAColor;
-	#width: number;
-	#layer: number;
-	#widthOverTrail: (factor: number) => number;
-	#colorOverTrail: (factor: number, current: RGBAColor) => RGBAColor;
+	private _parentTransform: ITransform;
+	private _previousPosition: ICoordinates;
+	private _lifetimes: Array<number>;
+	private _segmentList: SegmentList;
+	private _chain: GraphicPrimitive<SegmentList>;
+	private _sinceSpawn: number;
+	private _lifeTime: number;
+	private _color: RGBAColor;
+	private _width: number;
+	private _layer: number;
+	_widthOverTrail: (factor: number) => number;
+	_colorOverTrail: (factor: number, current: RGBAColor) => RGBAColor;
 
 	constructor(params: TrailRendererConstructorParams) {
 		super({});
 		const {
-			resolution = 10, lifeTime = 1000,
+			lifeTime = 100,
 			widthOverTrail = (factor) => -factor,
 			color = new RGBAColor(255, 255, 255),
-			layer = 1, width = 2, max = 50,
+			layer = 1, width = 2,
 		} = params;
-		this.#lifeTime = lifeTime;
-		this.#color = color;
-		this.#widthOverTrail = widthOverTrail;
-		this.#resolution = resolution;
-		this.#points = [];
-		this.#lifetimes = [];
-		this.#sinceSpawn = 0;
-		this.#layer = layer;
-		this.#width = width;
-		this.#max = max;
+		this._parentTransform = params.parentTransform;
+		if(!this._parentTransform) throw 'parent transform required';
+		this._lifeTime = lifeTime;
+		this._segmentList = new SegmentList([]);
+		this._color = color;
+		this._widthOverTrail = widthOverTrail;
+		this._lifetimes = [];
+		this._sinceSpawn = 0;
+		this._layer = layer;
+		this._width = width;
+		this._chain = new GraphicPrimitive({
+			layer: this._layer,
+			type: PrimitiveType.Lines,
+			shape: this._segmentList,
+			parent: this._parentTransform,
+			drawMethod: ShapeDrawMethod.Stroke,
+			disrespectParent: true,
+			options: {
+				strokeStyle: this._color.ToHex(),
+				lineWidth: this._width,
+				contextRespectivePosition: false,
+				lineCap: 'round',
+				lineJoin: 'round',
+			},
+		});
+		const go = this._parentTransform.gameObject as IGameObject;
+		go.RegisterModule(this._chain);
 	}
 
 	get WidthOverTrail() {
-		return this.#widthOverTrail;
+		return this._widthOverTrail;
 	}
 
 	get ColorOverTrail() {
-		return this.#colorOverTrail;
+		return this._colorOverTrail;
 	}
 
 	override Start() {
 		super.Start();
-		this.#parentTransform = this.gameObject?.transform;
-		if(!this.#parentTransform) throw 'parent transform required';
-		this.#chain = new GraphicPrimitive({
-			type: PrimitiveType.Polygon,
-			parent: this.#parentTransform as ITransform,
-			shape: new PolygonalChain(this.#points, false),
-			layer: this.#layer,
-			options: {
-				strokeStyle: this.#color.ToHex(),
-				lineWidth: this.#width,
-			},
-		});
+		this._previousPosition = this._parentTransform.WorldPosition;
 	}
 
 	get Chain() {
-		return this.#chain;
+		return this._chain;
 	}
 
-	private AddPoint(point: [number, number]) {
-		this.#points.splice(0, 0, point);
-		this.#lifetimes.splice(0, 0, 0);
+	private AddSegment(point: ICoordinates) {
+		this._segmentList.AddSegment(new Segment(this._previousPosition, point));
+		this._lifetimes.push(0);
 	}
 
 	override Update() {
 		super.Update();
-		for (let i = this.#points.length - 1; i > -1; i--) {
-			this.#lifetimes[i] += Time.deltaTime;
-			if(this.#lifetimes[i] > this.#lifeTime) {
-				this.#points.splice(i, 1);
-				this.#lifetimes.splice(i, 1);
+		for(const segmentId in this._segmentList.SegmentsUnsafe) {
+			this._lifetimes[+segmentId] += Time.deltaTime;
+			if(this._lifetimes[segmentId] > this._lifeTime) {
+				this._lifetimes.splice(+segmentId, 1);
+				this._segmentList.RemoveSegment(+segmentId);
 			}
 		}
-		this.#sinceSpawn += Time.deltaTime;
-		if(this.#sinceSpawn < 1000 / this.#resolution || this.#points.length >= this.#max) return;
-		const parentPosition = this.gameObject?.transform.WorldPosition.MultiplyCoordinates(this.gameObject?.transform.Scale.ToBinary());
-		if(!parentPosition) throw 'parent not found';
-		this.AddPoint([parentPosition.x, parentPosition.y]);
-		this.#sinceSpawn = 0;
-		// this.#chain.shape.Points = this.#points;
+		const parentPosition = this._parentTransform.WorldPosition;
+		this._sinceSpawn += Time.deltaTime;
+		if(this._sinceSpawn < 5) return;
+		this.AddSegment(parentPosition);
+		this._previousPosition = this._parentTransform.WorldPosition;
+
+		this._sinceSpawn = 0;
 	}
 
 }

@@ -11,6 +11,8 @@ type TransformOptions = {
     anchors?: { x: number, y: number }
 }
 
+const DEG_TO_RAD = Math.PI / 180;
+
 class Transform implements ITransform {
 	private localPosition: ICoordinates;
 	private localScale: ICoordinates;
@@ -21,7 +23,13 @@ class Transform implements ITransform {
 	private anchors: { x: number, y: number };
 
 	constructor(go: IGameObject | IBasicObject, params: TransformOptions) {
-		const { localPosition = Vector.Zero, localScale = Vector.One, localRotation, localRotationDegrees, parent = null, anchors = { x: 0.5, y: 0.5 } } = params;
+		const {
+			localPosition = Vector.Zero,
+			localScale = Vector.One,
+			localRotation,
+			localRotationDegrees,
+			parent = null,
+			anchors = { x: 0.5, y: 0.5 } } = params;
 		this.gameObject = go;
 		this.parent = parent;
 		this.localPosition = localPosition.Copy();
@@ -56,8 +64,24 @@ class Transform implements ITransform {
 	}
 
 	get WorldPosition(): Vector {
-		if(this.parent) return this.parent.WorldPosition.Add(Vector.MultiplyCoordinates(this.localPosition, this.Scale.ToBinary()));
-		return Vector.From(this.localPosition);
+		let position = this.localPosition.ToVector();
+		let current = this.parent;
+
+		while (current) {
+			position = Vector.MultiplyCoordinates(position, current.LocalScale);
+			const flipX = current.LocalScale.x < 0;
+			const flipY = current.LocalScale.y < 0;
+			position = position.Rotate(current.LocalRotation * (flipX !== flipY ? -1 : 1));
+			position = position.Add(current.LocalPosition);
+			current = current.Parent;
+		}
+
+		return position;
+	}
+
+	get WorldRotation(): number {
+		if(!this.parent) return this.localRotation;
+		return this.localRotation + this.parent.WorldRotation;
 	}
 
 	get LocalScale(): Vector {
@@ -70,7 +94,7 @@ class Transform implements ITransform {
 
 	get Scale(): Vector {
 		if(!this.parent) return this.LocalScale;
-		return this.parent.Scale.MultiplyCoordinates(this.localScale);
+		return Vector.MultiplyCoordinates(this.parent.Scale, this.localScale);
 	}
 
 	get LocalRotation() {
@@ -78,7 +102,7 @@ class Transform implements ITransform {
 	}
 
 	set LocalRotation(newRotation: number) {
-		const degrees = newRotation / Math.PI * 180;
+		const degrees = newRotation / DEG_TO_RAD;
 		this.localRotationDeg = degrees;
 		this.localRotation = newRotation;
 	}
@@ -88,7 +112,7 @@ class Transform implements ITransform {
 	}
 
 	set LocalRotationDeg(newRotation: number) {
-		const radians = newRotation * Math.PI / 180;
+		const radians = newRotation * DEG_TO_RAD;
 		this.localRotationDeg = newRotation;
 		this.localRotation = radians;
 	}

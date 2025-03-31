@@ -5,7 +5,6 @@ import CanvasContext2D from '../Canvas/Context2d';
 export class ExecutableManager {
 	protected readonly modules: Map<string, IExecutable>;
 	protected readonly parent?: IGameObject;
-	protected readonly context?: CanvasContext2D;
 
 	constructor(props: { modules?: Array<IExecutable>, parent?: IGameObject, context?: CanvasContext2D }) {
 		this.modules = new Map();
@@ -61,7 +60,6 @@ export class ExecutableManager {
 			const module = item[1];
 			if(!this.PreUpdate(module)) continue;
 			module.Update();
-			if(this.PostUpdate) this.PostUpdate();
 		}
 	}
 

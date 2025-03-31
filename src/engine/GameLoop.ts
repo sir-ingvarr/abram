@@ -121,15 +121,13 @@ class GameLoop {
 		this.Canvas.Context2D
 			.Reset()
 			.Clear()
-			.DrawBg()
-			.ContextRespectivePosition(false);
+			.DrawBg();
 		this.gameObjectManager.Update();
 		this.spriteRendererManager.SetCameraPosition(Camera.GetInstance({}).Position);
 		this.spriteRendererManager.DrawCallsFinished();
 		// this.collisionsManager.Update();
 		if(this.drawFps) {
 			this.canvas.Context2D
-				.ContextRespectivePosition(true)
 				.FillStyle('white')
 				.FillRect(this.canvas.Width - 100, 0, 100, 40)
 				.FillStyle('red')

@@ -8,9 +8,9 @@ import {
 } from '../Canvas/GraphicPrimitives/GraphicPrimitive';
 import {ICoordinates, IPoint, Nullable} from '../../types/common';
 import {CtxOptions} from '../../types/GraphicPrimitives';
-import ImageWrapper from '../Modules/ImageWrapper';
-import {RGBAColor, Stack} from '../Classes';
+import {RGBAColor, Stack, Vector} from '../Classes';
 import {IStack} from '../../types/Iterators';
+import ImageWrapper from '../Modules/ImageWrapper';
 
 export type Graphic = Sprite | IGraphicPrimitive<any>
 
@@ -18,9 +18,11 @@ export interface IContextOpts {
 	Width: number;
 	Height: number;
 	layer: number,
+	disrespectParent?: boolean,
 	contentType: 0 | 1,
 	parent?: {
 		WorldPosition: ICoordinates,
+		WorldRotation: number,
 		Scale: ICoordinates,
 		LocalPosition: ICoordinates,
 		LocalRotation: number,
@@ -46,13 +48,13 @@ class SpriteRenderer {
 
 	private renderingStackList: Array<IStack<IContextOpts>> = [];
 	private readonly mainCanvasContext: CanvasContext2D;
-	private loadList: Set<string>;
+	private loadList: Map<string, Promise<string>>;
 
 	private constructor(context2D: CanvasContext2D, private debug?: boolean) {
 		this.imageStorage = new Map<string, ImageBitmap>();
 		this.mainCanvasContext = context2D;
 		SpriteRenderer.instance = this;
-		this.loadList = new Set();
+		this.loadList = new Map<string, Promise<string>>();
 		this.debugStrokeColor = new RGBAColor(0, 120).ToHex();
 	}
 
@@ -81,15 +83,26 @@ class SpriteRenderer {
 		if(opts.debug) this.debug = opts.debug;
 	}
 
-	async LoadImage(imageId: string) {
-		if(this.HasImage(imageId) || this.loadList.has(imageId)) return;
+	LoadImage(imageId: string) {
+		if(this.loadList.has(imageId)) {
+			return this.loadList.get(imageId)?.then(() => imageId);
+		}
+		if(this.HasImage(imageId)) {
+			console.info(`Image ${imageId} already loaded`);
+			return imageId;
+		}
 		const image = new Image();
-		image.addEventListener('load', async () => {
-			this.RegisterImage(imageId, await createImageBitmap(image));
-			this.loadList.delete(imageId);
+		const loadPromise = new Promise<string>((resolve, reject) => {
+			image.addEventListener('load', async () => {
+				this.RegisterImage(imageId, await createImageBitmap(image));
+				this.loadList.delete(imageId);
+				resolve(imageId);
+			});
+			image.addEventListener('error', reject);
 		});
-		this.loadList.add(imageId);
+		this.loadList.set(imageId, loadPromise);
 		image.src = imageId;
+		return loadPromise;
 	}
 
 	private RegisterImage(imageId: string, bitmap: ImageBitmap) {
@@ -106,28 +119,33 @@ class SpriteRenderer {
 	}
 
 	private RenderElement(graphic: IContextOpts) {
-		if(!graphic || !graphic.parent) return;
-		let image;
-		if(graphic.contentType === 0) {
-			image = this.GetImage(graphic.ImageId || '-1');
-			if(!image) return;
-		}
-
-		const {
-			parent: {
-				WorldPosition: worldPosition,
-				Scale: scale,
-				LocalPosition: localPosition,
-				LocalRotation: localRotation,
-				Anchors: anchors,
-				Parent: parent,
-			},
-		} = graphic;
-
+		if(!graphic) return;
 		const width = graphic.Width;
 		const height = graphic.Height;
 
 		const context = this.mainCanvasContext;
+
+		if(!graphic.parent) return;
+		const { disrespectParent } = graphic;
+
+		const params = {
+			worldPosition: disrespectParent ? Vector.Zero : graphic.parent.WorldPosition,
+			scale: disrespectParent ? Vector.One : graphic.parent.Scale,
+			localPosition: disrespectParent ? Vector.Zero : graphic.parent.LocalPosition,
+			localRotation: disrespectParent ? 0 : graphic.parent.WorldRotation,
+			anchors: disrespectParent ? { x: 0, y: 0 } : graphic.parent.Anchors,
+			parent: disrespectParent ? null : graphic.parent.Parent,
+		};
+
+		const {
+			worldPosition,
+			scale,
+			// localPosition,
+			localRotation,
+			anchors,
+			// parent
+		} = params;
+
 		const anchoredX = anchors.x * width;
 		const anchoredY = anchors.y * height;
 
@@ -135,25 +153,29 @@ class SpriteRenderer {
 			.SetScale(scale.x, scale.y)
 			.SetPosition((worldPosition.x - this.contextPosition.x), (worldPosition.y - this.contextPosition.y));
 
-		if(parent) context
-			.Translate(-localPosition.x, -localPosition.y)
-			.Rotate(parent.LocalRotation)
-			.Translate(localPosition.x, localPosition.y);
+		// if (parent) context
+		// 	.Translate(-localPosition.x, -localPosition.y)
+		// 	.Rotate(parent.LocalRotation)
+		// 	.Translate(localPosition.x, localPosition.y);
 
 		context
 			.Rotate(localRotation)
 			.Translate(-anchoredX, -anchoredY);
 
 		if(graphic.contentType === 0) {
-			if(!image) return;
-			context.DrawImage(image, 0, 0, width, height);
+			if(!graphic.image?.isReady) return;
+			const image = this.GetImage(graphic.ImageId || '-1');
+			if(!image) throw new Error(`Image ${graphic.ImageId} not found`);
+			context.DrawImage(graphic, image, 0, 0, width, height);
 		} else {
-			context.Draw(graphic as GraphicPrimitive<any>, 0,0);
+			context.Draw(graphic as unknown as GraphicPrimitive<any>, 0,0);
 		}
 
 		if(this.debug)
 			context
-				.StrokeStyle(this.debugStrokeColor)
+				.LineWidth(1)
+				.StrokeStyle(`${this.debugStrokeColor}`)
+				.LineDash([])
 				.StrokeRect(anchoredX, anchoredY, 1, 1)
 				.StrokeRect(0, 0, width, height);
 

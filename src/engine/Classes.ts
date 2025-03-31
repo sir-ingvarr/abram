@@ -211,11 +211,22 @@ export class Vector extends Point {
 		return this;
 	}
 
+
 	DivideCoordinates(base: ICoordinates | number): Vector {
 		if(typeof base === 'number') {
 			return this.MultiplyCoordinates(1 / base);
 		}
 		return this.MultiplyCoordinates(new Vector(1 / base.x, 1 / base.y));
+	}
+
+	Rotate(angleRad: number): Vector {
+		const cos = Math.cos(angleRad);
+		const sin = Math.sin(angleRad);
+
+		return new Vector(
+			this.x * cos - this.y * sin,
+			this.x * sin + this.y * cos
+		);
 	}
 
 	get Normalized(): Vector {

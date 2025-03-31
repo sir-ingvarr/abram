@@ -7,8 +7,7 @@ import {ICoordinates} from '../../types/common';
 class SpriteRendererManager {
 	private static instance: SpriteRendererManager;
 	private spriteRenderer: SpriteRenderer;
-	private context?: CanvasContext2D;
-
+	private readonly context?: CanvasContext2D;
 	private constructor(canvas: Canvas, debug?: boolean) {
 		this.context = canvas.Context2D;
 		this.spriteRenderer = SpriteRenderer.GetInstance(this.context, debug);
@@ -27,29 +26,6 @@ class SpriteRendererManager {
 	}
 
 	public AddToRenderQueue(graphic: Graphic) {
-		// const prepared: IContextOpts = {
-		// 	Width: graphic.Width,
-		// 	Height: graphic.Height,
-		// 	layer: graphic.layer,
-		// 	contentType,
-		// 	parent: {
-		// 		LocalPosition: graphic.parent.LocalPosition,
-		// 		LocalRotation: graphic.parent.LocalRotation,
-		// 		WorldPosition: graphic.parent.WorldPosition,
-		// 		Scale: graphic.parent.Scale,
-		// 		anchors: graphic.parent.anchors,
-		// 		Parent: graphic.parent.Parent,
-		// 	}
-		// };
-		// if(graphic instanceof Sprite) {
-		// 	prepared.ImageId = graphic.ImageId;
-		// } else {
-		// 	prepared.shape = graphic.shape;
-		// 	prepared.options = graphic.options;
-		// 	prepared.type = graphic.type;
-		// 	prepared.dash = graphic.dash;
-		// 	prepared.drawMethod = graphic.drawMethod;
-		// }
 		this.spriteRenderer.AddToRenderQueue(graphic);
 	}
 

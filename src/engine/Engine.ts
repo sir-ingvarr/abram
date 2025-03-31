@@ -29,9 +29,10 @@ class Engine {
 	private fullScreen: boolean;
 	private loadScriptsPromises: Array<Promise<void>>;
 	private canvas: Canvas;
-	static instance: Engine;
+	private static _instance: Engine;
 
 	constructor (root: HTMLElement, options: EngineConfigOptions = { width: 800, height: 600 }) {
+		if(Engine._instance) throw new Error('Engine already instantiated, use Engine.Instance');
 		const {
 			width, height, fullscreen = false,
 			debug = false, drawFps = false,
@@ -44,7 +45,7 @@ class Engine {
 				colorSpace: ColorSpace.SRGB,
 			}
 		} = options;
-		Engine.instance = this;
+		Engine._instance = this;
 		this.loadScriptsPromises = [];
 		this.fullScreen = fullscreen;
 		this.root = root;
@@ -85,7 +86,7 @@ class Engine {
 	}
 
 	private SetCanvas(canvas: HTMLCanvasElement, width: number, height: number, canvasContextAttributes?: CanvasContext2DAttributes, bgColor?: RGBAColor) {
-		if(!this.root) return canvas;
+		if(!(this.root instanceof HTMLElement)) return canvas;
 		this.canvas = this.WrapCanvas(canvas, width, height, canvasContextAttributes, bgColor);
 		return this.InsertCanvas(this.root);
 	}
@@ -95,14 +96,14 @@ class Engine {
 	}
 
 	InsertCanvas (root: Element | Document): HTMLCanvasElement {
-		if(!(root instanceof Element) && !(root instanceof Document)) throw 'parent should be html Element or Document.';
+		if(!(root instanceof Element) && !(root instanceof Document)) throw new Error('parent should be html Element or Document.');
 		root.appendChild(this.canvas.CanvasElement);
 		return this.canvas.CanvasElement;
 	}
 
 	static get Instance(): Engine {
-		if(!Engine.instance) throw 'Engine not instantiated, call new Engine() first';
-		return Engine.instance;
+		if(!Engine._instance) throw new Error('Engine not instantiated, call new Engine() first');
+		return Engine._instance;
 	}
 
 	get Canvas(): Nullable<Canvas> {
@@ -120,7 +121,7 @@ class Engine {
 	async Start () {
 		await Promise.all(this.loadScriptsPromises);
 		this.loadScriptsPromises = [];
-		if(!this.canvas) throw 'Canvas not set, use CreateCanvas()';
+		if(!this.canvas) throw new Error('Canvas not set, use CreateCanvas()');
 		if(typeof InputSystem !== 'undefined') InputSystem.SetEventListeners();
 		this.gameLoopManager.Start();
 	}

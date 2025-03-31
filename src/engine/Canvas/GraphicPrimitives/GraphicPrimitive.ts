@@ -1,6 +1,6 @@
 import {CtxOptions, ShadowOptions} from '../../../types/GraphicPrimitives';
 import {RGBAColor, Segment} from '../../Classes';
-import {Circle, Polygon, PolygonalChain, Rect, SegmentList} from './Shapes';
+import {Circle, PolygonalChain, Rect, SegmentList} from './Shapes';
 import {ITransform} from '../../../types/GameObject';
 import Module from '../../Modules/Module';
 import SpriteRendererManager from '../../Managers/SpriteRendererManager';
@@ -17,9 +17,9 @@ const defaultOpts: CtxOptions = {
 export enum PrimitiveType {
     Circle,
     Rect,
-    Polygon,
     Line,
-	Lines
+	Lines,
+	Chain
 }
 
 export enum ShapeDrawMethod {
@@ -27,7 +27,7 @@ export enum ShapeDrawMethod {
 	Stroke
 }
 
-export type PrimitiveShape = Rect | Circle | Polygon | PolygonalChain | Segment | SegmentList;
+export type PrimitiveShape = Rect | Circle | PolygonalChain | Segment | SegmentList;
 
 export interface IGraphicPrimitive<T extends PrimitiveShape> {
 	layer: number,
@@ -39,7 +39,8 @@ export interface IGraphicPrimitive<T extends PrimitiveShape> {
 	parent: ITransform,
 	drawMethod: ShapeDrawMethod,
 	readonly Width: number,
-	readonly Height: number
+	readonly Height: number,
+	disrespectParent?: boolean,
 }
 
 export type GraphicPrimitiveConstructorParams<T extends PrimitiveShape> = {
@@ -49,7 +50,8 @@ export type GraphicPrimitiveConstructorParams<T extends PrimitiveShape> = {
 	shadow?: ShadowOptions,
 	layer?: number,
 	drawMethod?: ShapeDrawMethod,
-	shape: T
+	shape: T,
+	disrespectParent?: boolean,
 }
 
 export class GraphicPrimitive<Shape extends PrimitiveShape> extends Module implements IGraphicPrimitive<Shape> {
@@ -61,6 +63,7 @@ export class GraphicPrimitive<Shape extends PrimitiveShape> extends Module imple
 	public layer: number;
 	public parent: ITransform;
 	public drawMethod: ShapeDrawMethod;
+	public disrespectParent: boolean;
 
 	constructor(params: GraphicPrimitiveConstructorParams<Shape>) {
 		super({});
@@ -72,6 +75,7 @@ export class GraphicPrimitive<Shape extends PrimitiveShape> extends Module imple
 		this.HandleOptions(options, shadow);
 		this.parent = parent;
 		this.drawMethod = drawMethod;
+		this.disrespectParent = params.disrespectParent || false;
 	}
 
 	get Width() {

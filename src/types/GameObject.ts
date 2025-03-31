@@ -59,6 +59,8 @@ export interface ITransform extends IScalable {
     get LocalRotation(): number;
     set LocalRotation(value: number);
 
+    get WorldRotation(): number;
+
     get LocalRotationDeg(): number
     set LocalRotationDeg(value: number);
 

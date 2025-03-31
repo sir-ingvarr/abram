@@ -15,6 +15,7 @@ class Rocket extends GameObject {
             parent: this,
             params: {
                 layer: 2,
+                renderingStyle: RenderingStyle.World,
                 occlusionCulling: true,
                 particleBuffering: true,
                 graphic: () => new GraphicPrimitive({
@@ -24,15 +25,15 @@ class Rocket extends GameObject {
                     drawMethod: ShapeDrawMethod.Fill,
                 }),
                 lifeTime: () => Maths.RandomRange(.7, 2.5)*1000,
-                maxParticles: 30,
-                emitOverTime: () => Maths.RandomRange(5, 13, true),
+                maxParticles: 40,
+                emitOverTime: () => Maths.RandomRange(20, 40, true),
                 particleFollowers: [this.childParticleSystemGO],
                 emitEachTimeFrame: 2000,
-                gravityForceScale: 0.18,
+                gravityForceScale: 0.15,
                 initialColor: new RGBAColor(20, 20, 20, 210),
                 initialVelocity: () => Vector.Of(Maths.RandomRange(-200, 200), Maths.RandomRange(-290, -550)),
                 initialSize: () => Maths.RandomRange(8, 15),
-                initialPosition: () => Vector.Of(Maths.RandomRange(-540, 540), 350),
+                initialPosition: () => Vector.Of(Maths.RandomRange(-600, 600), Maths.RandomRange(370, 400)),
                 onParticleDestroy: this.onParticleDestroy,
             },
         });

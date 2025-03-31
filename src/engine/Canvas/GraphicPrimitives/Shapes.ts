@@ -157,126 +157,55 @@ export class SegmentList {
 
 export class PolygonalChain {
 	protected points: Array<ICoordinates>;
-	protected segments: Array<Segment>;
-	protected boundingBox: BoundingBox;
 	private readonly closed: boolean;
-	protected offset: ICoordinates;
 
-	constructor(points: Array<[number, number]>, closeChain?: boolean, offset: ICoordinates = new Vector() ) {
+	constructor(points: Array<Point>, closeChain?: boolean) {
 		this.closed = closeChain || false;
-		this.offset = offset;
-		let minX = points[0][0];
-		let maxX = points[0][0];
-		let minY = points[0][1];
-		let maxY = points[0][1];
-		this.AddPoint(new Vector(minX, maxY));
-		for(let index = 1; index < this.PointsCount; index++) {
-			const [x, y] = points[index];
-			this.AddPoint(new Vector(x, y));
-			if(x < minX) minX = x;
-			else if(x > maxX) maxX = x;
-			if(y < minY) minY = y;
-			else if(y > maxY) maxY = y;
-		}
-		this.boundingBox = new BoundingBox(new Point(minX, maxY), new Point(maxX, minY), this.offset);
+		this.points = points || [];
 	}
 
-
 	get Width() {
-		return this.boundingBox.Width;
+		return 0;
 	}
 
 	get Height() {
-		return this.boundingBox.Height;
-	}
-
-	set Offset(val: ICoordinates) {
-		this.offset = val.Copy();
-	}
-
-	get Offset(): ICoordinates {
-		return this.offset.Copy();
-	}
-
-	GetPointRealPosition(index: number): ICoordinates {
-		const point = this.points[index];
-		return point.Copy().Set(point.x + this.offset.x, point.y + this.offset.y);
-	}
-
-	TotalLength(): number {
-		return this.segments.reduce((acc,segment) => acc + segment.Length, 0);
-	}
-
-	private AddSegment(segment: Segment) {
-		if(this.closed) this.segments.pop();
-		this.segments.push(segment);
-		if(!this.closed) return;
-		this.segments.push(
-			new Segment(
-				segment.to.Copy(),
-				this.segments[0].from.Copy(),
-			)
-		);
+		return 0;
 	}
 
 	AddPoint(point: ICoordinates): void {
+		if(this.closed) this.points.pop();
 		this.points.push(point);
-		if(this.PointsCount === 1) return;
-		const current = this.points[this.points.length - 1];
-		this.AddSegment(new Segment(current, point));
+		if(!this.closed) return;
+		this.points.push(this.points[this.points.length - 1]);
 	}
 
 	IsPointOnLine(point: ICoordinates): boolean {
 		if(this.points.some(existingPoint => existingPoint.x === point.x && existingPoint.y === point.y))
 			return true;
-		return this.Segments.some(segment => segment.HasPoint(point));
+		let hasPoint = false;
+		for(let i = 1; i < this.points.length; i++) {
+			const segment = new Segment(this.points[i - 1], this.points[i]);
+			hasPoint = segment.HasPoint(point);
+			if(hasPoint) break;
+		}
+		return hasPoint;
 	}
 
 	get Points(): Array<ICoordinates> {
-		return Array.from(this.points.values());
+		return this.points;
+	}
+
+	get Count(): number {
+		return this.points.length;
 	}
 
 	get SegmentsUnsafe(): Array<Segment> {
-		return this.segments;
-	}
-
-	get Segments(): Array<Segment> {
-		return this.segments.map(val => val.Copy());
-	}
-
-	get PointsCount(): number {
-		return this.points.length;
-	}
-}
-
-export class Polygon extends PolygonalChain implements IShape {
-	constructor(points: Array<[number, number]>, offset: ICoordinates = new Vector()) {
-		super(points, true, offset);
-	}
-
-	get BoundingBox(): BoundingBox {
-		return this.boundingBox.Copy();
-	}
-
-	get Center(): ICoordinates {
-		return this.boundingBox.Center;
-	}
-
-	IsPointInside(point: ICoordinates): boolean {
-		if(!this.boundingBox.IsPointInside(point)) return false;
-		if(this.IsPointOnLine(point)) return true;
-		// TODO
-		return false;
-	}
-
-	IsIntersectingOther(): boolean {
-		return false;
-		// TODO
-	}
-
-	GetIntersectionPoints(): Array<ICoordinates> {
-		return [];
-		// TODO
+		const segments: Array<Segment> = [];
+		for(let i = 1; i < this.points.length; i++) {
+			segments.push(new Segment(this.points[i - 1], this.points[i]));
+		}
+		if(this.closed) segments.push(new Segment(this.points[this.points.length - 1], this.points[0]));
+		return segments;
 	}
 }
 

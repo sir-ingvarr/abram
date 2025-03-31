@@ -28,7 +28,7 @@ class RigidBody extends Module {
 	private mass: number;
 	private useGravity: boolean;
 	private gravityScale: number;
-	private forces: Array<Vector>;
+	private force: Vector;
 	private torque: number;
 	public collidedRb?: RigidBody;
 
@@ -43,7 +43,7 @@ class RigidBody extends Module {
 		this.centerOfMass = centerOfMass;
 		this.drag = drag;
 		this.angularVelocity = angularVelocity;
-		this.forces = [];
+		this.force = Vector.Zero;
 		this.torque = 0;
 		this.gravityScale = gravityScale;
 	}
@@ -128,7 +128,7 @@ class RigidBody extends Module {
 	}
 
 	AddForce(force: Vector): void {
-		this.forces.push(force.Copy());
+		this.force.Add(force);
 	}
 
 	AddTorque(torque: number) {
@@ -143,10 +143,9 @@ class RigidBody extends Module {
 	}
 
 	private CalcVelocityByForces() {
-		const resultingForce = Vector.Add(Vector.Zero, ...this.forces);
-		const accelerationVector = Vector.MultiplyCoordinates(1 / this.mass, resultingForce);
+		const accelerationVector = Vector.MultiplyCoordinates(1 / this.mass, this.force);
 		this.velocity.Add(accelerationVector);
-		this.forces = [];
+		this.force = Vector.Zero;
 		this.ApplyDrag();
 		const physicalMovement = Vector.MultiplyCoordinates(Time.deltaTime / 100, this.velocity);
 		this.gameObject?.transform.Translate(physicalMovement);

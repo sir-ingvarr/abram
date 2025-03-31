@@ -1,4 +1,4 @@
-const { Classes: {Point, Vector, PolarCoordinates, RGBAColor, Segment, Maths}, Camera, GameObject, Sprite, ImageWrapper, Time, GraphicPrimitives: { GraphicPrimitive, PrimitiveType, PrimitiveShape, ShapeDrawMethod }, Shapes: { Circle, SegmentList } } = window.Abram;
+const { Classes: {Point, Vector, PolarCoordinates, RGBAColor, Segment, Maths}, Camera, GameObject, Sprite, ImageWrapper, Time, GraphicPrimitives: { GraphicPrimitive, PrimitiveType, PrimitiveShape, ShapeDrawMethod }, Shapes: { Circle, SegmentList }, TrailRenderer } = window.Abram;
 
 
 class CameraMovement extends GameObject {
