@@ -55,5 +55,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         })
     }
     await engine.Instantiate(Rocket, { position: Vector.Zero, onParticleDestroy: SpawnTheExplosion, childParticleSystemGO: Smoke });
-    await engine.RequestFullScreen();
+    document.addEventListener('click', async (e) => {
+        await engine.RequestFullScreen();
+    })
 });

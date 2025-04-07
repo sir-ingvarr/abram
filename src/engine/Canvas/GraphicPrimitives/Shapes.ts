@@ -245,7 +245,7 @@ export class CircleArea extends Circle implements IShape {
 	}
 
 	get Center() {
-		return Vector.Of(this.offset.x + this.center.x, this.offset.y + this.center.y);
+		return Vector.Add(this.center, this.offset);
 	}
 
 	set Offset (newOffset: ICoordinates) {

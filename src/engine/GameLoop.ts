@@ -10,6 +10,7 @@ import {GameObjectManager} from './Managers/GameObjectManager';
 import Time from './Globals/Time';
 import SpriteRendererManager from './Managers/SpriteRendererManager';
 import Camera from './Modules/Camera';
+import CollisionsManager from './Managers/CollisionsManager';
 
 type InstantiateOpts = {
 	gameObject: IGameObjectConstructable<any>,
@@ -36,7 +37,7 @@ class GameLoop {
 	private readonly drawFps: boolean;
 	private readonly gameObjectManager: GameObjectManager;
 	private readonly spriteRendererManager: SpriteRendererManager;
-	// private collisionsManager: CollisionsManager;
+	private collisionsManager: CollisionsManager;
 	private readonly fpsProvider: FpsProvider;
 	private readonly canvas: Canvas;
 	private readonly instantiateQueue: Queue<InstantiateOpts & { callOnDone: AnyFunc }> = new Queue<InstantiateOpts & { callOnDone: AnyFunc }>({data: []});
@@ -54,7 +55,7 @@ class GameLoop {
 		this.frameDelay = this.targetFps && this.targetFps < 60 ? 1000 / this.targetFps : 0;
 		this.gameObjectManager = new GameObjectManager({ modules: [], context: this.canvas.Context2D});
 		this.spriteRendererManager = SpriteRendererManager.GetInstance(canvas, debug);
-		// this.collisionsManager = new CollisionsManager({ modules: [] });
+		this.collisionsManager = new CollisionsManager({ modules: [] });
 
 		this.instantiateQueue = new Queue<InstantiateOpts & { callOnDone: AnyFunc }>({data: []});
 
@@ -125,7 +126,7 @@ class GameLoop {
 		this.gameObjectManager.Update();
 		this.spriteRendererManager.SetCameraPosition(Camera.GetInstance({}).Position);
 		this.spriteRendererManager.DrawCallsFinished();
-		// this.collisionsManager.Update();
+		this.collisionsManager.Update();
 		if(this.drawFps) {
 			this.canvas.Context2D
 				.FillStyle('white')

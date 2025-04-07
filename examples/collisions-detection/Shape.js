@@ -1,5 +1,5 @@
 
-const { GameObject, GraphicPrimitives: { CirclePrimitive, RectPrimitive, GraphicPrimitive, PrimitiveType }, Collider2D, Collision: { Collider2DEvent, Collider2DType }, Shapes: {Circle, Rect, CircleArea}, ImageWrapper, InputSystem, Classes: {Vector, Maths}, RigidBody } = window.Abram;
+const { GameObject, GraphicPrimitives: { CirclePrimitive, RectPrimitive, GraphicPrimitive, PrimitiveType }, Collider2D, Collision: { Collider2DEvent, Collider2DType }, Shapes: {Circle, Rect, CircleArea}, ImageWrapper, InputSystem, Classes: {Vector, Maths, RGBAColor}, RigidBody } = window.Abram;
 class Shape extends GameObject {
 	collider;
 	constructor(params) {
@@ -9,11 +9,12 @@ class Shape extends GameObject {
 		this.verticalDir = 0;
 		this.layer = params.layer;
 		this.input = params.input || 0;
+		this.initialPosition = params.position;
+		this.graphic = null;
 	}
 
 	OnCollide(self, other) {
-		const module = self.parent.gameObject.GetModuleByName(GraphicPrimitive.constructor.name);
-		console.log('collision');
+		this.module.options.color = new RGBAColor(255, 0, 0, 255).ToHex();
 	}
 
 	Start() {
@@ -21,19 +22,15 @@ class Shape extends GameObject {
 
 		const size = 150;
 
-		const random = Math.random() < 0.5;
-		const graphic = new GraphicPrimitive({
-			type: random > 0.5 ? PrimitiveType.Circle : PrimitiveType.Rect,
-			shape: random > 0.5
-				? new CircleArea(size / 2, new Point())
-				: new Rect(new Point(), new Point(size, size)),
-			parent: this.Transform,
+		this.graphic = new GraphicPrimitive({
+			type: PrimitiveType.Circle,
+			shape: new CircleArea(size / 2, this.initialPosition),
+			parent: this.transform,
+
 		});
 
-		graphic.parent = this.transform;
-
 		this.collider = new Collider2D({
-			shape: new CircleArea(size / 2 * Math.max(this.transform.Scale.x, this.transform.Scale.y), new Point()),
+			shape: new CircleArea(size / 2, this.initialPosition),
 			type: Collider2DType.Collider,
 			parent: this.transform,
 		});
@@ -41,10 +38,10 @@ class Shape extends GameObject {
 		this.collider.On(Collider2DEvent.OnCollision2DEnter, this.OnCollide.bind(this));
 
 
-		this.rigidBody = new RigidBody({useGravity: true, gravityScale: 0.4, drag: 0.4});
+		this.rigidBody = new RigidBody({useGravity: true, gravityScale: 0.4, drag: 1});
 
 		this.RegisterModule(this.rigidBody);
-		// this.RegisterModule(graphic);
+		this.RegisterModule(this.graphic);
 		this.RegisterModule(this.collider);
 	}
 
@@ -80,7 +77,7 @@ class Shape extends GameObject {
 
 		this.prevHorDir = this.horizontalDir || this.prevHorDir;
 		if(shouldStand) {
-			this.rigidBody.AddForce(Vector.MultiplyCoordinates(3, new Vector(this.horizontalDir, 0)));
+			this.rigidBody.AddForce(Vector.MultiplyCoordinates(1, new Vector(this.horizontalDir, 0)));
 		}
 		super.Update();
 	}

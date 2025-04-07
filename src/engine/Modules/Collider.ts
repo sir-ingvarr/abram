@@ -1,16 +1,20 @@
 import Rigidbody from './Rigidbody';
-import {IShape} from '../../types/common';
-import {Circle, CircleArea} from '../Canvas/GraphicPrimitives/Shapes';
-import {Point, RGBAColor, Vector} from '../Classes';
+import {CircleArea} from '../Canvas/GraphicPrimitives/Shapes';
+import {RGBAColor, Vector} from '../Classes';
 import EventEmitterModule from './EventEmitterModule';
 import CollisionsManager from '../Managers/CollisionsManager';
 import {ITransform} from '../../types/GameObject';
-import {GraphicPrimitive, PrimitiveType, ShapeDrawMethod} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
+import {
+	GraphicPrimitive,
+	PrimitiveShape,
+	PrimitiveType,
+	ShapeDrawMethod,
+} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
 import SpriteRenderer from '../Managers/SpriteRenderer';
 
 type Collider2DParams = {
     rb?: Rigidbody,
-    shape: IShape,
+    shape: PrimitiveShape,
     type: Collider2DType,
     parent: ITransform,
 }
@@ -31,8 +35,9 @@ export enum Collider2DType {
 
 class Collider2D extends EventEmitterModule {
 	public parent: ITransform;
-	public shape: IShape;
-	// private isColliding = false;
+	public shape: PrimitiveShape;
+	private prevState = false;
+	private isColliding = false;
 	private type: Collider2DType;
 	private colliderGraphic: GraphicPrimitive<any>;
 
@@ -47,7 +52,7 @@ class Collider2D extends EventEmitterModule {
 		this.shape = shape;
 		this.colliderGraphic = new GraphicPrimitive({
 			type: PrimitiveType.Circle,
-			shape:	new Circle(this.shape.Width / 2, new Point()),
+			shape:	this.shape,
 			options: { strokeStyle: new RGBAColor(0, 180).ToHex() },
 			layer: 5,
 			drawMethod: ShapeDrawMethod.Stroke,
@@ -68,29 +73,34 @@ class Collider2D extends EventEmitterModule {
 	}
 
 	OnCollision2DEnter(other: Collider2D) {
-		// this.isColliding = true;
+		if(this.prevState) return;
+		this.prevState = false;
+		this.isColliding = true;
 		this.Emit(Collider2DEvent.OnCollision2DEnter, this, other);
 	}
 
 	OnCollision2DLeave() {
-		// this.isColliding = true;
+		if(!this.prevState) return;
+		this.prevState = true;
+		this.isColliding = false;
 		this.Emit(Collider2DEvent.OnCollision2DLeave, this);
 	}
 
 	OnTriggerEnter(other: Collider2D) {
 		// this.isColliding = true;
-		this.Emit(Collider2DEvent.OnCollision2DEnter, this, other);
+		this.Emit(Collider2DEvent.OnTriggerEnter, this, other);
 	}
 
 	OnTriggerLeave(other: Collider2D) {
 		// this.isColliding = false;
-		this.Emit(Collider2DEvent.OnCollision2DLeave, this, other);
+		this.Emit(Collider2DEvent.OnTriggerExit, this, other);
 	}
 
-	IsCollidingOther(other: Collider2D): boolean {
-		const shape = other.shape;
-		return this.shape.IsIntersectingOther(shape);
-	}
+	// IsCollidingOther(other: Collider2D): boolean {
+		// const shape = other.shape;
+		// return this.shape.IsIntersectingOther(shape);
+		// return false;
+	// }
 
 	override Destroy() {
 		super.Destroy();
@@ -99,8 +109,13 @@ class Collider2D extends EventEmitterModule {
 
 	override Update() {
 		super.Update();
-		this.shape.Offset = this.parent.WorldPosition;
+		// this.shape.Offset = this.parent.WorldPosition;
+		this.colliderGraphic.shape = this.shape;
 		SpriteRenderer.GetInstance().AddToRenderQueue(this.colliderGraphic);
+	}
+
+	get IsColliding() {
+		return this.isColliding;
 	}
 
 }

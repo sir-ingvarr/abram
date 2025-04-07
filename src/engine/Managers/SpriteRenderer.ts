@@ -140,10 +140,8 @@ class SpriteRenderer {
 		const {
 			worldPosition,
 			scale,
-			// localPosition,
 			localRotation,
 			anchors,
-			// parent
 		} = params;
 
 		const anchoredX = anchors.x * width;
@@ -152,11 +150,6 @@ class SpriteRenderer {
 		context
 			.SetScale(scale.x, scale.y)
 			.SetPosition((worldPosition.x - this.contextPosition.x), (worldPosition.y - this.contextPosition.y));
-
-		// if (parent) context
-		// 	.Translate(-localPosition.x, -localPosition.y)
-		// 	.Rotate(parent.LocalRotation)
-		// 	.Translate(localPosition.x, localPosition.y);
 
 		context
 			.Rotate(localRotation)

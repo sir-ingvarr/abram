@@ -1,6 +1,6 @@
 import Module from './Module';
 import Sprite from './Sprite';
-import {Iterator} from '../Classes';
+import {Iterator, Maths} from '../Classes';
 import Time from '../Globals/Time';
 
 interface AnimatorOptions {
@@ -60,12 +60,15 @@ class Animator extends Module {
 		if(!this.stateMap[newState]) throw 'invalid state';
 		this.state = newState;
 		this.currentStateData = this.stateMap[newState];
-		this.UpdateFrame();
+		this.UpdateFrame(1);
 	}
 
-	UpdateFrame() {
+	UpdateFrame(frames: number) {
 		if(!this.currentStateData) return;
-		this.controlledGraphic.image.ImageId = this.currentStateData.Next.value;
+		for(let i = 0; i < frames; i++) {
+			this.currentStateData.Next;
+		}
+		this.controlledGraphic.image.ImageId = this.currentStateData.Current.value;
 	}
 
 
@@ -74,8 +77,9 @@ class Animator extends Module {
 		if(!this.playing) return;
 		this.elapsedTime += Time.deltaTime;
 		if(this.elapsedTime < this.frameDelay) return;
+		const framesDone = Maths.Clamp(Math.floor(this.elapsedTime % this.frameDelay), 1, 10);
 		this.elapsedTime = 0;
-		this.UpdateFrame();
+		this.UpdateFrame(framesDone);
 	}
 }
 

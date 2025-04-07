@@ -11,7 +11,6 @@ class GameObject<T extends BasicObjectsConstructorParams = BasicObjectsConstruct
 		super(params);
 		this.childManager = new GameObjectManager({ modules: [], parent: this, context: this.context });
 		this.modulesManager = new ExecutableManager({ modules: [], parent: this, context: this.context });
-		this.needDestroy = false;
 	}
 
 	override Update() {

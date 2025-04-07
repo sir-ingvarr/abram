@@ -54,18 +54,18 @@ export type GraphicPrimitiveConstructorParams<T extends PrimitiveShape> = {
 	disrespectParent?: boolean,
 }
 
-export class GraphicPrimitive<Shape extends PrimitiveShape> extends Module implements IGraphicPrimitive<Shape> {
+export class GraphicPrimitive<IShape extends PrimitiveShape> extends Module implements IGraphicPrimitive<IShape> {
 	public options: CtxOptions;
 	public dash: Array<number> = [];
 	public type: PrimitiveType;
 	public contentType: 0 | 1;
-	public shape: Shape;
+	public shape: IShape;
 	public layer: number;
 	public parent: ITransform;
 	public drawMethod: ShapeDrawMethod;
 	public disrespectParent: boolean;
 
-	constructor(params: GraphicPrimitiveConstructorParams<Shape>) {
+	constructor(params: GraphicPrimitiveConstructorParams<IShape>) {
 		super({});
 		const { shape, type, layer = 0, options = {}, shadow = {}, parent, drawMethod = ShapeDrawMethod.Fill } = params;
 		this.type = type;

@@ -299,8 +299,8 @@ export class Segment {
 		return new Point(x1 + ua * (x2 - x1), y1 + ua * (y2 - y1));
 	}
 
-	get Length() : number {
-		return Math.sqrt(Math.pow(this.to.x - this.from.x, 2) + Math.pow(this.to.y - this.from.y, 2));
+	get Length(): number {
+		return Math.hypot(this.to.x - this.from.x, this.to.y - this.from.y);
 	}
 
 	Copy(): Segment {
@@ -448,9 +448,17 @@ export class RGBAColor {
 		return Maths.Clamp(val, 0, 255);
 	}
 
+	get Red () {
+		return this.red;
+	}
+
 	set Red (val: number) {
 		this.red = this.Clamp(val);
 		this.updateHex();
+	}
+
+	get Green () {
+		return this.green;
 	}
 
 	set Green (val: number) {
@@ -458,15 +466,25 @@ export class RGBAColor {
 		this.updateHex();
 	}
 
+	get Blue () {
+		return this.blue;
+	}
+
 	set Blue (val: number) {
 		this.blue = this.Clamp(val);
 		this.updateHex();
+	}
+
+	get Alpha () {
+		return this.alpha;
 	}
 
 	set Alpha (val: number) {
 		this.alpha = this.Clamp(val);
 		this.updateHex();
 	}
+
+
 
 	updateHex () {
 		this.colorHex = this.ToHex();

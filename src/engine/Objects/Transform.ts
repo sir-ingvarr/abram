@@ -1,6 +1,7 @@
 import {Vector} from '../Classes';
-import {IBasicObject, IGameObject, ITransform} from '../../types/GameObject';
+import {IGameObject, ITransform} from '../../types/GameObject';
 import {ICoordinates, IPoint, Nullable} from '../../types/common';
+import BasicObject from './BasicObject';
 
 type TransformOptions = {
     localPosition?: ICoordinates,
@@ -19,10 +20,10 @@ class Transform implements ITransform {
 	private localRotationDeg: number;
 	private localRotation: number;
 	private parent: Nullable<ITransform>;
-	public gameObject: IGameObject | IBasicObject;
+	public gameObject: IGameObject | BasicObject;
 	private anchors: { x: number, y: number };
 
-	constructor(go: IGameObject | IBasicObject, params: TransformOptions) {
+	constructor(go: IGameObject | BasicObject, params: TransformOptions) {
 		const {
 			localPosition = Vector.Zero,
 			localScale = Vector.One,

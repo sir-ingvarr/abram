@@ -283,7 +283,6 @@ class ParticleSystem extends ExecutableManager {
 			particle.collider?.Destroy();
 		}
 		this.UnregisterModuleById(particle.Id);
-		particle.NeedDestroy = false;
 	}
 
 	private ExecuteLifeTimeCalculations(particle: Particle) {
@@ -313,7 +312,7 @@ class ParticleSystem extends ExecutableManager {
 				const followerPromises = followersConstructs.map(follower => Engine.Instance.Instantiate<BasicObjectsConstructorParams>(follower, {}));
 				props.followers = await Promise.all(followerPromises);
 			}
-			particle.SetParams(props);
+			particle.SetInitialParams(props);
 			particle.initialScale = Vector.One;
 		} else {
 			const graphic = this.SetOrExecute(this.graphic);

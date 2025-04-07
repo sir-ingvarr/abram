@@ -5,6 +5,8 @@ import Rigidbody from '../engine/Modules/Rigidbody';
 import {BasicObjectsConstructorParams} from '../engine/Objects/BasicObject';
 
 interface IWithLifeCycle {
+    get StartExecuted(): boolean;
+    get IsWaitingDestroy(): boolean;
     Start(): void;
     Destroy(): void;
     Update(): void;
@@ -27,7 +29,7 @@ interface IScalable {
 export interface IExecutable extends IWithLifeCycle {
     name: string;
     active: boolean;
-    gameObject?: IBasicObject;
+    gameObject?: IGameObject;
     parent?: ITransform;
     set Active(value: boolean);
     get Active(): boolean;
@@ -82,6 +84,7 @@ export interface IGameObject extends IBasicObject, IWithContext {
 
     AppendChild(child: IGameObject): string;
     RegisterModule(module: IExecutable): void;
+    RemoveChildById(id: string): void;
     GetModuleByName(name: string): Nullable<IExecutable>;
     GetChildById(id: string): Nullable<IExecutable>;
 }

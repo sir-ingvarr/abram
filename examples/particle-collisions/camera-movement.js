@@ -1,4 +1,4 @@
-const { Classes: {Point}, Camera } = window.Abram;
+const { Classes: {Point}, Camera, GameObject } = window.Abram;
 
 
 class CameraMovement extends GameObject {

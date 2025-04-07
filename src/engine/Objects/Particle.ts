@@ -43,10 +43,10 @@ class Particle extends BasicObject {
 
 	constructor(params: ParticleConstructorOptions) {
 		super(params);
-		this.SetParams(params);
+		this.SetInitialParams(params);
 	}
 
-	SetParams(params: ParticleConstructorOptions) {
+	SetInitialParams(params: ParticleConstructorOptions) {
 		const {
 			graphic, lifeTime = 10, layer, drag = 0,
 			initialColor = new RGBAColor(), followers,
@@ -56,6 +56,7 @@ class Particle extends BasicObject {
 			graphic.layer = layer;
 			this.graphic = graphic;
 		}
+		this._startExecuted = false;
 		this.drag = Maths.Clamp(drag, -1 ,1);
 		this.lifeTime = lifeTime;
 		this.size = size;

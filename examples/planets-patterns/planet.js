@@ -18,6 +18,16 @@ class Planet extends GameObject {
 			});
 		this.randomRotationFactor = Math.random() >= 0.5 ? 1 : -1;
 		this.selfRotationSpeed = params.selfRotationSpeed || Maths.RandomRange(5, 40);
+
+		this.colors = [
+			RGBAColor.FromHex('#ff3b3b'),
+			RGBAColor.FromHex('#ff933b'),
+			RGBAColor.FromHex('#fffc3b'),
+			RGBAColor.FromHex('#81f374'),
+			RGBAColor.FromHex('#58ddfb'),
+			RGBAColor.FromHex('#3b8fff'),
+			RGBAColor.FromHex('#a56af4'),
+		];
 	}
 
 	Start() {
@@ -34,12 +44,21 @@ class Planet extends GameObject {
 			}));
 		}
 
+		if(this.name === 'sun') return;
 		this.RegisterModule(new TrailRenderer({
-			parentTransform: this.transform,
+			gameObject: this,
 			layer: 3,
-			color: new RGBAColor(255, 0, 0, 170),
-			width: 3,
-			lifeTime: 12500,
+			initialColor: RGBAColor.FromHex('#ff3b3b'),
+			widthOverTrail: (factor, initial) => {
+				const realFactor = Maths.Clamp(factor, 0.3, 1);
+				return initial * (1 - realFactor);
+			},
+			colorOverTrail: (factor) => {
+				return this.colors[Math.round(Maths.Lerp(0, 6, factor))].Copy();
+			},
+			initialWidth: this.radius,
+			lifeTime: 3000,
+			newSegmentEachMS: 20,
 		}));
 	}
 
@@ -53,9 +72,5 @@ class Planet extends GameObject {
 		this.transform.LocalRotation += this.selfRotationSpeed * Time.deltaTime * this.randomRotationFactor / 10000;
 		this.transform.LocalPosition = new PolarCoordinates({ r: this.rotateRadius, angle: this.angle })
 			.ToCartesian();
-		// if(this.transform.Parent) {
-		// 	this.transform.LocalPosition = this.transform.LocalPosition
-		// 		.Subtract(new Point(this.transform.Parent.gameObject.radius * this.transform.Parent.Anchors.x, this.transform.Parent.gameObject.radius * this.transform.Parent.Anchors.y));
-		// }
 	}
 }
