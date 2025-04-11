@@ -2,11 +2,12 @@ import BasicObject, {BasicObjectsConstructorParams} from './BasicObject';
 import {ICoordinates, Nullable} from '../../types/common';
 import {Sprite, Time} from '../../index';
 import {Maths, RGBAColor, Vector} from '../Classes';
-import Collider2D, {Collider2DEvent, Collider2DType} from '../Modules/Collider';
-import {CircleArea} from '../Canvas/GraphicPrimitives/Shapes';
+import Collider2D, {Collider2DEvent} from '../Modules/Collider';
+// import {CircleArea} from '../Canvas/GraphicPrimitives/Shapes';
 import {GraphicPrimitive, IGraphicPrimitive} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
 import SpriteRenderer from '../Managers/SpriteRenderer';
 import {IBasicObject} from '../../types/GameObject';
+// import Rigidbody from '../Modules/Rigidbody';
 
 export interface IFollower {
 	Destroy(): void
@@ -21,14 +22,14 @@ export type ParticleConstructorOptions = BasicObjectsConstructorParams & {
 	gravityScale?: number;
     initialColor?: RGBAColor;
     initialVelocity?: Vector;
-    OnCollide?: (self: Collider2D, other: Collider2D) => void;
-    collider?: Collider2D;
+   OnCollide?: (self: Collider2D, other: Collider2D) => void;
+   collider?: Collider2D;
 	followers?: Array<IBasicObject>;
 }
 
 class Particle extends BasicObject {
 	public graphic: Nullable<IGraphicPrimitive<any> | Sprite>;
-	private size: number;
+	// private size: number;
 	public drag: number;
 	public initialScale: ICoordinates;
 	public age: number;
@@ -50,7 +51,7 @@ class Particle extends BasicObject {
 		const {
 			graphic, lifeTime = 10, layer, drag = 0,
 			initialColor = new RGBAColor(), followers,
-			size = 10, initialVelocity = new Vector(), OnCollide, collider, gravityScale = 1
+			initialVelocity = new Vector(),/* size = 100 ,*/ OnCollide,/* collider,*/ gravityScale = 1
 		} = params;
 		if(graphic) {
 			graphic.layer = layer;
@@ -59,7 +60,7 @@ class Particle extends BasicObject {
 		this._startExecuted = false;
 		this.drag = Maths.Clamp(drag, -1 ,1);
 		this.lifeTime = lifeTime;
-		this.size = size;
+		// this.size = size;
 		this.gravityScale = gravityScale;
 		this.age = 0;
 		this.followers = followers;
@@ -70,11 +71,22 @@ class Particle extends BasicObject {
 		if(this.graphic) this.graphic.parent = this.transform;
 		this.OnCollide = OnCollide;
 		if(!this.OnCollide) return;
-		this.collider = collider || new Collider2D({
-			shape: new CircleArea(this.size * Math.max(this.initialScale.x, this.initialScale.y), this.transform.WorldPosition.Copy()),
-			type: Collider2DType.Collider,
-			parent: this.transform,
-		});
+		// const rb = new Rigidbody({
+		// 	gravityScale: this.gravityScale,
+		// 	velocity: this.velocity,
+		// 	drag: this.drag,
+		// 	mass: 1,
+		// 	useGravity: true,
+		// 	isStatic: false,
+		// });
+		//
+		// this.RegisterModule(rb);
+		// this.collider = collider || new Collider2D({
+		// 	shape: new CircleArea(this.size * Math.max(this.initialScale.x, this.initialScale.y), this.transform.WorldPosition.Copy()),
+		// 	type: Collider2DType.Collider,
+		// 	parent: this.transform,
+		// 	rb: rb,
+		// });
 		this.collider.On(Collider2DEvent.OnCollision2DEnter, this.OnCollide);
 	}
 

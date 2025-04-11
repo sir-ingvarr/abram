@@ -14,9 +14,9 @@ class GoldenSparks extends GameObject {
             parent: this,
             params: {
                 renderingStyle: RenderingStyle.World,
-                layer: 2,
+                layer: 5,
                 occlusionCulling: true,
-                particleBuffering: true,
+                particleBuffering: false,
                 graphic: () => new GraphicPrimitive({
                     type: PrimitiveType.Rect,
                     shape: new Rect(new Point(), new Point(10, 10)),
@@ -33,7 +33,7 @@ class GoldenSparks extends GameObject {
                     color.Alpha = 180;
                     return initial.LerpTo(color, factor)
                 },
-                gravityForceScale: 0,
+                gravityForceScale: () => Maths.RandomRange(0.01, 0.2),
                 initialVelocity: Vector.Zero,
                 initialSize: () => Maths.RandomRange(2, 6),
                 scaleOverLifeTime: factor => ({ x: Math.sin(2 * Math.PI * factor), y: Math.sin(2 * Math.PI * factor)}),

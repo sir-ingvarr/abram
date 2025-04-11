@@ -102,7 +102,7 @@ class Man extends GameObject {
             this.animator.SetState('jump');
         }
         this.transform.LocalScale = new Vector((this.horizontalDir || this.prevHorDir) * this.size, this.size);
-        const delta = Time.deltaTime / 1000;
+        const delta = Time.DeltaTimeSeconds;
         if(shouldStand) {
             this.rigidBody.AddForce(Vector.MultiplyCoordinates(3, new Vector(this.horizontalDir, 0)));
             this.rigidBody.AngularVelocity = 0;

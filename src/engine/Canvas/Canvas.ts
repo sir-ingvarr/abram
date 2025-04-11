@@ -14,7 +14,7 @@ export type CanvasConstructorParams = {
 
 class Canvas {
 	private readonly canvas: HTMLCanvasElement;
-	private context2D: CanvasContext2D;
+	private readonly context2D: CanvasContext2D;
 	private width: number;
 	private height: number;
 	private bgColor: RGBAColor;
@@ -30,11 +30,10 @@ class Canvas {
 
 		this.width = width;
 		this.height = height;
-		this.context2D =
-			new CanvasContext2D(
-				this.canvas.getContext('2d') as CanvasRenderingContext2D,
-				this.bgColor.ToHex(), this.width, this.height
-			);
+		this.context2D = new CanvasContext2D(
+			this.canvas.getContext('2d') as CanvasRenderingContext2D,
+			this.bgColor.ToHex(), this.width, this.height
+		);
 	}
 
 

@@ -33,9 +33,9 @@ class ParticleSystemTest extends GameObject {
                     })
                 },
                 lifeTime: () => Maths.RandomRange(3.5, 6.5) * 1000,
-                maxParticles: 5000,
-                emitOverTime: 10,
-                emitEachTimeFrame: 20,
+                maxParticles: 10000,
+                emitOverTime: 50,
+                emitEachTimeFrame: 50,
                 initialColor: () => {
                     const random = Maths.RandomRange(0, colors.length - 1, true)
                     return colors[random];
@@ -45,7 +45,7 @@ class ParticleSystemTest extends GameObject {
                     color.Alpha = 150;
                     return initial.LerpTo(color, factor)
                 },
-                gravityForceScale: () => Maths.RandomRange(0.5, 1),
+                gravityForceScale: () => Maths.RandomRange(0.6, 1),
                 rotationOverLifeTime: factor => Maths.Lerp(-10, 0, factor),
                 initialVelocity: () => Vector.Zero,
                 initialSize: () => Maths.RandomRange(20, 80),

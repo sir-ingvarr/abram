@@ -31,8 +31,8 @@ class GameLoop {
 	private isPlaying: boolean;
 	private prevFrameTime: number;
 	private frameDelay: number;
-	private targetFps: number;
-	// private frameTime: number;
+	private readonly targetFps: number;
+	private targetFrameDelay: number;
 	private readonly debug: boolean;
 	private readonly drawFps: boolean;
 	private readonly gameObjectManager: GameObjectManager;
@@ -52,7 +52,7 @@ class GameLoop {
 		this.canvas = canvas;
 		this.drawFps = drawFps;
 		this.targetFps = targetFps;
-		this.frameDelay = this.targetFps && this.targetFps < 60 ? 1000 / this.targetFps : 0;
+		this.targetFrameDelay = this.targetFps ? 1000 / this.targetFps : 0;
 		this.gameObjectManager = new GameObjectManager({ modules: [], context: this.canvas.Context2D});
 		this.spriteRendererManager = SpriteRendererManager.GetInstance(canvas, debug);
 		this.collisionsManager = new CollisionsManager({ modules: [] });
@@ -65,13 +65,13 @@ class GameLoop {
 			global.addEventListener('focusout', this.Pause.bind(this));
 			global.addEventListener('focusin', this.Play.bind(this));
 		}
-		this.prevFrameTime = Date.now();
+		this.prevFrameTime = performance.now();
 		if(!drawFps) return;
 		this.fpsProvider = new FpsProvider({
 			name: 'FPSProvider',
 			realFpsFramesBuffer: this.targetFps,
 			targetFps: this.targetFps,
-			frameDelay: this.frameDelay,
+			frameDelay: this.targetFrameDelay,
 			onFrameDelaySet: null,
 		});
 		this.gameObjectManager.RegisterModule(this.fpsProvider);
@@ -82,7 +82,7 @@ class GameLoop {
 	}
 
 	Play () {
-		this.prevFrameTime = Date.now();
+		this.prevFrameTime = performance.now();
 		this.isPlaying = true;
 		this.Render();
 	}
@@ -109,18 +109,17 @@ class GameLoop {
 
 	Render () {
 		if(!this.isPlaying) return;
-		const timeFrameBegin = Date.now();
+		const timeFrameBegin = performance.now();
 		while(this.instantiateQueue.Count) {
 			const element = this.instantiateQueue.Shift();
 			this.Spawn(element);
 		}
-		if(this.frameDelay && timeFrameBegin - this.prevFrameTime < this.frameDelay) {
-			requestAnimationFrame(this.Render.bind(this));
-			return;
-		}
+		// if(this.frameDelay && timeFrameBegin - this.prevFrameTime < this.frameDelay) {
+		// 	requestAnimationFrame(this.Render.bind(this));
+		// 	return;
+		// }
 		Time.FrameRendered();
 		this.Canvas.Context2D
-			.Reset()
 			.Clear()
 			.DrawBg();
 		this.gameObjectManager.Update();
@@ -129,16 +128,17 @@ class GameLoop {
 		this.collisionsManager.Update();
 		if(this.drawFps) {
 			this.canvas.Context2D
+				.Reset()
 				.FillStyle('white')
 				.FillRect(this.canvas.Width - 100, 0, 100, 40)
 				.FillStyle('red')
 				.FillText(`frame time: ${Time.deltaTime}`, this.canvas.Width - 90, 15)
 				.FillText(`FPS: ${Math.floor(this.fpsProvider.FPS)}`, this.canvas.Width - 90, 30);
 		}
-		this.prevFrameTime = Date.now();
+		this.prevFrameTime = performance.now();
 		requestAnimationFrame(this.Render.bind(this));
-		// this.frameTime = this.prevFrameTime - timeFrameBegin;
-		// this.frameDelay = 1000 / this.targetFps - this.frameTime;
+		const frameTime = this.prevFrameTime - timeFrameBegin;
+		this.frameDelay = 1000 / this.targetFps - frameTime;
 	}
 
 	private Spawn<T extends BasicObjectsConstructorParams>(args:{

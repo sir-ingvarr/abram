@@ -4,7 +4,7 @@ class Lines extends GameObject {
 		this.counter = 0;
 		this.limit = params.limit || 100;
 		this.current = 4;
-		this.color = (params.color || new RGBAColor(255, 20, 20, 35)).ToHex();
+		this.color = (params.color || new RGBAColor(255, 255, 255, 35)).ToHex();
 		this.segmentsList = new SegmentList([]);
 		this.planet1 = params.planet1;
 		this.planet2 = params.planet2;
@@ -36,7 +36,7 @@ class Lines extends GameObject {
 	Update() {
 		super.Update();
 		this.counter++;
-		if(this.counter < 6) {
+		if(this.counter < 5) {
 			return;
 		}
 		this.counter = 0;

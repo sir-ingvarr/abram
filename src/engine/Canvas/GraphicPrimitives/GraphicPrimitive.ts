@@ -75,7 +75,7 @@ export class GraphicPrimitive<IShape extends PrimitiveShape> extends Module impl
 		this.HandleOptions(options, shadow);
 		this.parent = parent;
 		this.drawMethod = drawMethod;
-		this.disrespectParent = params.disrespectParent || false;
+		this.disrespectParent = params.disrespectParent === undefined ? false : params.disrespectParent;
 	}
 
 	get Width() {

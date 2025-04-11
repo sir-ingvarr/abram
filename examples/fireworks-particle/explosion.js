@@ -17,9 +17,9 @@ class Explosion extends GameObject {
             parent: this,
             params: {
                 renderingStyle: RenderingStyle.World,
-                layer: 2,
+                layer: 3,
                 occlusionCulling: true,
-                particleBuffering: true,
+                particleBuffering: false,
                 graphic: () => new GraphicPrimitive({
                     type: PrimitiveType.Rect,
                     shape: new Rect(new Point(), new Point(10, 10)),
@@ -36,8 +36,10 @@ class Explosion extends GameObject {
                     color.Alpha = 180;
                     return initial.LerpTo(color, factor)
                 },
-                gravityForceScale: 0.1,
-                rotationOverLifeTime: factor => Maths.Lerp(0, -10, factor),
+                gravityForceScale: 0.15,
+                rotationOverLifeTime: factor => {
+                    return Maths.Lerp(0, -10, factor);
+                },
                 initialVelocity: () => new PolarCoordinates({ r: Maths.RandomRange(0, 350),angle: Maths.RandomRange(0, 2*Math.PI) }).ToCartesian().ToVector(),//Vector.Of(Maths.RandomRange(-150, 150), Maths.RandomRange(-150, 150)),
                 initialSize: () => Maths.RandomRange(15, 35),
                 scaleOverLifeTime: factor => ({ x: Maths.Clamp(1 - factor, 0.1, 1.5), y: Maths.Clamp(1 - factor, 0.1, 1.5)}),

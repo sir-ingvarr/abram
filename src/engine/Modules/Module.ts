@@ -52,7 +52,7 @@ abstract class Module implements IExecutable {
 	}
 
 	GenerateId(name: string) {
-		return name + Date.now() + Math.random();
+		return name + performance.now() + Math.random();
 	}
 
 	SetGameObject(gameObject: IGameObject) {

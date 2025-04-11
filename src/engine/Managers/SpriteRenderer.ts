@@ -132,28 +132,27 @@ class SpriteRenderer {
 			worldPosition: disrespectParent ? Vector.Zero : graphic.parent.WorldPosition,
 			scale: disrespectParent ? Vector.One : graphic.parent.Scale,
 			localPosition: disrespectParent ? Vector.Zero : graphic.parent.LocalPosition,
-			localRotation: disrespectParent ? 0 : graphic.parent.WorldRotation,
+			worldRotation: disrespectParent ? 0 : graphic.parent.WorldRotation,
 			anchors: disrespectParent ? { x: 0, y: 0 } : graphic.parent.Anchors,
-			parent: disrespectParent ? null : graphic.parent.Parent,
 		};
 
 		const {
 			worldPosition,
 			scale,
-			localRotation,
+			worldRotation,
 			anchors,
 		} = params;
 
 		const anchoredX = anchors.x * width;
 		const anchoredY = anchors.y * height;
 
-		context
-			.SetScale(scale.x, scale.y)
-			.SetPosition((worldPosition.x - this.contextPosition.x), (worldPosition.y - this.contextPosition.y));
+		const matrix = new DOMMatrix()
+			.translate(worldPosition.x - this.contextPosition.x, worldPosition.y - this.contextPosition.y)
+			.scale(scale.x, scale.y)
+			.rotate(worldRotation * 180 / Math.PI)
+			.translate(-anchoredX, -anchoredY);
 
-		context
-			.Rotate(localRotation)
-			.Translate(-anchoredX, -anchoredY);
+		context.SetTransform(matrix);
 
 		if(graphic.contentType === 0) {
 			if(!graphic.image?.isReady) return;
@@ -171,8 +170,6 @@ class SpriteRenderer {
 				.LineDash([])
 				.StrokeRect(anchoredX, anchoredY, 1, 1)
 				.StrokeRect(0, 0, width, height);
-
-		context.Reset();
 	}
 
 	public Render() {

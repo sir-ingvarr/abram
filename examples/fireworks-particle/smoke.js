@@ -12,9 +12,9 @@ class Smoke extends GameObject {
             parent: this,
             params: {
                 occlusionCulling: true,
-                particleBuffering: true,
+                particleBuffering: false,
+                layer: 1,
                 graphic: () => new GraphicPrimitive({
-                    layer: 2,
                     type: PrimitiveType.Rect,
                     shape: new Rect(new Point(), new Point(10, 10)),
                     parent: this.Transform,

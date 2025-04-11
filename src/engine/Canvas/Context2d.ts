@@ -140,6 +140,11 @@ class CanvasContext2D {
 		return this;
 	}
 
+	SetTransform(transform: DOMMatrix): CanvasContext2D {
+		this.ctx.setTransform(transform);
+		return this;
+	}
+
 	SetPosition(x: number, y: number): CanvasContext2D {
 		const transform = this.ctx.getTransform();
 		transform.e = x; transform.f = y;
@@ -189,7 +194,8 @@ class CanvasContext2D {
 
 	DrawBg(offset?: ICoordinates): CanvasContext2D {
 		const { x = 0, y = 0 } = offset || {};
-		return this.BeginPath().FillStyle(this.bgColor)
+		return this.BeginPath()
+			.FillStyle(this.bgColor)
 			.Rect(x, y,	this.width,	this.height)
 			.Fill();
 	}
@@ -253,7 +259,6 @@ class CanvasContext2D {
 		} else {
 			this.Stroke();
 		}
-		// return this.ClosePath();
 	}
 
 	FillText(text: string, x: number, y: number, maxWidth?: number): CanvasContext2D {
@@ -295,7 +300,6 @@ class CanvasContext2D {
 	}
 
 	DrawImage(graphic: IContextOpts, imageData: CanvasImageSource, x: number, y: number, w: number, h: number): CanvasContext2D {
-		this.BeginPath();
 		const contextRespectivePosition = graphic?.options?.contextRespectivePosition || false;
 		const initialPos = contextRespectivePosition ? this.Position : new Point();
 		this.ctx.drawImage(imageData, x + initialPos.x, y + initialPos.y, w, h);

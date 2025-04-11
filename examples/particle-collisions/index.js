@@ -8,9 +8,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     await engine.RegisterGameScript('./camera-movement.js');
     await engine.RegisterGameScript('./particle-system.js');
 
-    const gameObject = new ParticleSystemTest({ position: new Vector(0, 0)});
-    engine.AppendGameObject(gameObject);
-
     engine.Start();
+
+    await engine.Instantiate(CameraMovement, {});
+    await engine.Instantiate(ParticleSystemTest, { position: new Vector(0, 0)});
 });
 

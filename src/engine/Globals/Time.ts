@@ -4,18 +4,24 @@ class Time {
 	// time passed between ends of frames rendering;
 	static deltaTime = 0;
 	// last end of frame time
-	static prevFrameEndTime: number = Date.now();
+	static prevFrameEndTime: number = performance.now();
+
+	static timeScale = 1;
 
 	static FrameRendered(): void {
-		const time = Date.now();
+		const time = performance.now();
 		const delta = time - this.prevFrameEndTime;
 		this.totalRuntime += delta;
-		this.deltaTime = delta;
+		this.deltaTime = delta * Time.timeScale;
 		this.prevFrameEndTime = time;
 	}
 
 	static get SineTime(): number {
 		return Math.sin(this.totalRuntime);
+	}
+
+	static get DeltaTimeSeconds(): number {
+		return this.deltaTime / 1000;
 	}
 }
 

@@ -88,8 +88,8 @@ class ParticleSystem extends ExecutableManager {
 	protected emitOverDistanceKeeper: number;
 	protected particleFollowers?: ValueOrFunction<Array<IGameObjectConstructable<any>>>;
 	protected lastPointEmitted: Vector;
-	protected timeLastEmitted: number;
-	protected timeLastBurstEmitted: number;
+	protected timeSinceLastEmitted: number;
+	protected timeSinceLastBurstEmitted: number;
 	protected colorOverLifeTime?: PureFunction<RGBAColor>;
 	protected rotationOverLifeTime?: PureFunction<number>;
 	protected velocityOverLifeTime?: PureFunction<Vector>;
@@ -164,7 +164,7 @@ class ParticleSystem extends ExecutableManager {
 		this.velocityOverLifeTime = velocityOverLifeTime;
 		this.rotationOverLifeTime = rotationOverLifeTime;
 		this.scaleOverLifeTime = scaleOverLifeTime;
-		this.timeLastEmitted = Date.now();
+		this.timeSinceLastEmitted = performance.now();
 		this.emitEachTimeFrame = emitEachTimeFrame;
 		this.emitOverDistance = emitOverDistance;
 		this.emitOverTime = emitOverTime;
@@ -179,7 +179,7 @@ class ParticleSystem extends ExecutableManager {
 
 		if(emitOverDistance) this.emitOverDistanceKeeper = 0;
 		if(this.burstEmit) {
-			this.timeLastBurstEmitted = Date.now();
+			this.timeSinceLastBurstEmitted = 0;
 			const { skipFirst, emit } = this.SetOrExecute(this.burstEmit);
 			if(skipFirst) return;
 			this.EmitNParticles(this.SetOrExecute(emit));
@@ -247,17 +247,17 @@ class ParticleSystem extends ExecutableManager {
 		const now = Date.now();
 		let amountToEmit = 0;
 		if(this.burstEmit) {
-			const timeSinceLastBurstEmitted = now - this.timeLastBurstEmitted;
+			this.timeSinceLastBurstEmitted += Time.deltaTime;
 
 			const { repeat, every = 0, emit = 0 } = this.SetOrExecute(this.burstEmit);
-			if(repeat && every && every <= timeSinceLastBurstEmitted) {
+			if(repeat && every && every <= this.timeSinceLastBurstEmitted) {
 				amountToEmit += this.SetOrExecute(emit);
 			}
-			if(amountToEmit > 0) this.timeLastBurstEmitted = Date.now();
+			if(amountToEmit > 0) this.timeSinceLastBurstEmitted %= every;
 		}
-		const timeSinceLastEmitted = now - this.timeLastEmitted;
-		if(this.SetOrExecute(this.emitEachTimeFrame, now) < timeSinceLastEmitted) {
-			this.timeLastEmitted = now;
+		this.timeSinceLastEmitted += Time.deltaTime;
+		if(this.SetOrExecute(this.emitEachTimeFrame, now) < this.timeSinceLastEmitted) {
+			this.timeSinceLastEmitted = 0;
 			amountToEmit += this.SetOrExecute(this.emitOverTime);
 		}
 		this.EmitNParticles(amountToEmit);
@@ -288,9 +288,13 @@ class ParticleSystem extends ExecutableManager {
 	private ExecuteLifeTimeCalculations(particle: Particle) {
 		const lifetimeFactor = particle.age / particle.lifeTime;
 		if(this.colorOverLifeTime) particle.color = this.colorOverLifeTime(particle.initialColor, lifetimeFactor);
-		if(this.rotationOverLifeTime) particle.transform.LocalRotationDeg += this.rotationOverLifeTime(lifetimeFactor);
+		if(this.rotationOverLifeTime) particle.transform.LocalRotation = this.rotationOverLifeTime(lifetimeFactor);
 		if(this.velocityOverLifeTime) particle.velocity.Add(this.velocityOverLifeTime(lifetimeFactor));
-		if(this.gravityForceScale) particle.velocity.Add(new Vector(0, 9.8 * particle.gravityScale));
+		const gravityFactor = Vector.MultiplyCoordinates(
+			Time.DeltaTimeSeconds * 100,
+			new Vector(0, 9.8 * particle.gravityScale)
+		);
+		if(this.gravityForceScale) particle.velocity.Add(gravityFactor);
 		if(this.drag) particle.velocity.MultiplyCoordinates((1 - particle.drag / Time.deltaTime));
 		if(this.scaleOverLifeTime) {
 			const scale = this.scaleOverLifeTime(lifetimeFactor);

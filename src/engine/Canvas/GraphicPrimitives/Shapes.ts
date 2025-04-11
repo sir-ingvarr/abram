@@ -4,8 +4,17 @@ import {Maths, Point, Segment, Vector} from '../../Classes';
 export class Rect {
 	constructor(
         protected from: ICoordinates,
-        protected to: ICoordinates
+        protected to: ICoordinates,
+		protected offset: ICoordinates = new Point(),
 	) {}
+
+	get Offset(): ICoordinates {
+		return this.offset;
+	}
+
+	set Offset(newOffset: ICoordinates) {
+		this.offset = newOffset.Copy();
+	}
 
 	SetSize(size: number) {
 		const factorX = size / Math.abs(this.to.x - this.from.x);
@@ -31,22 +40,17 @@ export class Rect {
 	get Height() {
 		return Math.abs(this.from.y - this.to.y);
 	}
+
+	IsIntersectingOther(other: Rect): boolean {
+		return other.from.x <= this.to.x && other.to.x >= this.from.x
+			&& other.from.y <= this.to.y && other.to.y >= this.from.y;
+	}
 }
 
 export class BoundingBox extends Rect implements IShape {
-	private offset: ICoordinates;
-
 	constructor(from: ICoordinates, to: ICoordinates, offset: ICoordinates = new Point()) {
 		super(from, to);
 		this.Offset = offset;
-	}
-
-	set Offset (newCenter: ICoordinates) {
-		this.offset = newCenter.Copy();
-	}
-
-	get Offset (): ICoordinates {
-		return this.offset.Copy();
 	}
 
 	get BoundingBox() {
@@ -74,10 +78,6 @@ export class BoundingBox extends Rect implements IShape {
             && point.x <= Math.max(this.from.x, this.to.x)
             && point.y >= Math.min(this.from.y, this.to.y)
             && point.y >= Math.min(this.from.y, this.to.y);
-	}
-
-	IsIntersectingOther(other: BoundingBox): boolean {
-		return BoundingBox.Overlap(this, other);
 	}
 
 	GetIntersectionPoints(): Array<ICoordinates> {
@@ -229,7 +229,7 @@ export class Circle {
 }
 
 export class CircleArea extends Circle implements IShape {
-	private offset: ICoordinates;
+	protected offset: ICoordinates;
 
 	constructor(radius: number, center: ICoordinates, offset: ICoordinates = new Point()) {
 		super(radius, center);
@@ -262,8 +262,12 @@ export class CircleArea extends Circle implements IShape {
 	}
 
 	IsIntersectingOther(other: CircleArea): boolean {
-		const segment = new Segment(other.center, this.center);
-		return segment.Length <= this.radius + other.radius;
+		return this.GetCollisionDepth(other) <= 0;
+	}
+
+	GetCollisionDepth(other: CircleArea): number {
+		const segment = new Segment(Vector.Add(other.center, other.offset), Vector.Add(this.center, this.offset));
+		return segment.Length - this.radius - other.radius;
 	}
 
 	GetIntersectionPoints(other: CircleArea): Array<ICoordinates> {

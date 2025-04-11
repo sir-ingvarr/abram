@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', async function() {
     const root = document.getElementById('root');
-
     const { Engine, Classes: { RGBAColor, Vector } } = window.Abram;
 
     const engine = new Engine(root, { width: 1280, height: 800, targetFps: 60, debug: false, drawFps: true, pauseOnBlur: false });
@@ -12,9 +11,26 @@ document.addEventListener('DOMContentLoaded', async function() {
     await engine.RegisterGameScript('./bg.js');
     await engine.RegisterGameScript('./golden_sparks.js');
 
+    const slider = document.createElement('input');
+    root.appendChild(slider);
+    slider.type = 'range';
+    slider.min = 0;
+    slider.max = 2;
+    slider.step = 0.01;
+    slider.value = 1;
+    slider.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+    slider.addEventListener('change', function(e) {
+        const value = parseFloat(e.target.value);
+        Time.timeScale = value;
+    })
+
     engine.Start();
 
-    await engine.Instantiate(CameraMovement, {})
+    Time.timeScale = 1;
+
+    await engine.Instantiate(CameraMovement, {});
 
     const bgSprite = new Sprite({
         height: 800,

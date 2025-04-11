@@ -128,6 +128,12 @@ export class Vector extends Point {
 		return v1.x * v2.x  +  v1.y * v2.y;
 	}
 
+	static AngleBetween(v1: Vector, v2: Vector): number {
+		const dot = Vector.Dot(v1, v2);
+		const cosOfAngle = dot / (v1.Magnitude * v2.Magnitude);
+		return Math.acos(cosOfAngle);
+	}
+
 	static Add(first: ICoordinates, ...args: Array<ICoordinates>): Vector {
 		const result = Vector.From(first);
 		for(let i = 0; i < args.length; i++) {
@@ -171,6 +177,16 @@ export class Vector extends Point {
 		return from.Angle - to.Angle;
 	}
 
+	static Rotate(vector: ICoordinates, angleRad: number): Vector {
+		const cos = Math.cos(angleRad);
+		const sin = Math.sin(angleRad);
+
+		return new Vector(
+			vector.x * cos - vector.y * sin,
+			vector.x * sin + vector.y * cos
+		);
+	}
+
 	get Magnitude(): number {
 		return Math.sqrt(this.x * this.x + this.y * this.y);
 	}
@@ -180,8 +196,7 @@ export class Vector extends Point {
 	}
 
 	get Angle(): number {
-		const cosine = Math.abs(this.x) / this.Magnitude;
-		return Math.acos(cosine);
+		return Math.atan2(this.y, this.x);
 	}
 
 	ToBinary(): Vector {
@@ -195,9 +210,9 @@ export class Vector extends Point {
 	}
 
 	SetMagnitude(newMag: number): Vector {
+		if(this.Magnitude === 0) return this;
 		const factor = newMag / this.Magnitude;
-		this.MultiplyCoordinates(factor);
-		return this;
+		return this.MultiplyCoordinates(factor);
 	}
 
 	MultiplyCoordinates(base: ICoordinates | number): Vector {
@@ -222,11 +237,11 @@ export class Vector extends Point {
 	Rotate(angleRad: number): Vector {
 		const cos = Math.cos(angleRad);
 		const sin = Math.sin(angleRad);
-
-		return new Vector(
-			this.x * cos - this.y * sin,
-			this.x * sin + this.y * cos
-		);
+		const x = this.x * cos - this.y * sin;
+		const y = this.x * sin + this.y * cos;
+		this.x = x;
+		this.y = y;
+		return this;
 	}
 
 	get Normalized(): Vector {

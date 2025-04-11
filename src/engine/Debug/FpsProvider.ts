@@ -27,7 +27,7 @@ export class FpsProvider extends GameObject<FpsProviderConstructorOptions> {
 		super(params);
 		const { realFpsFramesBuffer, targetFps = 0, onFrameDelaySet = () => null, frameDelay = 0 } = params;
 		this.realFpsFramesBuffer = realFpsFramesBuffer || targetFps;
-		this.startCountTime = Date.now();
+		this.startCountTime = performance.now();
 		this.targetFps = targetFps;
 		if(targetFps) this.frameDelay = frameDelay >= 0 ? frameDelay : 1000 / targetFps;
 		this.OnFrameDelaySet = onFrameDelaySet;
@@ -39,7 +39,7 @@ export class FpsProvider extends GameObject<FpsProviderConstructorOptions> {
 			this.framesSinceRealFps++;
 			return;
 		}
-		const currentTime = Date.now();
+		const currentTime = performance.now();
 		const deltaTime = currentTime - this.startCountTime;
 		const trueFrameTime = deltaTime / this.realFpsFramesBuffer;
 		this.realFps = 1000 / trueFrameTime;
@@ -49,10 +49,7 @@ export class FpsProvider extends GameObject<FpsProviderConstructorOptions> {
 		//ADAPTIVE FRAME DELAY ATTEMPT
 
 		if(!this.OnFrameDelaySet || !this.frameDelay) return;
-		const delta = this.targetFps - this.realFps;
-		if(Math.abs(delta) < 2) return;
-		let factor = -1;
-		if(this.realFps > this.targetFps) factor = 1;
+		const  factor = this.realFps > this.targetFps ? 1 : -1;
 		this.frameDelay += this.frameDelay * (1 - Math.min(this.realFps, this.targetFps) / Math.max(this.targetFps, this.realFps)) * factor;
 		this.OnFrameDelaySet(this.frameDelay);
 	}

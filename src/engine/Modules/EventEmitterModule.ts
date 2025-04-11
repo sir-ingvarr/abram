@@ -15,11 +15,19 @@ class EventEmitterModule extends Module implements IExecutable {
 		this.eventsListeners[event].add(callback);
 	}
 
+	Once(event: string | number, callback: AnyFunc): void {
+		const wrapper = (...args: any) => {
+			callback(this, ...args);
+			this.RemoveEventListener(event, wrapper);
+		};
+		this.On(event, wrapper);
+	}
+
 	Emit<T = any>(event: string | number, ...args: Array<T>): void {
 		const handlers = this.eventsListeners[event];
 		if(!handlers || !handlers.size) return;
 		for(const handler of handlers) {
-			handler(...args);
+			handler(this, ...args);
 		}
 	}
 

@@ -57,8 +57,8 @@ class Planet extends GameObject {
 				return this.colors[Math.round(Maths.Lerp(0, 6, factor))].Copy();
 			},
 			initialWidth: this.radius,
-			lifeTime: 3000,
-			newSegmentEachMS: 20,
+			lifeTime: 15000,
+			newSegmentEachMS: 30,
 		}));
 	}
 
