@@ -16,6 +16,7 @@ type RigidBodyParams = {
 	drag?: number,
 	gravityScale?: number,
 	isStatic?: boolean,
+	freezeRotation?: boolean,
 }
 
 const G_CONSTANT = 9.82;
@@ -36,6 +37,7 @@ class RigidBody extends Module {
 	private force: Vector;
 	private torque: number;
 	private invertedMass: number;
+	private freezeRotation: boolean;
 	public collidedRb?: RigidBody;
 
 
@@ -45,8 +47,9 @@ class RigidBody extends Module {
 			mass = 1, velocity = new Vector(), angularDrag = 0.5,
 			useGravity = true, drag = 0.5, angularVelocity = 0,
 			gravityScale = 1, centerOfMass = new Point(), bounciness = 1,
-			isStatic = false,
+			isStatic = false, freezeRotation = false,
 		} = params;
+		this.freezeRotation = freezeRotation;
 		this.mass = isStatic ? Infinity : mass;
 		this.invertedMass = isStatic ? 0 : 1 / mass;
 		this.velocity = isStatic ? Vector.ZeroMutable : velocity;
@@ -151,6 +154,15 @@ class RigidBody extends Module {
 		this.angularDrag = val;
 	}
 
+	get FreezeRotation() {
+		return this.freezeRotation;
+	}
+
+	set FreezeRotation(val: boolean) {
+		this.freezeRotation = val;
+		if(val) this.angularVelocity = 0;
+	}
+
 	AddForceToPoint(applyPoint: Vector, force: Vector): void {
 		if(this.isStatic) return;
 		const armVector = Vector.Subtract(applyPoint, this.centerOfMass);
@@ -167,8 +179,24 @@ class RigidBody extends Module {
 		this.force.Add(force);
 	}
 
-	AddTorque(torque: number) {
+	AddImpulse(impulse: Vector) {
 		if(this.isStatic) return;
+		this.velocity.Add(Vector.MultiplyCoordinates(this.invertedMass, impulse));
+	}
+
+	AddImpulseAtPoint(applyPoint: Vector, impulse: Vector) {
+		if(this.isStatic) return;
+		this.AddImpulse(impulse);
+		if(this.freezeRotation) return;
+		const armVector = Vector.Subtract(applyPoint, this.centerOfMass);
+		const armLenSq = Vector.Dot(armVector, armVector);
+		if(armLenSq === 0) return;
+		const torque = armVector.x * impulse.y - armVector.y * impulse.x;
+		this.angularVelocity += torque * this.invertedMass;
+	}
+
+	AddTorque(torque: number) {
+		if(this.isStatic || this.freezeRotation) return;
 		this.angularVelocity += torque;
 	}
 

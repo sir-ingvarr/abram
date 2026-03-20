@@ -3,7 +3,7 @@ import {Vector} from '../engine/Classes';
 import CanvasContext2D from '../engine/Canvas/Context2d';
 import Rigidbody from '../engine/Modules/Rigidbody';
 import {BasicObjectsConstructorParams} from '../engine/Objects/BasicObject';
-import {CircleArea} from '../engine/Canvas/GraphicPrimitives/Shapes';
+import {ColliderShape} from '../engine/Collision/CollisionDetection';
 
 interface IWithLifeCycle {
     get StartExecuted(): boolean;
@@ -42,9 +42,10 @@ export interface IExecutable extends IWithLifeCycle {
 export interface ICollider2D extends IExecutable {
     parent: ITransform;
     connectedRigidbody: Rigidbody;
-    shape: CircleArea;
+    shape: ColliderShape;
     Collide(other: ICollider2D): void;
-    Leave(other: ICollider2D): void
+    Leave(other: ICollider2D): void;
+    SyncShape(): void;
 }
 
 export interface ITransform extends IScalable {

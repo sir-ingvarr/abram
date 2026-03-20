@@ -83,6 +83,10 @@ class SpriteRenderer {
 		this.renderingStackList[layer].Push(graphic);
 	}
 
+	get Debug(): boolean {
+		return !!this.debug;
+	}
+
 	public SetContextOpts(opts: Partial<IContextOpts>) {
 		if(opts.Height) {
 			this.mainCanvasContext.Height = opts.Height;
@@ -141,26 +145,19 @@ class SpriteRenderer {
 
 		if(!graphic.parent) return;
 
-		let worldPosition: ICoordinates;
-		let scale: ICoordinates;
-		let worldRotation: number;
-		let anchoredX: number;
-		let anchoredY: number;
+		const { disrespectParent } = graphic;
 
-		if(graphic.disrespectParent) {
-			worldPosition = Vector.Zero;
-			scale = Vector.One;
-			worldRotation = 0;
-			anchoredX = 0;
-			anchoredY = 0;
-		} else {
-			worldPosition = graphic.parent.WorldPosition;
-			scale = graphic.parent.Scale;
-			worldRotation = graphic.parent.WorldRotation;
-			const anchors = graphic.parent.Anchors;
-			anchoredX = anchors.x * width;
-			anchoredY = anchors.y * height;
-		}
+		const worldPosition = disrespectParent
+			? Vector.Zero
+			: graphic.parent.WorldPosition;
+		const scale = disrespectParent
+			? Vector.One
+			: graphic.parent.Scale;
+		const worldRotation = disrespectParent
+			? 0
+			: graphic.parent.WorldRotation;
+		const anchoredX = disrespectParent ? 0 : graphic.parent.Anchors.x * width;
+		const anchoredY = disrespectParent ? 0 : graphic.parent.Anchors.y * height;
 
 		const csx = this.contextScale.x;
 		const csy = this.contextScale.y;
@@ -178,11 +175,11 @@ class SpriteRenderer {
 
 		// T(ccx,ccy) * S(csx,csy) * T(-ccx,-ccy) * T(tx,ty) * S(sx,sy) * R(θ) * T(-ax,-ay)
 		const a = csx * sx * cos;
-		const b = csy * sx * sin;
-		const c = csx * sy * -sin;
+		const b = csy * sy * sin;
+		const c = -csx * sx * sin;
 		const d = csy * sy * cos;
-		const e = ccx * (1 - csx) + csx * (tx - anchoredX * sx * cos + anchoredY * sy * sin);
-		const f = ccy * (1 - csy) + csy * (ty - anchoredX * sx * sin - anchoredY * sy * cos);
+		const e = ccx * (1 - csx) + csx * (tx + sx * (-anchoredX * cos + anchoredY * sin));
+		const f = ccy * (1 - csy) + csy * (ty + sy * (-anchoredX * sin - anchoredY * cos));
 
 		context.SetTransformRaw(a, b, c, d, e, f);
 

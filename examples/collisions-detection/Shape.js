@@ -12,6 +12,7 @@ class Shape extends GameObject {
 		this.initialForce = params.initialForce || null;
 		this.size = params.size || Maths.RandomRange(20, 150);
 		this.isStatic = params.isStatic || false;
+		this.bouncinessCooldown = 500;
 	}
 
 	Start() {
@@ -39,6 +40,13 @@ class Shape extends GameObject {
 			parent: this.transform,
 			rb: this.rigidBody,
 		});
+
+		this.collider.On(Collider2DEvent.OnCollision2DEnter, () => {
+			if(this.bouncinessCooldown > 0) return;
+			this.bouncinessCooldown = 500;
+			this.rigidBody.Bounciness = Maths.Clamp(this.rigidBody.Bounciness - 0.1, 0, 100);
+			console.log("Bounciness: " + this.rigidBody.Bounciness);
+		})
 
 
 
@@ -73,6 +81,7 @@ class Shape extends GameObject {
 	}
 
 	Update() {
+		this.bouncinessCooldown -= Time.deltaTime;
 		this.horizontalDir = this.CheckHorizontalInputs();
 		this.verticalDir = this.CheckVerticalInputs();
 		const pos = this.transform.WorldPosition;

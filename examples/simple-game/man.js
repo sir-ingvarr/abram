@@ -7,15 +7,16 @@ class Man extends GameObject {
         this.verticalDir = 0;
         this.cam = cam;
         this.layer = params.layer;
+        this.isGrounded = false;
+        this.jumped = false;
+        this.instantiate = params.instantiate;
+        this.shootCooldown = 0;
     }
 
     Start() {
-        this.ground = new RigidBody({useGravity: false, drag: 4});
-
         const image = new ImageWrapper('./assets/dude_idle.png');
         new ImageWrapper('./assets/dude_run1.png')
         new ImageWrapper('./assets/dude_run2.png')
-
 
         const graphic = new Sprite({
             image: image,
@@ -34,17 +35,27 @@ class Man extends GameObject {
             graphicElement: graphic,
         });
 
-        this.rigidBody = new RigidBody({useGravity: true, gravityScale: 0.2, angularDrag: 0.8, drag: 0.4, centerOfMass: new Vector(0, 10)});
+        this.rigidBody = new RigidBody({
+            useGravity: true, gravityScale: 0.2, angularDrag: 0.03,
+            drag: 0.4, mass: 1, bounciness: 0,
+            centerOfMass: new Vector(0, 10),
+        });
 
+        this.collider = new Collider2D({
+            shape: new OBBShape(24, 60),
+            type: Collider2DType.Collider,
+            parent: this.transform,
+            rb: this.rigidBody,
+        });
 
         this.RegisterModule(this.rigidBody);
         this.RegisterModule(graphic);
         this.RegisterModule(this.animator);
+        this.RegisterModule(this.collider);
 
-        this.gun = new GameObject({ position: new Vector(15,0), name: `${this.name}_gun`});
+        this.gun = new GameObject({ position: new Vector(15, 0), name: `${this.name}_gun` });
 
         const gunImage = new ImageWrapper('./assets/gun.png');
-
         const gunGraphic = new Sprite({
             image: gunImage,
             width: 30, height: 20, layer: this.layer + 1,
@@ -66,9 +77,27 @@ class Man extends GameObject {
         return 0;
     }
 
-    Jump(shouldStand) {
-        if(InputSystem.KeyPressed('Space') && shouldStand) {
+    Shoot() {
+        if(!this.instantiate) return;
+        this.shootCooldown -= Time.deltaTime;
+        if(InputSystem.KeyPressed('ControlLeft') && this.shootCooldown <= 0) {
+            this.shootCooldown = 300;
+            const gunPos = this.gun.transform.WorldPosition;
+            this.instantiate(Bullet, {
+                position: new Vector(gunPos.x + this.prevHorDir * 40, gunPos.y),
+                direction: this.prevHorDir,
+                speed: 100,
+            });
+        }
+    }
+
+    Jump() {
+        if(InputSystem.KeyPressed('Space') && this.isGrounded) {
+            this.isGrounded = false;
+            this.jumped = true;
+            this.rigidBody.FreezeRotation = false;
             this.rigidBody.AddForce(Vector.MultiplyCoordinates(100, Vector.Down).Add(new Vector(this.horizontalDir * 40, 0)));
+            this.rigidBody.AddTorque(this.prevHorDir * 1300);
         }
     }
 
@@ -76,24 +105,29 @@ class Man extends GameObject {
         this.horizontalDir = this.CheckHorizontalInputs();
         this.verticalDir = this.CheckVerticalInputs();
         const pos = this.transform.WorldPosition;
+
+        // Ground detection: check if velocity along Y is near zero and collider is active
+        // Skip ground check briefly after jumping so grace period doesn't re-ground us
+        if(this.jumped) {
+            if(!this.collider.IsColliding) this.jumped = false;
+        } else {
+            const vy = this.rigidBody.Velocity.y;
+            this.isGrounded = Math.abs(vy) < 0.5 && this.collider.IsColliding;
+        }
+
         if(this.cam) {
             this.cam.SetPosition(pos);
-            this.cam.SetTargetZoom(pos.y >= 0 ? 1 : 1.5);
+            this.cam.SetTargetZoom(this.isGrounded ? 1 : 1.5);
         }
-        const shouldStand = pos.y >= 0;
-        this.rigidBody.UseGravity = !shouldStand
-        if(shouldStand) {
-            this.rigidBody.collidedRb = this.ground;
-            this.rigidBody.Velocity = new Vector(this.rigidBody.Velocity.x, 0);
-            this.transform.LocalPosition = new Vector(pos.x, 0);
-        } else {
-            this.rigidBody.collidedRb = null;
-        }
-        this.Jump(shouldStand);
+
+        this.Jump();
+        this.Shoot();
 
         this.prevHorDir = this.horizontalDir || this.prevHorDir;
 
-        if(shouldStand) {
+        if(this.isGrounded) {
+            this.transform.LocalRotation = 0;
+            this.rigidBody.FreezeRotation = true;
             if (!!this.horizontalDir || !!this.verticalDir) {
                 this.animator.SetState('running');
             } else {
@@ -101,19 +135,14 @@ class Man extends GameObject {
             }
         } else {
             this.animator.SetState('jump');
-        }
-        this.transform.LocalScale = new Vector((this.horizontalDir || this.prevHorDir) * this.size, this.size);
-        const delta = Time.DeltaTimeSeconds;
-        if(shouldStand) {
-            this.rigidBody.AddForce(Vector.MultiplyCoordinates(3, new Vector(this.horizontalDir, 0)));
-            this.rigidBody.AngularVelocity = 0;
-            // if(this.size > 1) this.size -= delta;
-            this.transform.LocalRotation = 0;
-            this.gun.Active = true;
+            this.rigidBody.FreezeRotation = false;
 
-        } else {
-            this.rigidBody.AddForceToPoint(new Vector(0, -10), new Vector(20, 0));
-            // if(this.size < 1.5) this.size += delta;
+        }
+
+        this.transform.LocalScale = new Vector((this.horizontalDir || this.prevHorDir) * this.size, this.size);
+
+        if(this.isGrounded) {
+            this.rigidBody.AddForce(Vector.MultiplyCoordinates(3, new Vector(this.horizontalDir, 0)));
         }
         super.Update();
     }
