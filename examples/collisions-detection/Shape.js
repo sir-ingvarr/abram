@@ -1,4 +1,3 @@
-const { GameObject, GraphicPrimitives: { CirclePrimitive, RectPrimitive, GraphicPrimitive, PrimitiveType, ShapeDrawMethod }, Collider2D, Collision: { Collider2DEvent, Collider2DType }, Shapes: {Circle, Rect, CircleArea}, ImageWrapper, InputSystem, Classes: {Vector, Maths, RGBAColor, PolarCoordinates}, RigidBody, Time } = window.Abram;
 class Shape extends GameObject {
 	constructor(params) {
 		super(params);
@@ -13,6 +12,7 @@ class Shape extends GameObject {
 		this.initialForce = params.initialForce || null;
 		this.size = params.size || Maths.RandomRange(20, 150);
 		this.isStatic = params.isStatic || false;
+		this.bouncinessCooldown = 500;
 	}
 
 	Start() {
@@ -40,6 +40,13 @@ class Shape extends GameObject {
 			parent: this.transform,
 			rb: this.rigidBody,
 		});
+
+		this.collider.On(Collider2DEvent.OnCollision2DEnter, () => {
+			if(this.bouncinessCooldown > 0) return;
+			this.bouncinessCooldown = 500;
+			this.rigidBody.Bounciness = Maths.Clamp(this.rigidBody.Bounciness - 0.1, 0, 100);
+			console.log("Bounciness: " + this.rigidBody.Bounciness);
+		})
 
 
 
@@ -74,13 +81,14 @@ class Shape extends GameObject {
 	}
 
 	Update() {
+		this.bouncinessCooldown -= Time.deltaTime;
 		this.horizontalDir = this.CheckHorizontalInputs();
 		this.verticalDir = this.CheckVerticalInputs();
 		const pos = this.transform.WorldPosition;
 		if(pos.x < (-640)) {
 			this.transform.LocalPosition = new Vector(-639, pos.y);
 			if(this.input === -1) {
-				this.rigidBody.velocity = new Vector(-this.rigidBody.velocity.x * this.rigidBody.bounciness, this.rigidBody.velocity.y);
+				this.rigidBody.Velocity = new Vector(-this.rigidBody.Velocity.x * this.rigidBody.Bounciness, this.rigidBody.Velocity.y);
 			} else {
 				pos.x = 639;
 			}
@@ -88,14 +96,14 @@ class Shape extends GameObject {
 		if(pos.x > (640)) {
 			if(this.input === -1) {
 				this.transform.LocalPosition = new Vector(639, pos.y);
-				this.rigidBody.velocity = new Vector(-this.rigidBody.velocity.x * this.rigidBody.bounciness, this.rigidBody.velocity.y);
+				this.rigidBody.Velocity = new Vector(-this.rigidBody.Velocity.x * this.rigidBody.Bounciness, this.rigidBody.Velocity.y);
 			} else {
 				pos.x = -639;
 			}
 		}
 		const shouldStand = pos.y >= (100 - this.size / 2);
 		if(shouldStand) {
-			this.rigidBody.velocity = new Vector(this.rigidBody.velocity.x, -this.rigidBody.velocity.y * this.rigidBody.bounciness);
+			this.rigidBody.Velocity = new Vector(this.rigidBody.Velocity.x, -this.rigidBody.Velocity.y * this.rigidBody.Bounciness);
 			this.transform.LocalPosition = new Vector(pos.x, 100 - this.size / 2);
 		}
 		this.Jump(shouldStand);

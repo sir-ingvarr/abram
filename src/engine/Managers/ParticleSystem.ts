@@ -6,8 +6,7 @@ import Sprite from '../Modules/Sprite';
 import {ICoordinates, Nullable} from '../../types/common';
 import Collider2D from '../Modules/Collider';
 import {IGraphicPrimitive} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
-import {BasicObjectsConstructorParams} from '../Objects/BasicObject';
-import {Time} from '../../index';
+import Time from '../Globals/Time';
 import SpriteRendererManager from './SpriteRendererManager';
 import ImageWrapper from '../Modules/ImageWrapper';
 import Engine from '../Engine';
@@ -164,7 +163,7 @@ class ParticleSystem extends ExecutableManager {
 		this.velocityOverLifeTime = velocityOverLifeTime;
 		this.rotationOverLifeTime = rotationOverLifeTime;
 		this.scaleOverLifeTime = scaleOverLifeTime;
-		this.timeSinceLastEmitted = performance.now();
+		this.timeSinceLastEmitted = 0;
 		this.emitEachTimeFrame = emitEachTimeFrame;
 		this.emitOverDistance = emitOverDistance;
 		this.emitOverTime = emitOverTime;
@@ -244,7 +243,7 @@ class ParticleSystem extends ExecutableManager {
 	}
 
 	private ExecuteEmitOverTime() {
-		const now = Date.now();
+		const now = Time.totalRuntime;
 		let amountToEmit = 0;
 		if(this.burstEmit) {
 			this.timeSinceLastBurstEmitted += Time.deltaTime;
@@ -294,8 +293,8 @@ class ParticleSystem extends ExecutableManager {
 			Time.DeltaTimeSeconds * 100,
 			new Vector(0, 9.8 * particle.gravityScale)
 		);
-		if(this.gravityForceScale) particle.velocity.Add(gravityFactor);
-		if(this.drag) particle.velocity.MultiplyCoordinates((1 - particle.drag / Time.deltaTime));
+		if(particle.gravityScale) particle.velocity.Add(gravityFactor);
+		if(this.drag) particle.velocity.MultiplyCoordinates(Math.exp(-particle.drag * Time.DeltaTimeSeconds));
 		if(this.scaleOverLifeTime) {
 			const scale = this.scaleOverLifeTime(lifetimeFactor);
 			particle.transform.LocalScale = new Vector(
@@ -313,17 +312,17 @@ class ParticleSystem extends ExecutableManager {
 
 			const followersConstructs = this.SetOrExecute(this.particleFollowers);
 			if(followersConstructs) {
-				const followerPromises = followersConstructs.map(follower => Engine.Instance.Instantiate<BasicObjectsConstructorParams>(follower, {}));
+				const followerPromises = followersConstructs.map(follower => Engine.Instance.Instantiate(follower, {}));
 				props.followers = await Promise.all(followerPromises);
 			}
 			particle.SetInitialParams(props);
-			particle.initialScale = Vector.One;
+			particle.initialScale = Vector.OneMutable;
 		} else {
 			const graphic = this.SetOrExecute(this.graphic);
 			const props = this.GetParticleInitialProps(graphic);
 			const followersConstructs = this.SetOrExecute(this.particleFollowers);
 			if(followersConstructs) {
-				const followerPromises = followersConstructs.map(follower => Engine.Instance.Instantiate<BasicObjectsConstructorParams>(follower, {}));
+				const followerPromises = followersConstructs.map(follower => Engine.Instance.Instantiate(follower, {}));
 				props.followers = await Promise.all(followerPromises);
 			}
 			particle = new Particle(props);
@@ -345,7 +344,7 @@ class ParticleSystem extends ExecutableManager {
 			drag: this.SetOrExecute(this.drag),
 			gravityScale: this.SetOrExecute(this.gravityForceScale),
 			lifeTime: this.SetOrExecute(this.lifeTime),
-			size: this.SetOrExecute(this.initialSize),
+			size,
 			OnCollide: this.onParticleCollision,
 			initialVelocity: this.SetOrExecute(this.initialVelocity),
 		};

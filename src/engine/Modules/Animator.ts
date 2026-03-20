@@ -30,7 +30,7 @@ class Animator extends Module {
 			frameDelay = 50, stateMap = { idle: [] },
 			state = 'idle', graphicElement, playing = true
 		} = options;
-		if(!graphicElement) throw 'animator requires a graphic element';
+		if(!graphicElement) throw new Error('animator requires a graphic element');
 		this.frameDelay = frameDelay;
 		this.elapsedTime = 0;
 		this.state = state;
@@ -57,7 +57,7 @@ class Animator extends Module {
 
 	SetState(newState: string) {
 		if(newState === this.state) return;
-		if(!this.stateMap[newState]) throw 'invalid state';
+		if(!this.stateMap[newState]) throw new Error('invalid state');
 		this.state = newState;
 		this.currentStateData = this.stateMap[newState];
 		this.UpdateFrame(1);

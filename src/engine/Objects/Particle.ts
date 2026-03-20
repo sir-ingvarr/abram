@@ -1,6 +1,7 @@
 import BasicObject, {BasicObjectsConstructorParams} from './BasicObject';
 import {ICoordinates, Nullable} from '../../types/common';
-import {Sprite, Time} from '../../index';
+import Sprite from '../Modules/Sprite';
+import Time from '../Globals/Time';
 import {Maths, RGBAColor, Vector} from '../Classes';
 import Collider2D, {Collider2DEvent} from '../Modules/Collider';
 // import {CircleArea} from '../Canvas/GraphicPrimitives/Shapes';
@@ -70,23 +71,7 @@ class Particle extends BasicObject {
 		this.color = this.initialColor.Copy();
 		if(this.graphic) this.graphic.parent = this.transform;
 		this.OnCollide = OnCollide;
-		if(!this.OnCollide) return;
-		// const rb = new Rigidbody({
-		// 	gravityScale: this.gravityScale,
-		// 	velocity: this.velocity,
-		// 	drag: this.drag,
-		// 	mass: 1,
-		// 	useGravity: true,
-		// 	isStatic: false,
-		// });
-		//
-		// this.RegisterModule(rb);
-		// this.collider = collider || new Collider2D({
-		// 	shape: new CircleArea(this.size * Math.max(this.initialScale.x, this.initialScale.y), this.transform.WorldPosition.Copy()),
-		// 	type: Collider2DType.Collider,
-		// 	parent: this.transform,
-		// 	rb: rb,
-		// });
+		if(!this.OnCollide || !this.collider) return;
 		this.collider.On(Collider2DEvent.OnCollision2DEnter, this.OnCollide);
 	}
 

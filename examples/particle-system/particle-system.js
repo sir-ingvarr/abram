@@ -1,6 +1,3 @@
-
-const { GameObject, GraphicPrimitives: { GraphicPrimitive, PrimitiveType, ShapeDrawMethod }, Shapes: { Circle, Rect }, ImageWrapper, Classes: {RGBAColor, Vector, Maths}, ParticleSystem } = window.Abram;
-
 const orange = RGBAColor.FromHex('#FFCD76BF');
 const yellow = RGBAColor.FromHex('#FFF96EC7');
 const red = RGBAColor.FromHex('#FF4F4DDA');

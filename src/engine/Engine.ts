@@ -1,7 +1,7 @@
 import {IGameObject, IGameObjectConstructable, ITransform} from '../types/GameObject';
 import {RGBAColor} from './Classes';
 import InputSystem from './Globals/Input';
-import {AnyFunc, CanvasContext2DAttributes, ColorSpace, Nullable} from '../types/common';
+import {CanvasContext2DAttributes, ColorSpace, Nullable} from '../types/common';
 import Canvas from './Canvas/Canvas';
 import GameLoop from './GameLoop';
 import {BasicObjectsConstructorParams} from './Objects/BasicObject';
@@ -14,9 +14,7 @@ export type EngineConfigOptions = {
 	debug?: boolean,
 	canvas?: HTMLCanvasElement,
 	drawFps?: boolean,
-	targetFps?: number,
 	bgColor?: RGBAColor,
-	adaptiveFrameDelay?: boolean,
 	frameBuffering?: boolean,
 	pauseOnBlur?: boolean,
 	canvasContextAttributes?: CanvasContext2DAttributes,
@@ -36,7 +34,7 @@ class Engine {
 		const {
 			width, height, fullscreen = false,
 			debug = false, drawFps = false,
-			targetFps = 60, pauseOnBlur = true,
+			pauseOnBlur = true,
 			bgColor = new RGBAColor(), canvas = null,
 			canvasContextAttributes = {
 				alpha: true,
@@ -52,7 +50,7 @@ class Engine {
 		this.SetCanvas(canvas || this.CreateCanvas(), width, height, canvasContextAttributes, bgColor);
 
 		this.gameLoopManager = new GameLoop({
-			canvas: this.canvas, drawFps, debug, targetFps, pauseOnBlur
+			canvas: this.canvas, drawFps, debug, pauseOnBlur
 		});
 	}
 
@@ -114,8 +112,8 @@ class Engine {
 		this.gameLoopManager.GameObjectManager.RegisterModule(element);
 	}
 
-	Instantiate<T extends BasicObjectsConstructorParams>(gameObject: IGameObjectConstructable<T>, params: T, parent?: ITransform, callOnDone?: AnyFunc): Promise<IGameObject> {
-		return this.gameLoopManager.Instantiate({ gameObject, params, parent, callOnDone });
+	Instantiate<T extends BasicObjectsConstructorParams>(gameObject: IGameObjectConstructable<T>, params: T, parent?: ITransform): Promise<IGameObject> {
+		return this.gameLoopManager.Instantiate({ gameObject, params, parent });
 	}
 
 	async Start () {

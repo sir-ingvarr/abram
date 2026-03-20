@@ -30,7 +30,7 @@ export class ExecutableManager {
 
 	RegisterModule(module: IExecutable): string {
 		if(!this.PreModuleRegister(module)) {
-			throw `Unable to register the module ${module.Id} object does not pass pre-register check`;
+			throw new Error(`Unable to register the module ${module.Id} object does not pass pre-register check`);
 		}
 		this.modules.set(module.Id, module);
 		this.PostModuleRegister(module);

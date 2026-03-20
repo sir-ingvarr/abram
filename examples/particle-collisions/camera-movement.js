@@ -1,6 +1,3 @@
-const { Classes: {Point}, Camera, GameObject } = window.Abram;
-
-
 class CameraMovement extends GameObject {
     constructor(params) {
         super(params);

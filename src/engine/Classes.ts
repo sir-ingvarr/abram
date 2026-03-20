@@ -28,7 +28,7 @@ export class PolarCoordinates {
 			const polarAttributes = CoordinatesConverter.ConvertToPolar(x, y);
 			this.radius = polarAttributes.radius;
 			this.angle = polarAttributes.angle;
-		} else throw 'invalid constructor parameters passed.';
+		} else throw new Error('invalid constructor parameters passed.');
 	}
 
 	static From(point: ICoordinates): PolarCoordinates {
@@ -100,29 +100,22 @@ export class Vector extends Point {
 		return new Vector(x, y || x);
 	}
 
-	static get Up() {
-		return Vector.Of(0, 1);
-	}
+	private static readonly _up = Object.freeze(new Vector(0, 1));
+	private static readonly _down = Object.freeze(new Vector(0, -1));
+	private static readonly _left = Object.freeze(new Vector(-1, 0));
+	private static readonly _right = Object.freeze(new Vector(1, 0));
+	private static readonly _zero = Object.freeze(new Vector(0, 0));
+	private static readonly _one = Object.freeze(new Vector(1, 1));
 
-	static get Down() {
-		return Vector.Of(0, -1);
-	}
+	static get Up() { return Vector._up; }
+	static get Down() { return Vector._down; }
+	static get Left() { return Vector._left; }
+	static get Right() { return Vector._right; }
+	static get Zero() { return Vector._zero; }
+	static get One() { return Vector._one; }
 
-	static get Left() {
-		return Vector.Of(-1, 0);
-	}
-
-	static get Right() {
-		return Vector.Of(1, 0);
-	}
-
-	static get Zero() {
-		return Vector.Of(0);
-	}
-
-	static get One() {
-		return Vector.Of(1, 1);
-	}
+	static get ZeroMutable() { return new Vector(0, 0); }
+	static get OneMutable() { return new Vector(1, 1); }
 
 	static Dot(v1: Vector, v2: Vector) {
 		return v1.x * v2.x  +  v1.y * v2.y;
@@ -374,7 +367,7 @@ export class Maths {
 
 	static GetLerpFactor(from: number, to: number, value: number): Nullable<number> {
 		if(!from || !to || !value) return null;
-		return value - from / to - from;
+		return (value - from) / (to - from);
 	}
 
 
@@ -432,7 +425,7 @@ export class RGBAColor {
 	static FromHex(hex: string) {
 		if(!hex) return;
 		if(hex[0] === '#') hex = hex.slice(1);
-		if(!/[0-9A-F]{6}/i.test(hex)) throw 'invalid hex format';
+		if(!/[0-9A-F]{6}/i.test(hex)) throw new Error('invalid hex format');
 		try {
 			const red = parseInt(hex.slice(0, 2), 16);
 			const green = parseInt(hex.slice(2, 4), 16);

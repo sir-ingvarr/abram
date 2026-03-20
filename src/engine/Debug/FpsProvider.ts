@@ -1,23 +1,15 @@
 import GameObject from '../Objects/GameObject';
-import {Nullable} from '../../types/common';
 import {BasicObjectsConstructorParams} from '../Objects/BasicObject';
 
 export type FpsProviderConstructorOptions = BasicObjectsConstructorParams & {
-	threshold?: number,
-	realFpsFramesBuffer: number,
-	targetFps: number,
-	onFrameDelaySet: Nullable<(newFactor: number) => void>,
-	frameDelay: number
+	sampleSize?: number,
 }
 
 export class FpsProvider extends GameObject<FpsProviderConstructorOptions> {
-	private targetFps: number;
-	private frameDelay: number;
 	private realFps = 0;
-	private realFpsFramesBuffer = 10;
-	private framesSinceRealFps = 0;
-	private startCountTime = 0;
-	private OnFrameDelaySet: Nullable<(newFactor: number) => void>;
+	private sampleSize: number;
+	private framesSinceSample = 0;
+	private sampleStartTime = 0;
 
 	get FPS() {
 		return this.realFps;
@@ -25,32 +17,18 @@ export class FpsProvider extends GameObject<FpsProviderConstructorOptions> {
 
 	constructor(params: FpsProviderConstructorOptions) {
 		super(params);
-		const { realFpsFramesBuffer, targetFps = 0, onFrameDelaySet = () => null, frameDelay = 0 } = params;
-		this.realFpsFramesBuffer = realFpsFramesBuffer || targetFps;
-		this.startCountTime = performance.now();
-		this.targetFps = targetFps;
-		if(targetFps) this.frameDelay = frameDelay >= 0 ? frameDelay : 1000 / targetFps;
-		this.OnFrameDelaySet = onFrameDelaySet;
+		this.sampleSize = params.sampleSize || 60;
+		this.sampleStartTime = performance.now();
 	}
 
 	override Update() {
 		super.Update();
-		if(this.framesSinceRealFps < this.realFpsFramesBuffer) {
-			this.framesSinceRealFps++;
-			return;
-		}
+		this.framesSinceSample++;
+		if(this.framesSinceSample < this.sampleSize) return;
 		const currentTime = performance.now();
-		const deltaTime = currentTime - this.startCountTime;
-		const trueFrameTime = deltaTime / this.realFpsFramesBuffer;
-		this.realFps = 1000 / trueFrameTime;
-		this.startCountTime = currentTime;
-		this.framesSinceRealFps = 0;
-
-		//ADAPTIVE FRAME DELAY ATTEMPT
-
-		if(!this.OnFrameDelaySet || !this.frameDelay) return;
-		const  factor = this.realFps > this.targetFps ? 1 : -1;
-		this.frameDelay += this.frameDelay * (1 - Math.min(this.realFps, this.targetFps) / Math.max(this.targetFps, this.realFps)) * factor;
-		this.OnFrameDelaySet(this.frameDelay);
+		const avgFrameTime = (currentTime - this.sampleStartTime) / this.sampleSize;
+		this.realFps = 1000 / avgFrameTime;
+		this.sampleStartTime = currentTime;
+		this.framesSinceSample = 0;
 	}
 }

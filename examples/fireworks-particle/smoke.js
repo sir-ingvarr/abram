@@ -1,5 +1,3 @@
-const { ParticleSystemAssets: {RenderingStyle} } = Abram;
-
 class Smoke extends GameObject {
 
     constructor(params) {

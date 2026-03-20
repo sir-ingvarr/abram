@@ -15,7 +15,7 @@ class CanvasContext2D {
 		private width: number,
 		private height: number,
 	) {
-		if(!this.ctx) throw 'ctx is required';
+		if(!this.ctx) throw new Error('ctx is required');
 		this.SetSize(width, height);
 	}
 
@@ -44,14 +44,24 @@ class CanvasContext2D {
 		if(height) this.Height = height;
 	}
 
+	private cachedBoundingBox: BoundingBox | null = null;
+	private bbCacheValid = false;
+
+	InvalidateBoundingBoxCache() {
+		this.bbCacheValid = false;
+	}
+
 	get ContextRespectiveBoundingBox() {
+		if(this.bbCacheValid && this.cachedBoundingBox) return this.cachedBoundingBox;
 		const p = this.Position;
 		const halfWidth = this.width / 2;
 		const halfHeight = this.height / 2;
-		return new BoundingBox(
+		this.cachedBoundingBox = new BoundingBox(
 			new Point(p.x - halfWidth, p.y - halfHeight),
 			new Point(p.x + halfWidth, p.y + halfHeight)
 		);
+		this.bbCacheValid = true;
+		return this.cachedBoundingBox;
 	}
 
 
@@ -142,6 +152,11 @@ class CanvasContext2D {
 
 	SetTransform(transform: DOMMatrix): CanvasContext2D {
 		this.ctx.setTransform(transform);
+		return this;
+	}
+
+	SetTransformRaw(a: number, b: number, c: number, d: number, e: number, f: number): CanvasContext2D {
+		this.ctx.setTransform(a, b, c, d, e, f);
 		return this;
 	}
 

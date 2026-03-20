@@ -2,8 +2,6 @@
 import Canvas from './Canvas/Canvas';
 import {IGameObject, IGameObjectConstructable, ITransform} from '../types/GameObject';
 import {FpsProvider} from './Debug/FpsProvider';
-import {BasicObjectsConstructorParams} from './Objects/BasicObject';
-import {AnyFunc} from '../types/common';
 import GameObject from './Objects/GameObject';
 import {Queue} from './Classes';
 import {GameObjectManager} from './Managers/GameObjectManager';
@@ -16,23 +14,17 @@ type InstantiateOpts = {
 	gameObject: IGameObjectConstructable<any>,
 	params: any,
 	parent?: ITransform,
-	callOnDone?: AnyFunc,
 }
 
 export type GameLoopOptions = {
 	canvas: Canvas,
 	pauseOnBlur?: boolean,
 	debug?: boolean,
-	targetFps?: number,
 	drawFps?: boolean,
 }
 
 class GameLoop {
 	private isPlaying: boolean;
-	private prevFrameTime: number;
-	private frameDelay: number;
-	private readonly targetFps: number;
-	private targetFrameDelay: number;
 	private readonly debug: boolean;
 	private readonly drawFps: boolean;
 	private readonly gameObjectManager: GameObjectManager;
@@ -40,24 +32,23 @@ class GameLoop {
 	private collisionsManager: CollisionsManager;
 	private readonly fpsProvider: FpsProvider;
 	private readonly canvas: Canvas;
-	private readonly instantiateQueue: Queue<InstantiateOpts & { callOnDone: AnyFunc }> = new Queue<InstantiateOpts & { callOnDone: AnyFunc }>({data: []});
+	private readonly instantiateQueue: Queue<InstantiateOpts & { resolve: (go: IGameObject) => void }> = new Queue<InstantiateOpts & { resolve: (go: IGameObject) => void }>({data: []});
+	private readonly boundRender: () => void;
 
 	constructor(
 		opts: GameLoopOptions
 	) {
 		const {
-			canvas, debug = false, targetFps = 60, drawFps = false, pauseOnBlur
+			canvas, debug = false, drawFps = false, pauseOnBlur
 		} = opts;
 		this.debug = debug;
 		this.canvas = canvas;
 		this.drawFps = drawFps;
-		this.targetFps = targetFps;
-		this.targetFrameDelay = this.targetFps ? 1000 / this.targetFps : 0;
 		this.gameObjectManager = new GameObjectManager({ modules: [], context: this.canvas.Context2D});
-		this.spriteRendererManager = SpriteRendererManager.GetInstance(canvas, debug);
+		this.spriteRendererManager = SpriteRendererManager.GetInstance(canvas, this.debug);
 		this.collisionsManager = new CollisionsManager({ modules: [] });
 
-		this.instantiateQueue = new Queue<InstantiateOpts & { callOnDone: AnyFunc }>({data: []});
+		this.instantiateQueue = new Queue<InstantiateOpts & { resolve: (go: IGameObject) => void }>({data: []});
 
 		if (pauseOnBlur) {
 			global.addEventListener('blur', this.Pause.bind(this));
@@ -65,14 +56,11 @@ class GameLoop {
 			global.addEventListener('focusout', this.Pause.bind(this));
 			global.addEventListener('focusin', this.Play.bind(this));
 		}
-		this.prevFrameTime = performance.now();
+		this.boundRender = this.Render.bind(this);
 		if(!drawFps) return;
 		this.fpsProvider = new FpsProvider({
 			name: 'FPSProvider',
-			realFpsFramesBuffer: this.targetFps,
-			targetFps: this.targetFps,
-			frameDelay: this.targetFrameDelay,
-			onFrameDelaySet: null,
+			sampleSize: 60,
 		});
 		this.gameObjectManager.RegisterModule(this.fpsProvider);
 	}
@@ -82,9 +70,8 @@ class GameLoop {
 	}
 
 	Play () {
-		this.prevFrameTime = performance.now();
 		this.isPlaying = true;
-		this.Render();
+		this.boundRender();
 	}
 
 	Pause() {
@@ -93,13 +80,11 @@ class GameLoop {
 
 	Start () {
 		this.Play();
-		if(!this.debug) return;
-		console.log(`target fps set to ${this.targetFps}, targetFrameDelay: ${this.frameDelay}`);
 	}
 
-	public async Instantiate<T extends BasicObjectsConstructorParams>(opts: InstantiateOpts): Promise<T> {
+	public Instantiate(opts: InstantiateOpts): Promise<IGameObject> {
 		return new Promise(resolve => {
-			this.instantiateQueue.Push({ ...opts, callOnDone: go => resolve(go) });
+			this.instantiateQueue.Push({ ...opts, resolve });
 		});
 	}
 
@@ -109,21 +94,20 @@ class GameLoop {
 
 	Render () {
 		if(!this.isPlaying) return;
-		const timeFrameBegin = performance.now();
+		requestAnimationFrame(this.boundRender);
 		while(this.instantiateQueue.Count) {
 			const element = this.instantiateQueue.Shift();
 			this.Spawn(element);
 		}
-		// if(this.frameDelay && timeFrameBegin - this.prevFrameTime < this.frameDelay) {
-		// 	requestAnimationFrame(this.Render.bind(this));
-		// 	return;
-		// }
 		Time.FrameRendered();
+		this.Canvas.Context2D
+			.InvalidateBoundingBoxCache();
 		this.Canvas.Context2D
 			.Clear()
 			.DrawBg();
 		this.gameObjectManager.Update();
-		this.spriteRendererManager.SetCameraPosition(Camera.GetInstance({}).Position);
+		const camera = Camera.GetInstance({});
+		this.spriteRendererManager.SetCamera(camera.Position, camera.Scale);
 		this.spriteRendererManager.DrawCallsFinished();
 		this.collisionsManager.Update();
 		if(this.drawFps) {
@@ -135,25 +119,17 @@ class GameLoop {
 				.FillText(`frame time: ${Time.deltaTime}`, this.canvas.Width - 90, 15)
 				.FillText(`FPS: ${Math.floor(this.fpsProvider.FPS)}`, this.canvas.Width - 90, 30);
 		}
-		this.prevFrameTime = performance.now();
-		requestAnimationFrame(this.Render.bind(this));
-		const frameTime = this.prevFrameTime - timeFrameBegin;
-		this.frameDelay = 1000 / this.targetFps - frameTime;
 	}
 
-	private Spawn<T extends BasicObjectsConstructorParams>(args:{
-		gameObject: IGameObjectConstructable<T>,
-		params: T, parent?: ITransform, callOnDone?: AnyFunc,
-	}): IGameObject {
+	private Spawn(args: InstantiateOpts & { resolve: (go: IGameObject) => void }): void {
 		const gameObjectInstance = new args.gameObject(args.params);
 		if(!args.parent) {
 			this.AppendGameObject(gameObjectInstance);
 		} else {
-			if(!(args.parent.gameObject instanceof GameObject)) throw 'unable to instantiate child to non GameObject parent';
+			if(!(args.parent.gameObject instanceof GameObject)) throw new Error('unable to instantiate child to non GameObject parent');
 			args.parent.gameObject.AppendChild(gameObjectInstance);
 		}
-		if(args.callOnDone) args.callOnDone(gameObjectInstance);
-		return gameObjectInstance;
+		args.resolve(gameObjectInstance);
 	}
 
 	private AppendGameObject(element: IGameObject) {

@@ -1,6 +1,3 @@
-
-const { ImageWrapper, GraphicPrimitives: { GraphicPrimitive, ShapeDrawMethod, PrimitiveType }, Shapes: { Circle, Rect }, Classes: {RGBAColor, Vector, Maths}, ParticleSystem } = window.Abram;
-
 function OnCollide(self, other) {
     console.log('onCollide');
 }

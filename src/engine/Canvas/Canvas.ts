@@ -23,7 +23,7 @@ class Canvas {
 	constructor(props: CanvasConstructorParams) {
 		const { width, height, canvas, bgColor = new RGBAColor() } = props;
 		this.bgColor = bgColor;
-		if(!canvas) throw 'canvas is required';
+		if(!canvas) throw new Error('canvas is required');
 		this.canvas = canvas;
 		this.canvas.width = width;
 		this.canvas.height = height;
