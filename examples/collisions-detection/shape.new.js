@@ -30,7 +30,7 @@ class Shape extends GameObject {
 		});
 
 		this.rigidBody = new RigidBody({
-			useGravity: true, gravityScale: 0.3, drag: 0.5, mass: this.size / 60, bounciness: this.bounciness, isStatic: this.isStatic,
+			useGravity: true, gravityScale: 1, drag: 1.2, mass: this.size / 60, bounciness: this.bounciness, isStatic: this.isStatic,
 		});
 
 		this.collider = new Collider2D({
@@ -75,33 +75,37 @@ class Shape extends GameObject {
 	Update() {
 		this.horizontalDir = this.CheckHorizontalInputs();
 		this.verticalDir = this.CheckVerticalInputs();
-		const pos = this.transform.WorldPosition;
-		if(pos.x < (-640)) {
-			this.transform.LocalPosition = new Vector(-639, pos.y);
-			if(this.input === -1) {
-				this.rigidBody.Velocity = new Vector(-this.rigidBody.Velocity.x * this.rigidBody.Bounciness, this.rigidBody.Velocity.y);
-			} else {
-				pos.x = 639;
+		if(!this.isStatic) {
+			const pos = this.transform.WorldPosition;
+			if (pos.x < (-640)) {
+				this.transform.LocalPosition = new Vector(-639, pos.y);
+				if (this.input === -1) {
+					this.rigidBody.Velocity = new Vector(0, this.rigidBody.Velocity.y);
+				} else {
+					pos.x = 639;
+				}
 			}
-		}
-		if(pos.x > (640)) {
-			if(this.input === -1) {
-				this.transform.LocalPosition = new Vector(639, pos.y);
-				this.rigidBody.Velocity = new Vector(-this.rigidBody.Velocity.x * this.rigidBody.Bounciness, this.rigidBody.Velocity.y);
-			} else {
-				pos.x = -639;
+			if (pos.x > (640)) {
+				if (this.input === -1) {
+					this.transform.LocalPosition = new Vector(639, pos.y);
+					this.rigidBody.Velocity = new Vector(0, this.rigidBody.Velocity.y);
+				} else {
+					pos.x = -639;
+				}
 			}
-		}
-		const shouldStand = pos.y >= (100 - this.size / 2);
-		if(shouldStand) {
-			this.rigidBody.Velocity = new Vector(this.rigidBody.Velocity.x, -this.rigidBody.Velocity.y * this.rigidBody.Bounciness);
-			this.transform.LocalPosition = new Vector(pos.x, 100 - this.size / 2);
-		}
-		this.Jump(shouldStand);
+			const shouldStand = pos.y >= (360 - this.size / 2);
+			if (shouldStand) {
+				// this.rigi`dBody.velocity = new Vector(this.rigidBody.velocity.x, -this.rigidBody.velocity.y * this.rigidBody.bounciness);
+				this.transform.LocalPosition = new Vector(pos.x, 360 - this.size / 2);
+				this.rigidBody.Velocity = new Vector(this.rigidBody.Velocity.x, 0);
+				this.rigidBody.Bounciness = 0;
+			}
+			this.Jump(shouldStand);
 
-		this.prevHorDir = this.horizontalDir || this.prevHorDir;
-		if(shouldStand) {
-			this.rigidBody.AddForce(Vector.MultiplyCoordinates(1, new Vector(this.horizontalDir, 0)));
+			this.prevHorDir = this.horizontalDir || this.prevHorDir;
+			if (shouldStand) {
+				this.rigidBody.AddForce(Vector.MultiplyCoordinates(1, new Vector(this.horizontalDir, 0)));
+			}
 		}
 		super.Update();
 	}

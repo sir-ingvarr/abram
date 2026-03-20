@@ -19,7 +19,7 @@ class SpriteRendererManager {
 
 	public static GetInstance(canvas?: Canvas, debug?: boolean) {
 		if(!SpriteRendererManager.instance) {
-			if (!canvas) throw 'no instance of SpriteRendererManager. required params are missing';
+			if (!canvas) throw new Error('no instance of SpriteRendererManager. required params are missing');
 			SpriteRendererManager.instance = new SpriteRendererManager(canvas, debug);
 		}
 		return SpriteRendererManager.instance;
@@ -33,8 +33,8 @@ class SpriteRendererManager {
 		return this.context;
 	}
 
-	public SetCameraPosition(position: ICoordinates) {
-		this.spriteRenderer.SetContextOpts({Position: position});
+	public SetCamera(position: ICoordinates, scale: ICoordinates) {
+		this.spriteRenderer.SetContextOpts({Position: position, Scale: scale});
 	}
 
 	public DrawCallsFinished() {

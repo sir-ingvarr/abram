@@ -1,111 +1,125 @@
-## Game engine in JS
+# ABRAM
 
-The idea of this is a creation of unity-like game engine for simple 2d games.
+**Advanced Browser Rendering Abstraction Module** — a Unity-inspired 2D game engine for the browser, built with TypeScript. Zero runtime dependencies.
 
-### Main features (for now)
-* Game objects
-* Sprite loading
-* Keyboard input handling
-* Simple animator
-* Helpers (RGBA, Math, Vector classes)
+<p align="center">
+  <img src="./logo.png" alt="ABRAM logo" width="200" />
+</p>
 
-### How it looks
+## Features
 
-![](./gif/game_demo.gif)
+- **Component-based architecture** — GameObjects hold Modules (Sprite, Rigidbody, Collider, Animator, TrailRenderer, etc.)
+- **Parent-child transforms** — nested position, rotation, and scale with world coordinate propagation
+- **Impulse-based physics** — gravity, forces, drag, collision detection and response via circle colliders
+- **Particle system** — emit over time/distance/burst, pooling, sub-emitters, lifetime curves, occlusion culling
+- **Sprite animation** — state machine animator with frame-based transitions
+- **Trail rendering** — configurable width/color over trail lifetime
+- **Keyboard input** — static InputSystem with press tracking and event listeners
+- **Camera** — position, zoom/scale, center tracking
+- **Math utilities** — Vector, Point, Polar coordinates, Bezier curves, color interpolation
 
-### Example
+## Quick Start
 
-#### Initialization
-```
-document.addEventListener('DOMContentLoaded', function() {
-    // create engine instance and append canvas to parent
-    const engine = new Engine({width: 500, height: 500, canvasResolution: 10, debug: true});
-    const root = document.getElementById('root');
-    engine.CreateCanvas(root);
-    
-    // set canvas bg color
-    const bgColor = new RGBAColor(0,0,0, 150);
-    engine.SetBackgroundColor(bgColor);
+### Browser (script tag)
 
-    // instantiate GameObjects and register in engine
-    const gameObject = new Man({
-        position: new Vector(10, 20)
-    });
-    engine.AppendGameObject(gameObject);
+```html
+<script src="path/to/abram.js"></script>
+<script>
+const { Engine, GameObject, Classes: { Vector, RGBAColor } } = window.Abram;
 
-    const gameObject2 = new ManTwo({
-        position: new Vector(30, 30)
-    });
-    engine.AppendGameObject(gameObject2);
-
-    engine.Start();
+const root = document.getElementById('root');
+const engine = new Engine(root, {
+    width: 1280,
+    height: 800,
+    drawFps: true,
+    bgColor: new RGBAColor(30, 30, 30),
 });
+
+engine.AppendGameObject(new MyGameObject({ position: new Vector(0, 0) }));
+engine.Start();
+</script>
 ```
 
-#### GameObject
-```
-class Man extends GameObject {
-    constructor(params) {
-        super(params);
-        // some initial props
-        this.horizontalDir = 0;
-        this.prevHorDir = 1;
-        this.verticalDir = 0;
-    }
+### npm
 
-    // unity-style Start and Render
+```bash
+npm install abram (NOT PUBLISHED YET)
+```
+
+```js
+import Engine, { GameObject, Classes } from 'abram';
+const { Vector, RGBAColor } = Classes;
+```
+
+## Creating a GameObject
+
+```js
+class Player extends GameObject {
     Start() {
-    
-        // create sprite
-        const graphic = new GraphicElement({
-            url: './assets/dude_idle.png',
-            width: 3, height: 7,
+        const sprite = new Sprite({
+            image: new ImageWrapper('./player.png'),
+            width: 64,
+            height: 64,
+            layer: 1,
         });
+        this.RegisterModule(sprite);
 
-
-        // create animator
-        this.animator = new Animator({
-            frameDelay: 100, // delay between frames
-            stateMap: {
-                idle: ['./assets/dude_idle.png'],
-                running: ['./assets/dude_run1.png', './assets/dude_idle.png', './assets/dude_run2.png', './assets/dude_idle.png',],
-            }, // array of sprite urls per animator state
-            state: 'idle', // default state
-            graphicElement: graphic, // link to sprite component
-        });
-        // apply sprite component to game object
-        this.SetGraphicsContent(graphic);
+        this.rb = new RigidBody({ useGravity: true, mass: 1, drag: 0.5 });
+        this.RegisterModule(this.rb);
     }
 
-    CheckHorizontalInputs() {
-        // static InputSystem class to check for keyboard keys
-        if(InputSystem.KeyPressed('KeyA')) return -1;
-        if(InputSystem.KeyPressed('KeyD')) return 1;
-        return 0;
-    }
-
-    CheckVerticalInputs() {
-        if(InputSystem.KeyPressed('KeyW')) return -1;
-        if(InputSystem.KeyPressed('KeyS')) return 1;
-        return 0;
-    }
-
-
-    // state handling per frame magic
-    Render() {
-        this.horizontalDir = this.CheckHorizontalInputs();
-        this.verticalDir = this.CheckVerticalInputs();
-        if(!!this.horizontalDir || !!this.verticalDir) {
-            this.prevHorDir = this.horizontalDir || this.prevHorDir;
-            this.animator.SetState('running');
-        } else {
-            this.animator.SetState('idle');
+    Update() {
+        if (InputSystem.KeyPressed('ArrowRight')) {
+            this.rb.AddForce(new Vector(5, 0));
         }
-        if(this.graphic) this.graphic.SetScale(this.horizontalDir || this.prevHorDir);
-        this.position.Translate(0.1 * this.horizontalDir, 0.1 * this.verticalDir);
-        
-        // destroy available
-        // if(this.position.x > 150) this.Destroy();
+        super.Update();
     }
 }
 ```
+
+## Lifecycle
+
+Every `GameObject` and `Module` follows the lifecycle: **Start()** (called once, on first frame) -> **Update()** (called every frame) -> **Destroy()**.
+
+Physics, rendering, and collisions are processed automatically by the engine after `Update()`.
+
+## Build
+
+```bash
+npm run build       # full pipeline: clear -> tsc -> webpack
+npm run build-ts    # TypeScript only
+npm run bundle      # webpack only
+npm run lint        # ESLint
+```
+
+## Examples
+
+The `examples/` directory contains working demos:
+
+| Example | Description |
+|---------|-------------|
+| `simple-game` | Character movement with sprites, animation, and input |
+| `collisions-detection` | Circle collider physics with spawning |
+| `particle-system` | Particle effects with lifetime curves |
+| `particle-collisions` | Particles with collision physics |
+| `fireworks-particle` | Fireworks with sub-emitters and time scaling |
+| `planets-patterns` | Orbital mechanics with trail renderers |
+| `bezier-curve` | Bezier curve visualization |
+| `colors` | RGBAColor manipulation and gradients |
+
+Open any example's `index.html` in a browser after running `npm run build`.
+
+## Documentation
+
+Detailed API docs are in the [`docs/`](./docs) folder:
+
+- [Engine](./docs/engine.md) — initialization and configuration
+- [GameObjects & Transforms](./docs/gameobjects.md) — scene hierarchy and transforms
+- [Modules](./docs/modules.md) — Sprite, Animator, Rigidbody, Collider, TrailRenderer
+- [Particle System](./docs/particles.md) — emitters, lifetime curves, sub-emitters
+- [Math & Utilities](./docs/math.md) — Vector, Point, RGBAColor, Maths, and more
+- [Input](./docs/input.md) — keyboard handling
+
+## License
+
+ISC

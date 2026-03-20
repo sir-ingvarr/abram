@@ -15,7 +15,7 @@ class CanvasContext2D {
 		private width: number,
 		private height: number,
 	) {
-		if(!this.ctx) throw 'ctx is required';
+		if(!this.ctx) throw new Error('ctx is required');
 		this.SetSize(width, height);
 	}
 

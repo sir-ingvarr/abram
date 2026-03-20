@@ -1,8 +1,6 @@
 document.addEventListener('DOMContentLoaded', async function() {
     const root = document.getElementById('root');
-    const { Engine, Classes: { RGBAColor, Vector } } = window.Abram;
-
-    const engine = new Engine(root, { width: 1280, height: 800, targetFps: 60, debug: false, drawFps: true, pauseOnBlur: false });
+    const engine = new Engine(root, { width: 1280, height: 800, debug: false, drawFps: true, pauseOnBlur: false });
 
     await engine.RegisterGameScript('./camera-movement.js')
     await engine.RegisterGameScript('./explosion.js');

@@ -2,10 +2,11 @@
   "name": "abram",
   "version": "0.0.1",
   "description": "advanced browser rendering abstraction module (js game engine)",
-  "main": "index.js",
-  "directories": {
-    "example": "examples"
-  },
+  "main": "build/abram.js",
+  "types": "build/index.d.ts",
+  "files": [
+    "build"
+  ],
   "scripts": {
     "lint": "eslint ./src",
     "test": "exit 0",

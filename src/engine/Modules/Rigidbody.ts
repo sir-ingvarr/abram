@@ -202,7 +202,7 @@ class RigidBody extends Module {
 
 	override Start() {
 		super.Start();
-		if(!this.gameObject) throw 'GameObject not found';
+		if(!this.gameObject) throw new Error('GameObject not found');
 		this.prevPosition = this.gameObject.transform.WorldPosition;
 	}
 

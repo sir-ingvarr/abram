@@ -1,0 +1,11 @@
+src
+examples
+docs
+.husky
+.idea
+.eslintrc.json
+tsconfig.json
+webpack.config.js
+logo.png
+Readme.md
+CLAUDE.md

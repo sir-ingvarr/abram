@@ -34,6 +34,7 @@ export interface IContextOpts {
 	image?: ImageWrapper,
 	debug?: boolean;
 	Position?: ICoordinates,
+	Scale?: ICoordinates,
 	options?: CtxOptions,
 	type?: PrimitiveType,
 	dash?: Array<number>,
@@ -44,6 +45,7 @@ class SpriteRenderer {
 	private static instance: SpriteRenderer;
 	private readonly imageStorage: Map<string, ImageBitmap>;
 	private contextPosition: ICoordinates;
+	private contextScale: ICoordinates;
 	private readonly debugStrokeColor: string;
 
 	private renderingStackList: Array<IStack<IContextOpts>> = [];
@@ -53,6 +55,7 @@ class SpriteRenderer {
 	private constructor(context2D: CanvasContext2D, private debug?: boolean) {
 		this.imageStorage = new Map<string, ImageBitmap>();
 		this.mainCanvasContext = context2D;
+		this.contextScale = Vector.One;
 		SpriteRenderer.instance = this;
 		this.loadList = new Map<string, Promise<string>>();
 		this.debugStrokeColor = new RGBAColor(0, 120).ToHex();
@@ -80,6 +83,7 @@ class SpriteRenderer {
 		if(opts.Height) this.mainCanvasContext.Height = opts.Height;
 		if(opts.Width) this.mainCanvasContext.Width = opts.Width;
 		if(opts.Position) this.contextPosition = opts.Position;
+		if(opts.Scale) this.contextScale = opts.Scale;
 		if(opts.debug) this.debug = opts.debug;
 	}
 
@@ -146,7 +150,14 @@ class SpriteRenderer {
 		const anchoredX = anchors.x * width;
 		const anchoredY = anchors.y * height;
 
+		const camScale = this.contextScale;
+		const canvasCenterX = this.mainCanvasContext.Width / 2;
+		const canvasCenterY = this.mainCanvasContext.Height / 2;
+
 		const matrix = new DOMMatrix()
+			.translate(canvasCenterX, canvasCenterY)
+			.scale(camScale.x, camScale.y)
+			.translate(-canvasCenterX, -canvasCenterY)
 			.translate(worldPosition.x - this.contextPosition.x, worldPosition.y - this.contextPosition.y)
 			.scale(scale.x, scale.y)
 			.rotate(worldRotation * 180 / Math.PI)

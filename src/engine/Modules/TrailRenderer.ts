@@ -71,9 +71,7 @@ class TrailRenderer extends Module {
 
 	override Start() {
 		super.Start();
-		this._previousPosition = this.gameObject?.transform?.WorldPosition;
 	}
-
 
 	private AddSegment(point?: ICoordinates) {
 		if(!this._previousPosition) return;
@@ -123,6 +121,11 @@ class TrailRenderer extends Module {
 		if(this._sinceSpawn < this._newSegmentEachMS) return;
 		const parentPosition = this.gameObject?.transform?.WorldPosition;
 		if(!parentPosition) return;
+		if(!this._previousPosition) {
+			this._previousPosition = parentPosition;
+			this._sinceSpawn = 0;
+			return;
+		}
 		this.AddSegment(parentPosition);
 		this._previousPosition = parentPosition;
 		this._sinceSpawn = 0;

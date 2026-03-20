@@ -1,5 +1,3 @@
-const { GameObject, Sprite, ImageWrapper, Animator, InputSystem, Time, Classes: {Vector}, RigidBody } = window.Abram;
-
 class Man extends GameObject {
     constructor(params, cam) {
         super(params);
@@ -78,12 +76,15 @@ class Man extends GameObject {
         this.horizontalDir = this.CheckHorizontalInputs();
         this.verticalDir = this.CheckVerticalInputs();
         const pos = this.transform.WorldPosition;
-        if(this.cam) this.cam.SetPosition(pos);
+        if(this.cam) {
+            this.cam.SetPosition(pos);
+            this.cam.SetTargetZoom(pos.y >= 0 ? 1 : 1.5);
+        }
         const shouldStand = pos.y >= 0;
         this.rigidBody.UseGravity = !shouldStand
         if(shouldStand) {
             this.rigidBody.collidedRb = this.ground;
-            this.rigidBody.velocity.y = 0;
+            this.rigidBody.Velocity = new Vector(this.rigidBody.Velocity.x, 0);
             this.transform.LocalPosition = new Vector(pos.x, 0);
         } else {
             this.rigidBody.collidedRb = null;

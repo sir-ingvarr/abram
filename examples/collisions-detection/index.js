@@ -1,9 +1,7 @@
 document.addEventListener('DOMContentLoaded', async function() {
     const root = document.getElementById('root');
 
-    const { Engine, Classes: { Vector, Maths } } = window.Abram;
-
-    const engine = new Engine(root, { width: 1280, height: 800, debug: false, canvasContextAttributes: { alpha: false }, drawFps: true, adaptiveFrameDelay: false, pauseOnBlur: false });
+    const engine = new Engine(root, { width: 1280, height: 800, debug: false, canvasContextAttributes: { alpha: false }, drawFps: true, pauseOnBlur: false });
     await engine.RegisterGameScript('./Shape.js');
     await engine.RegisterGameScript('./camera-movement.js');
     await engine.RegisterGameScript('./spawner.js');

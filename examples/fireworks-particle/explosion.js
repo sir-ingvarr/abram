@@ -1,6 +1,4 @@
 
-const { Time, GraphicPrimitives: { GraphicPrimitive, PrimitiveType, ShapeDrawMethod }, Shapes: { Rect, Circle }, Sprite, ImageWrapper, Classes: {RGBAColor, Vector, Maths, PolarCoordinates}, ParticleSystem } = window.Abram;
-
 class Explosion extends GameObject {
     lifetime;
     color
