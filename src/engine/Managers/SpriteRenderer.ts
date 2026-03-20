@@ -46,6 +46,8 @@ class SpriteRenderer {
 	private readonly imageStorage: Map<string, ImageBitmap>;
 	private contextPosition: ICoordinates;
 	private contextScale: ICoordinates;
+	private canvasCenterX: number;
+	private canvasCenterY: number;
 	private readonly debugStrokeColor: string;
 
 	private renderingStackList: Array<IStack<IContextOpts>> = [];
@@ -56,6 +58,8 @@ class SpriteRenderer {
 		this.imageStorage = new Map<string, ImageBitmap>();
 		this.mainCanvasContext = context2D;
 		this.contextScale = Vector.One;
+		this.canvasCenterX = context2D.Width / 2;
+		this.canvasCenterY = context2D.Height / 2;
 		SpriteRenderer.instance = this;
 		this.loadList = new Map<string, Promise<string>>();
 		this.debugStrokeColor = new RGBAColor(0, 120).ToHex();
@@ -80,8 +84,14 @@ class SpriteRenderer {
 	}
 
 	public SetContextOpts(opts: Partial<IContextOpts>) {
-		if(opts.Height) this.mainCanvasContext.Height = opts.Height;
-		if(opts.Width) this.mainCanvasContext.Width = opts.Width;
+		if(opts.Height) {
+			this.mainCanvasContext.Height = opts.Height;
+			this.canvasCenterY = opts.Height / 2;
+		}
+		if(opts.Width) {
+			this.mainCanvasContext.Width = opts.Width;
+			this.canvasCenterX = opts.Width / 2;
+		}
 		if(opts.Position) this.contextPosition = opts.Position;
 		if(opts.Scale) this.contextScale = opts.Scale;
 		if(opts.debug) this.debug = opts.debug;
@@ -130,40 +140,51 @@ class SpriteRenderer {
 		const context = this.mainCanvasContext;
 
 		if(!graphic.parent) return;
-		const { disrespectParent } = graphic;
 
-		const params = {
-			worldPosition: disrespectParent ? Vector.Zero : graphic.parent.WorldPosition,
-			scale: disrespectParent ? Vector.One : graphic.parent.Scale,
-			localPosition: disrespectParent ? Vector.Zero : graphic.parent.LocalPosition,
-			worldRotation: disrespectParent ? 0 : graphic.parent.WorldRotation,
-			anchors: disrespectParent ? { x: 0, y: 0 } : graphic.parent.Anchors,
-		};
+		let worldPosition: ICoordinates;
+		let scale: ICoordinates;
+		let worldRotation: number;
+		let anchoredX: number;
+		let anchoredY: number;
 
-		const {
-			worldPosition,
-			scale,
-			worldRotation,
-			anchors,
-		} = params;
+		if(graphic.disrespectParent) {
+			worldPosition = Vector.Zero;
+			scale = Vector.One;
+			worldRotation = 0;
+			anchoredX = 0;
+			anchoredY = 0;
+		} else {
+			worldPosition = graphic.parent.WorldPosition;
+			scale = graphic.parent.Scale;
+			worldRotation = graphic.parent.WorldRotation;
+			const anchors = graphic.parent.Anchors;
+			anchoredX = anchors.x * width;
+			anchoredY = anchors.y * height;
+		}
 
-		const anchoredX = anchors.x * width;
-		const anchoredY = anchors.y * height;
+		const csx = this.contextScale.x;
+		const csy = this.contextScale.y;
+		const ccx = this.canvasCenterX;
+		const ccy = this.canvasCenterY;
 
-		const camScale = this.contextScale;
-		const canvasCenterX = this.mainCanvasContext.Width / 2;
-		const canvasCenterY = this.mainCanvasContext.Height / 2;
+		const tx = worldPosition.x - this.contextPosition.x;
+		const ty = worldPosition.y - this.contextPosition.y;
 
-		const matrix = new DOMMatrix()
-			.translate(canvasCenterX, canvasCenterY)
-			.scale(camScale.x, camScale.y)
-			.translate(-canvasCenterX, -canvasCenterY)
-			.translate(worldPosition.x - this.contextPosition.x, worldPosition.y - this.contextPosition.y)
-			.scale(scale.x, scale.y)
-			.rotate(worldRotation * 180 / Math.PI)
-			.translate(-anchoredX, -anchoredY);
+		const cos = Math.cos(worldRotation);
+		const sin = Math.sin(worldRotation);
 
-		context.SetTransform(matrix);
+		const sx = scale.x;
+		const sy = scale.y;
+
+		// T(ccx,ccy) * S(csx,csy) * T(-ccx,-ccy) * T(tx,ty) * S(sx,sy) * R(θ) * T(-ax,-ay)
+		const a = csx * sx * cos;
+		const b = csy * sx * sin;
+		const c = csx * sy * -sin;
+		const d = csy * sy * cos;
+		const e = ccx * (1 - csx) + csx * (tx - anchoredX * sx * cos + anchoredY * sy * sin);
+		const f = ccy * (1 - csy) + csy * (ty - anchoredX * sx * sin - anchoredY * sy * cos);
+
+		context.SetTransformRaw(a, b, c, d, e, f);
 
 		if(graphic.contentType === 0) {
 			if(!graphic.image?.isReady) return;

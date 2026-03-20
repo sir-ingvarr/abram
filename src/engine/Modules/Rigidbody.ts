@@ -49,14 +49,14 @@ class RigidBody extends Module {
 		} = params;
 		this.mass = isStatic ? Infinity : mass;
 		this.invertedMass = isStatic ? 0 : 1 / mass;
-		this.velocity = isStatic ? Vector.Zero : velocity;
+		this.velocity = isStatic ? Vector.ZeroMutable : velocity;
 		this.useGravity = isStatic ? false : useGravity;
 		this.angularDrag = isStatic ? Infinity : angularDrag;
 		this.centerOfMass = centerOfMass;
 		this.drag = isStatic ? Infinity : drag;
 		this.bounciness = bounciness;
 		this.angularVelocity = isStatic ? 0 : angularVelocity;
-		this.force = Vector.Zero;
+		this.force = Vector.ZeroMutable;
 		this.torque = 0;
 		this.gravityScale = isStatic ? 0 : gravityScale;
 		this.isStatic = isStatic;
@@ -187,7 +187,7 @@ class RigidBody extends Module {
 	private CalcVelocityByForces() {
 		const accelerationVector = Vector.DivideCoordinates(this.mass, this.force);
 		this.velocity.Add(accelerationVector);
-		this.force = Vector.Zero;
+		this.force = Vector.ZeroMutable;
 		const physicalMovement = Vector.MultiplyCoordinates(Time.DeltaTimeSeconds * 10, this.velocity);
 		this.gameObject?.transform.Translate(physicalMovement);
 	}

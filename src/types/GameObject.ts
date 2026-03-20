@@ -25,6 +25,8 @@ interface IScalable {
 
     get LocalScale(): Vector;
     set LocalScale(value: Vector);
+
+    get LocalScaleMutable(): Vector;
 }
 
 export interface IExecutable extends IWithLifeCycle {
@@ -57,6 +59,7 @@ export interface ITransform extends IScalable {
     get WorldPosition(): Vector;
     get LocalPosition(): Vector;
     set LocalPosition(value: Vector);
+    get LocalPositionMutable(): Vector;
 
     RotateDeg(amount: number): ITransform;
 

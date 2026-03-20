@@ -316,7 +316,7 @@ class ParticleSystem extends ExecutableManager {
 				props.followers = await Promise.all(followerPromises);
 			}
 			particle.SetInitialParams(props);
-			particle.initialScale = Vector.One;
+			particle.initialScale = Vector.OneMutable;
 		} else {
 			const graphic = this.SetOrExecute(this.graphic);
 			const props = this.GetParticleInitialProps(graphic);

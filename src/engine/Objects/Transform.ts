@@ -15,8 +15,8 @@ type TransformOptions = {
 const DEG_TO_RAD = Math.PI / 180;
 
 class Transform implements ITransform {
-	private localPosition: ICoordinates;
-	private localScale: ICoordinates;
+	private localPosition: Vector;
+	private localScale: Vector;
 	private localRotationDeg: number;
 	private localRotation: number;
 	private parent: Nullable<ITransform>;
@@ -33,15 +33,15 @@ class Transform implements ITransform {
 			anchors = { x: 0.5, y: 0.5 } } = params;
 		this.gameObject = go;
 		this.parent = parent;
-		this.localPosition = localPosition.Copy();
-		this.localScale = localScale.Copy();
+		this.localPosition = Vector.From(localPosition);
+		this.localScale = Vector.From(localScale);
 		if(typeof localRotationDegrees === 'number') this.LocalRotationDeg = localRotationDegrees;
 		else if(typeof localRotation === 'number') this.LocalRotation = localRotation;
 		this.anchors = anchors;
 	}
 
 	get Anchors() {
-		return Object.assign({}, this.anchors);
+		return this.anchors;
 	}
 
 	set Anchors(newVal: IPoint) {
@@ -60,23 +60,35 @@ class Transform implements ITransform {
 		return Vector.From(this.localPosition);
 	}
 
+
 	set LocalPosition(newLocalPos: Vector) {
 		this.localPosition = newLocalPos.Copy();
 	}
 
-	get WorldPosition(): Vector {
-		let position = this.localPosition.ToVector();
-		let current = this.parent;
+	get LocalPositionMutable(): Vector {
+		return this.localPosition;
+	}
 
-		while (current) {
-			position = Vector.MultiplyCoordinates(position, current.LocalScale);
-			const flipX = current.LocalScale.x < 0;
-			const flipY = current.LocalScale.y < 0;
-			position = position.Rotate(current.LocalRotation * (flipX !== flipY ? -1 : 1));
-			position = position.Add(current.LocalPosition);
+	get WorldPosition(): Vector {
+		const position = new Vector(this.localPosition.x, this.localPosition.y);
+		let current: Nullable<ITransform> = this.parent;
+
+		while (current !== null) {
+			const parentLocalScale = current.LocalScaleMutable;
+			const parentLocalPosition = current.LocalPositionMutable;
+			const parentLocalRotation = current.LocalRotation;
+			position.MultiplyCoordinates(parentLocalScale);
+			const flipX = parentLocalScale.x < 0;
+			const flipY = parentLocalScale.y < 0;
+			const rotation = parentLocalRotation * (flipX !== flipY ? -1 : 1);
+			const cos = Math.cos(rotation);
+			const sin = Math.sin(rotation);
+			const rx = position.x * cos - position.y * sin;
+			const ry = position.x * sin + position.y * cos;
+			position.x = rx + parentLocalPosition.x;
+			position.y = ry + parentLocalPosition.y;
 			current = current.Parent;
 		}
-
 		return position;
 	}
 
@@ -93,9 +105,14 @@ class Transform implements ITransform {
 		this.localScale = newLocalScale.Copy();
 	}
 
+	get LocalScaleMutable(): Vector {
+		return this.localScale;
+	}
+
 	get Scale(): Vector {
-		if(!this.parent) return this.LocalScale;
-		return Vector.MultiplyCoordinates(this.parent.Scale, this.localScale);
+		if(!this.parent) return new Vector(this.localScale.x, this.localScale.y);
+		const ps = this.parent.Scale;
+		return new Vector(ps.x * this.localScale.x, ps.y * this.localScale.y);
 	}
 
 	get LocalRotation() {

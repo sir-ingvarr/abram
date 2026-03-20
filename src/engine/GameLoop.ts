@@ -101,6 +101,8 @@ class GameLoop {
 		}
 		Time.FrameRendered();
 		this.Canvas.Context2D
+			.InvalidateBoundingBoxCache();
+		this.Canvas.Context2D
 			.Clear()
 			.DrawBg();
 		this.gameObjectManager.Update();
