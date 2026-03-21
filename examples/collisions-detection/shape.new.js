@@ -68,7 +68,7 @@ class Shape extends GameObject {
 
 	Jump(shouldStand) {
 		if(InputSystem.KeyPressed(this.input === 0 ? 'Space' : 'ControlLeft') && shouldStand) {
-			this.rigidBody.AddForce(Vector.MultiplyCoordinates(200, Vector.Down).Add(new Vector(this.horizontalDir * 40, 0)));
+			this.rigidBody.AddForce(Vector.MultiplyCoordinates(200, Vector.Up).Add(new Vector(this.horizontalDir * 40, 0)));
 		}
 	}
 

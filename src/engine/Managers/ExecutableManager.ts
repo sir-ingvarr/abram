@@ -18,7 +18,7 @@ export class ExecutableManager {
 	protected PreUpdate(module: IExecutable): boolean {
 		return module.Active;
 	}
-	protected PostUpdate() { return; }
+	protected PostUpdate() { /* override in subclass */ }
 
 	protected PreModuleRegister(module: IExecutable): boolean {
 		if(this.parent) module.gameObject = this.parent;
@@ -47,24 +47,21 @@ export class ExecutableManager {
 
 	GetModuleByName(name: string): Nullable<IExecutable> {
 		if (!name) return null;
-		const modules = this.modules.values();
-		for(const module of modules) {
-			if (!module.name || module.name !== name) continue;
-			return module;
+		for(const module of this.modules.values()) {
+			if (module.name === name) return module;
 		}
 		return null;
 	}
 
 	Update() {
-		for (const item of this.modules) {
-			const module = item[1];
+		for (const [, module] of this.modules) {
 			if(!this.PreUpdate(module)) continue;
 			module.Update();
 		}
 	}
 
 	Destroy() {
-		for(const [_, module] of this.modules) {
+		for(const [, module] of this.modules) {
 			module.Destroy();
 		}
 		this.modules.clear();

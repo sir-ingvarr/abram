@@ -51,10 +51,18 @@ class Collider2D extends EventEmitterModule implements ICollider2D {
 			type = Collider2DType.Collider,
 			rb,
 		} = params;
-		this.shape = shape;
 
+		this.shape = shape;
+		this.connectedRigidbody = rb;
+		this.type = type;
+		this.colliderGraphic = this.createColliderGraphic(shape);
+
+		CollisionsManager.GetInstance().RegisterModule(this);
+	}
+
+	private createColliderGraphic(shape: ColliderShape): GraphicPrimitive<any> {
 		if (shape instanceof OBBShape) {
-			this.colliderGraphic = new GraphicPrimitive({
+			return new GraphicPrimitive({
 				type: PrimitiveType.Rect,
 				shape: new Rect(
 					new Point(),
@@ -65,20 +73,16 @@ class Collider2D extends EventEmitterModule implements ICollider2D {
 				drawMethod: ShapeDrawMethod.Stroke,
 				parent: this.parent
 			});
-		} else {
-			this.colliderGraphic = new GraphicPrimitive({
-				type: PrimitiveType.Circle,
-				shape: this.shape as CircleArea,
-				options: { strokeStyle: new RGBAColor(0, 180).ToHex() },
-				layer: 3,
-				drawMethod: ShapeDrawMethod.Stroke,
-				parent: this.parent
-			});
 		}
 
-		this.connectedRigidbody = rb;
-		this.type = type;
-		CollisionsManager.GetInstance().RegisterModule(this);
+		return new GraphicPrimitive({
+			type: PrimitiveType.Circle,
+			shape: this.shape as CircleArea,
+			options: { strokeStyle: new RGBAColor(0, 180).ToHex() },
+			layer: 3,
+			drawMethod: ShapeDrawMethod.Stroke,
+			parent: this.parent
+		});
 	}
 
 	Collide(other: Collider2D) {

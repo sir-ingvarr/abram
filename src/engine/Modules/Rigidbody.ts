@@ -1,7 +1,7 @@
 import Module from './Module';
 import {Point, Vector} from '../Classes';
 import Time from '../Globals/Time';
-import {ICoordinates} from '../../types/common';
+import {ICoordinates, Nullable} from '../../types/common';
 import {IGameObject} from '../../types/GameObject';
 
 type RigidBodyParams = {
@@ -17,6 +17,7 @@ type RigidBodyParams = {
 	gravityScale?: number,
 	isStatic?: boolean,
 	freezeRotation?: boolean,
+	velocityLimit?: Vector,
 }
 
 const G_CONSTANT = 9.82;
@@ -38,6 +39,7 @@ class RigidBody extends Module {
 	private torque: number;
 	private invertedMass: number;
 	private freezeRotation: boolean;
+	private velocityLimit: Nullable<Vector>;
 	public collidedRb?: RigidBody;
 
 
@@ -48,8 +50,10 @@ class RigidBody extends Module {
 			useGravity = true, drag = 0.5, angularVelocity = 0,
 			gravityScale = 1, centerOfMass = new Point(), bounciness = 1,
 			isStatic = false, freezeRotation = false,
+			velocityLimit = null,
 		} = params;
 		this.freezeRotation = freezeRotation;
+		this.velocityLimit = velocityLimit;
 		this.mass = isStatic ? Infinity : mass;
 		this.invertedMass = isStatic ? 0 : 1 / mass;
 		this.velocity = isStatic ? Vector.ZeroMutable : velocity;
@@ -163,12 +167,20 @@ class RigidBody extends Module {
 		if(val) this.angularVelocity = 0;
 	}
 
+	get VelocityLimit(): Nullable<Vector> {
+		return this.velocityLimit;
+	}
+
+	set VelocityLimit(val: Nullable<Vector>) {
+		this.velocityLimit = val;
+	}
+
 	AddForceToPoint(applyPoint: Vector, force: Vector): void {
 		if(this.isStatic) return;
 		const armVector = Vector.Subtract(applyPoint, this.centerOfMass);
 		const forceDot = Vector.Dot(armVector, force);
 		const selfDot = Vector.Dot(armVector, armVector);
-		const parallelComponent = Vector.MultiplyCoordinates(forceDot/selfDot, applyPoint);
+		const parallelComponent = Vector.MultiplyCoordinates(forceDot/selfDot, armVector);
 		const angularForce = Vector.Subtract(force, parallelComponent);
 		this.AddForce(force.Subtract(angularForce));
 		this.AddTorque(angularForce.MultiplyCoordinates(armVector.Magnitude).Magnitude);
@@ -188,11 +200,11 @@ class RigidBody extends Module {
 		if(this.isStatic) return;
 		this.AddImpulse(impulse);
 		if(this.freezeRotation) return;
-		const armVector = Vector.Subtract(applyPoint, this.centerOfMass);
-		const armLenSq = Vector.Dot(armVector, armVector);
-		if(armLenSq === 0) return;
-		const torque = armVector.x * impulse.y - armVector.y * impulse.x;
-		this.angularVelocity += torque * this.invertedMass;
+		const leverArm = Vector.Subtract(applyPoint, this.centerOfMass);
+		const leverArmLengthSq = Vector.Dot(leverArm, leverArm);
+		if(leverArmLengthSq === 0) return;
+		const impulseTorque = leverArm.x * impulse.y - leverArm.y * impulse.x;
+		this.angularVelocity += impulseTorque * this.invertedMass;
 	}
 
 	AddTorque(torque: number) {
@@ -202,7 +214,7 @@ class RigidBody extends Module {
 
 	private ApplyGravity() {
 		if(!this.useGravity) return;
-		this.AddForce(Vector.MultiplyCoordinates(G_CONSTANT * this.gravityScale, Vector.Up));
+		this.AddForce(Vector.MultiplyCoordinates(G_CONSTANT * this.gravityScale, Vector.Down));
 	}
 
 	private CalcAngularVelocity() {
@@ -216,6 +228,12 @@ class RigidBody extends Module {
 		const accelerationVector = Vector.DivideCoordinates(this.mass, this.force);
 		this.velocity.Add(accelerationVector);
 		this.force = Vector.ZeroMutable;
+		if(this.velocityLimit) {
+			this.velocity.Clamp(
+				[-this.velocityLimit.x, this.velocityLimit.x],
+				[-this.velocityLimit.y, this.velocityLimit.y],
+			);
+		}
 		const physicalMovement = Vector.MultiplyCoordinates(Time.DeltaTimeSeconds * 10, this.velocity);
 		this.gameObject?.transform.Translate(physicalMovement);
 	}
@@ -223,7 +241,6 @@ class RigidBody extends Module {
 
 	private ApplyDrag() {
 		const drag = ((this.collidedRb ? this.collidedRb.drag : AIR_RESISTANCE) + this.drag) / 2;
-		//const dragMultiplier = 1 - Time.DeltaTimeSeconds * drag;
 		const dragMultiplier = Math.exp(-drag * Time.DeltaTimeSeconds);
 		this.velocity.MultiplyCoordinates(dragMultiplier);
 	}

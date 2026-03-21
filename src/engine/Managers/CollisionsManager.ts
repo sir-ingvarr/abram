@@ -38,37 +38,85 @@ class CollisionsManager extends ExecutableManager {
 		return id1 < id2 ? `${id1}:${id2}` : `${id2}:${id1}`;
 	}
 
-	private CollisionResponse(collider1: ICollider2D, collider2: ICollider2D, normal: Vector, depth: number, contactPoint: Vector) {
-		const rb1 = collider1.connectedRigidbody;
-		const rb2 = collider2.connectedRigidbody;
+	private applyCollisionImpulse(collider1: ICollider2D, collider2: ICollider2D, normal: Vector, contactPoint: Vector) {
+		const rigidbody1 = collider1.connectedRigidbody;
+		const rigidbody2 = collider2.connectedRigidbody;
 
-		const relativeVelocity = Vector.Subtract(rb2.Velocity, rb1.Velocity);
+		const relativeVelocity = Vector.Subtract(rigidbody2.Velocity, rigidbody1.Velocity);
 		const velocityAlongNormal = Vector.Dot(relativeVelocity, normal);
 
 		if(velocityAlongNormal <= 0) {
-			const restitution = (rb1.Bounciness + rb2.Bounciness) / 2;
-			const j = -(1 + restitution) * velocityAlongNormal / (rb1.InvertedMass + rb2.InvertedMass);
+			const restitution = (rigidbody1.Bounciness + rigidbody2.Bounciness) / 2;
+			const impulseMagnitude = -(1 + restitution) * velocityAlongNormal / (rigidbody1.InvertedMass + rigidbody2.InvertedMass);
 
-			const impulse = Vector.MultiplyCoordinates(j, normal);
-			rb1.AddImpulseAtPoint(contactPoint, Vector.MultiplyCoordinates(-1, impulse));
-			rb2.AddImpulseAtPoint(contactPoint, impulse);
+			const impulse = Vector.MultiplyCoordinates(impulseMagnitude, normal);
+			rigidbody1.AddImpulseAtPoint(contactPoint, Vector.MultiplyCoordinates(-1, impulse));
+			rigidbody2.AddImpulseAtPoint(contactPoint, impulse);
 		}
+	}
+
+	private correctPenetration(collider1: ICollider2D, collider2: ICollider2D, normal: Vector, depth: number) {
+		const rigidbody1 = collider1.connectedRigidbody;
+		const rigidbody2 = collider2.connectedRigidbody;
 
 		const slop = 0.01;
-		const percent = 0.8;
-		const correctionMagnitude = Math.max(depth - slop, 0) * percent;
-		if(correctionMagnitude > 0) {
-			const inverseMassSum = rb1.InvertedMass + rb2.InvertedMass;
-			if(inverseMassSum > 0) {
-				const correction = Vector.MultiplyCoordinates(correctionMagnitude / inverseMassSum, normal);
-				const transform1 = rb1.gameObject?.transform;
-				const transform2 = rb2.gameObject?.transform;
-				if(transform1 && !rb1.IsStatic) {
-					transform1.LocalPosition = transform1.LocalPosition.Subtract(Vector.MultiplyCoordinates(rb1.InvertedMass, correction));
+		const correctionPercent = 0.8;
+		const correctionMagnitude = Math.max(depth - slop, 0) * correctionPercent;
+		if(correctionMagnitude <= 0) return;
+
+		const inverseMassSum = rigidbody1.InvertedMass + rigidbody2.InvertedMass;
+		if(inverseMassSum <= 0) return;
+
+		const correction = Vector.MultiplyCoordinates(correctionMagnitude / inverseMassSum, normal);
+		const transform1 = rigidbody1.gameObject?.transform;
+		const transform2 = rigidbody2.gameObject?.transform;
+		if(transform1 && !rigidbody1.IsStatic) {
+			transform1.LocalPosition = transform1.LocalPosition.Subtract(Vector.MultiplyCoordinates(rigidbody1.InvertedMass, correction));
+		}
+		if(transform2 && !rigidbody2.IsStatic) {
+			transform2.LocalPosition = transform2.LocalPosition.Add(Vector.MultiplyCoordinates(rigidbody2.InvertedMass, correction));
+		}
+	}
+
+	private CollisionResponse(collider1: ICollider2D, collider2: ICollider2D, normal: Vector, depth: number, contactPoint: Vector) {
+		this.applyCollisionImpulse(collider1, collider2, normal, contactPoint);
+		this.correctPenetration(collider1, collider2, normal, depth);
+	}
+
+	private processCollisionPair(collider1: ICollider2D, collider2: ICollider2D, touchedThisFrame: Set<string>) {
+		collider1.SyncShape();
+		collider2.SyncShape();
+
+		const pairKey = this.PairKey(collider1.Id, collider2.Id);
+		const result = detectCollision(collider1.shape, collider2.shape);
+
+		if(result) {
+			this.CollisionResponse(collider1, collider2, result.normal, result.depth, result.contactPoint);
+			touchedThisFrame.add(pairKey);
+
+			if(!this.activePairs.has(pairKey)) {
+				(collider1 as Collider2D).Collide(collider2 as Collider2D);
+				(collider2 as Collider2D).Collide(collider1 as Collider2D);
+			}
+			this.activePairs.set(pairKey, 0);
+		}
+	}
+
+	private updateGracePeriods(touchedThisFrame: Set<string>) {
+		for(const [pairKey, framesSinceContact] of this.activePairs) {
+			if(touchedThisFrame.has(pairKey)) continue;
+
+			if(framesSinceContact >= LEAVE_GRACE_FRAMES) {
+				const [colliderId1, colliderId2] = pairKey.split(':');
+				const colliderA = this.modules.get(colliderId1);
+				const colliderB = this.modules.get(colliderId2);
+				if(colliderA && colliderB) {
+					(colliderA as Collider2D).Leave(colliderB as Collider2D);
+					(colliderB as Collider2D).Leave(colliderA as Collider2D);
 				}
-				if(transform2 && !rb2.IsStatic) {
-					transform2.LocalPosition = transform2.LocalPosition.Add(Vector.MultiplyCoordinates(rb2.InvertedMass, correction));
-				}
+				this.activePairs.delete(pairKey);
+			} else {
+				this.activePairs.set(pairKey, framesSinceContact + 1);
 			}
 		}
 	}
@@ -84,43 +132,11 @@ class CollisionsManager extends ExecutableManager {
 			for(let j = i + 1; j < arr.length; j++) {
 				const collider2 = arr[j][1];
 				if(!collider2.parent?.gameObject.active) continue;
-
-				collider1.SyncShape();
-				collider2.SyncShape();
-
-				const pairKey = this.PairKey(collider1.Id, collider2.Id);
-				const result = detectCollision(collider1.shape, collider2.shape);
-
-				if(result) {
-					this.CollisionResponse(collider1, collider2, result.normal, result.depth, result.contactPoint);
-					touchedThisFrame.add(pairKey);
-
-					if(!this.activePairs.has(pairKey)) {
-						(collider1 as Collider2D).Collide(collider2 as Collider2D);
-						(collider2 as Collider2D).Collide(collider1 as Collider2D);
-					}
-					this.activePairs.set(pairKey, 0);
-				}
+				this.processCollisionPair(collider1, collider2, touchedThisFrame);
 			}
 		}
 
-		// Tick grace period for pairs not touched this frame
-		for(const [key, framesSinceContact] of this.activePairs) {
-			if(touchedThisFrame.has(key)) continue;
-
-			if(framesSinceContact >= LEAVE_GRACE_FRAMES) {
-				const [id1, id2] = key.split(':');
-				const c1 = this.modules.get(id1);
-				const c2 = this.modules.get(id2);
-				if(c1 && c2) {
-					(c1 as Collider2D).Leave(c2 as Collider2D);
-					(c2 as Collider2D).Leave(c1 as Collider2D);
-				}
-				this.activePairs.delete(key);
-			} else {
-				this.activePairs.set(key, framesSinceContact + 1);
-			}
-		}
+		this.updateGracePeriods(touchedThisFrame);
 	}
 
 }

@@ -100,8 +100,8 @@ export class Vector extends Point {
 		return new Vector(x, y || x);
 	}
 
-	private static readonly _up = Object.freeze(new Vector(0, 1));
-	private static readonly _down = Object.freeze(new Vector(0, -1));
+	private static readonly _up = Object.freeze(new Vector(0, -1));
+	private static readonly _down = Object.freeze(new Vector(0, 1));
 	private static readonly _left = Object.freeze(new Vector(-1, 0));
 	private static readonly _right = Object.freeze(new Vector(1, 0));
 	private static readonly _zero = Object.freeze(new Vector(0, 0));

@@ -36,8 +36,9 @@ class Man extends GameObject {
         });
 
         this.rigidBody = new RigidBody({
-            useGravity: true, gravityScale: 0.2, angularDrag: 0.03,
-            drag: 0.4, mass: 1, bounciness: 0,
+            useGravity: true, gravityScale: 0.21, angularDrag: 0.03,
+            velocityLimit: new Vector(20, 100),
+            drag: 2, mass: 2, bounciness: 0,
             centerOfMass: new Vector(0, 10),
         });
 
@@ -82,11 +83,12 @@ class Man extends GameObject {
         this.shootCooldown -= Time.deltaTime;
         if(InputSystem.KeyPressed('ControlLeft') && this.shootCooldown <= 0) {
             this.shootCooldown = 300;
+            const fireDirection = this.transform.Right;
             const gunPos = this.gun.transform.WorldPosition;
+            const spawnOffset = Vector.MultiplyCoordinates(40, fireDirection);
             this.instantiate(Bullet, {
-                position: new Vector(gunPos.x + this.prevHorDir * 40, gunPos.y),
-                direction: this.prevHorDir,
-                speed: 100,
+                position: Vector.Add(gunPos, spawnOffset),
+                velocity: Vector.Add(Vector.MultiplyCoordinates(100, fireDirection), this.rigidBody.Velocity),
             });
         }
     }
@@ -96,8 +98,8 @@ class Man extends GameObject {
             this.isGrounded = false;
             this.jumped = true;
             this.rigidBody.FreezeRotation = false;
-            this.rigidBody.AddForce(Vector.MultiplyCoordinates(100, Vector.Down).Add(new Vector(this.horizontalDir * 40, 0)));
-            this.rigidBody.AddTorque(this.prevHorDir * 1300);
+            this.rigidBody.AddForce(Vector.MultiplyCoordinates(100, Vector.Up).Add(new Vector(this.horizontalDir * 40, 0)));
+            this.rigidBody.AddTorque(1300);
         }
     }
 
@@ -119,13 +121,10 @@ class Man extends GameObject {
             this.cam.SetPosition(pos);
             this.cam.SetTargetZoom(this.isGrounded ? 1 : 1.5);
         }
-
-        this.Jump();
-        this.Shoot();
-
-        this.prevHorDir = this.horizontalDir || this.prevHorDir;
-
         if(this.isGrounded) {
+            this.rigidBody.Velocity = new Vector(this.rigidBody.Velocity.x, 0);
+            this.rigidBody.Torque = 0;
+            this.rigidBody.AngularVelocity = 0;
             this.transform.LocalRotation = 0;
             this.rigidBody.FreezeRotation = true;
             if (!!this.horizontalDir || !!this.verticalDir) {
@@ -138,6 +137,12 @@ class Man extends GameObject {
             this.rigidBody.FreezeRotation = false;
 
         }
+
+        this.Jump();
+        this.Shoot();
+
+        this.prevHorDir = this.horizontalDir || this.prevHorDir;
+
 
         this.transform.LocalScale = new Vector((this.horizontalDir || this.prevHorDir) * this.size, this.size);
 

@@ -69,10 +69,6 @@ class TrailRenderer extends Module {
 		return this._colorOverTrail;
 	}
 
-	override Start() {
-		super.Start();
-	}
-
 	private AddSegment(point?: ICoordinates) {
 		if(!this._previousPosition) return;
 		if(!point) point = this._previousPosition;
@@ -98,9 +94,8 @@ class TrailRenderer extends Module {
 		this._lifetimes.push(0);
 	}
 
-	override Update() {
-		super.Update();
-		for(let i = 0; i < this._graphics.length; i++) {
+	private updateExistingSegments() {
+		for(let i = this._graphics.length - 1; i >= 0; i--) {
 			this._lifetimes[i] += Time.deltaTime;
 			if(this._lifetimes[i] > this._lifeTime) {
 				this._lifetimes.splice(i, 1);
@@ -109,14 +104,18 @@ class TrailRenderer extends Module {
 				this._colors.splice(i, 1);
 				continue;
 			}
-			const color = this._colors[i] = this._colorOverTrail(this._lifetimes[i] / this._lifeTime, this._initialColor);
-			const width = this._widths[i] = this._widthOverTrail(this._lifetimes[i] / this._lifeTime, this._initialWidth);
+			const lifetimeFactor = this._lifetimes[i] / this._lifeTime;
+			const color = this._colors[i] = this._colorOverTrail(lifetimeFactor, this._initialColor);
+			const width = this._widths[i] = this._widthOverTrail(lifetimeFactor, this._initialWidth);
 			const graphic = this._graphics[i];
 			if(!graphic) continue;
 			graphic.options.strokeStyle = color.ToHex();
 			graphic.options.lineWidth = width;
 			graphic.Update();
 		}
+	}
+
+	private trySpawnNewSegment() {
 		this._sinceSpawn += Time.deltaTime;
 		if(this._sinceSpawn < this._newSegmentEachMS) return;
 		const parentPosition = this.gameObject?.transform?.WorldPosition;
@@ -129,6 +128,12 @@ class TrailRenderer extends Module {
 		this.AddSegment(parentPosition);
 		this._previousPosition = parentPosition;
 		this._sinceSpawn = 0;
+	}
+
+	override Update() {
+		super.Update();
+		this.updateExistingSegments();
+		this.trySpawnNewSegment();
 	}
 
 }

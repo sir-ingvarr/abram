@@ -11,6 +11,8 @@ import SpriteRendererManager from './SpriteRendererManager';
 import ImageWrapper from '../Modules/ImageWrapper';
 import Engine from '../Engine';
 
+const TWO_PI = 6.2831853;
+
 export enum RenderingStyle {
 	Local,
 	World,
@@ -120,7 +122,7 @@ class ParticleSystem extends ExecutableManager {
 			drag = 0,
 			initialPosition = () => {
 				const { x = 0, y = 0 } = this.parent?.transform.WorldPosition as Vector;
-				return new PolarCoordinates({ x, y, r: Maths.RandomRange(0, 2), angle: Maths.RandomRange(0, 6.18) })
+				return new PolarCoordinates({ x, y, r: Maths.RandomRange(0, 2), angle: Maths.RandomRange(0, TWO_PI) })
 					.ToCartesian().ToVector();
 			},
 			initialVelocity = new Vector(),
@@ -304,32 +306,36 @@ class ParticleSystem extends ExecutableManager {
 		}
 	}
 
+	private async instantiateFollowers(props: ParticleConstructorOptions) {
+		const followerConstructors = this.SetOrExecute(this.particleFollowers);
+		if(!followerConstructors) return;
+		const followerPromises = followerConstructors.map(follower => Engine.Instance.Instantiate(follower, {}));
+		props.followers = await Promise.all(followerPromises);
+	}
+
+	private setupParticleTransform(particle: Particle) {
+		const initialPosVal = this.SetOrExecute(this.initialPosition);
+		particle.transform.LocalPosition = (this.renderingStyle === RenderingStyle.World && this.parent)
+			? this.parent.transform.WorldPosition.Add(initialPosVal)
+			: initialPosVal;
+		particle.transform.LocalRotationDeg = this.SetOrExecute(this.initialRotation);
+	}
+
 	private async CreateOrObtainParticle(): Promise<Particle> {
 		let particle: Particle;
 		if(this.particleBuffering && this.buffer.Count > 0) {
 			particle = this.buffer.Pop() as Particle;
 			const props = this.GetParticleInitialProps(null);
-
-			const followersConstructs = this.SetOrExecute(this.particleFollowers);
-			if(followersConstructs) {
-				const followerPromises = followersConstructs.map(follower => Engine.Instance.Instantiate(follower, {}));
-				props.followers = await Promise.all(followerPromises);
-			}
+			await this.instantiateFollowers(props);
 			particle.SetInitialParams(props);
 			particle.initialScale = Vector.OneMutable;
 		} else {
 			const graphic = this.SetOrExecute(this.graphic);
 			const props = this.GetParticleInitialProps(graphic);
-			const followersConstructs = this.SetOrExecute(this.particleFollowers);
-			if(followersConstructs) {
-				const followerPromises = followersConstructs.map(follower => Engine.Instance.Instantiate(follower, {}));
-				props.followers = await Promise.all(followerPromises);
-			}
+			await this.instantiateFollowers(props);
 			particle = new Particle(props);
 		}
-		const initialPosVal = this.SetOrExecute(this.initialPosition);
-		particle.transform.LocalPosition = (this.renderingStyle === RenderingStyle.World && this.parent) ? this.parent.transform.WorldPosition.Add(initialPosVal) : initialPosVal;
-		particle.transform.LocalRotationDeg = this.SetOrExecute(this.initialRotation);
+		this.setupParticleTransform(particle);
 		return particle;
 	}
 

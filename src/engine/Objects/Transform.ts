@@ -145,6 +145,32 @@ class Transform implements ITransform {
 		return this;
 	}
 
+	get Right(): Vector {
+		const cos = Math.cos(this.WorldRotation);
+		const sin = Math.sin(this.WorldRotation);
+		const scale = this.Scale;
+		const flipX = scale.x < 0 ? -1 : 1;
+		return new Vector(cos * flipX, sin * flipX);
+	}
+
+	get Left(): Vector {
+		const right = this.Right;
+		return new Vector(-right.x, -right.y);
+	}
+
+	get Up(): Vector {
+		const cos = Math.cos(this.WorldRotation);
+		const sin = Math.sin(this.WorldRotation);
+		const scale = this.Scale;
+		const flipY = scale.y < 0 ? -1 : 1;
+		return new Vector(sin * flipY, -cos * flipY);
+	}
+
+	get Down(): Vector {
+		const up = this.Up;
+		return new Vector(-up.x, -up.y);
+	}
+
 }
 
 export default Transform;

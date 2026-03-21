@@ -4,11 +4,9 @@ import Sprite from '../Modules/Sprite';
 import Time from '../Globals/Time';
 import {Maths, RGBAColor, Vector} from '../Classes';
 import Collider2D, {Collider2DEvent} from '../Modules/Collider';
-// import {CircleArea} from '../Canvas/GraphicPrimitives/Shapes';
 import {GraphicPrimitive, IGraphicPrimitive} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
 import SpriteRenderer from '../Managers/SpriteRenderer';
 import {IBasicObject} from '../../types/GameObject';
-// import Rigidbody from '../Modules/Rigidbody';
 
 export interface IFollower {
 	Destroy(): void
@@ -30,7 +28,6 @@ export type ParticleConstructorOptions = BasicObjectsConstructorParams & {
 
 class Particle extends BasicObject {
 	public graphic: Nullable<IGraphicPrimitive<any> | Sprite>;
-	// private size: number;
 	public drag: number;
 	public initialScale: ICoordinates;
 	public age: number;
@@ -52,7 +49,7 @@ class Particle extends BasicObject {
 		const {
 			graphic, lifeTime = 10, layer, drag = 0,
 			initialColor = new RGBAColor(), followers,
-			initialVelocity = new Vector(),/* size = 100 ,*/ OnCollide,/* collider,*/ gravityScale = 1
+			initialVelocity = new Vector(), OnCollide, gravityScale = 1
 		} = params;
 		if(graphic) {
 			graphic.layer = layer;
@@ -61,7 +58,6 @@ class Particle extends BasicObject {
 		this._startExecuted = false;
 		this.drag = Maths.Clamp(drag, -1 ,1);
 		this.lifeTime = lifeTime;
-		// this.size = size;
 		this.gravityScale = gravityScale;
 		this.age = 0;
 		this.followers = followers;

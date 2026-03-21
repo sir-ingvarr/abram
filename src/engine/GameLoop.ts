@@ -1,4 +1,3 @@
-// import CollisionsManager from './Managers/CollisionsManager';
 import Canvas from './Canvas/Canvas';
 import {IGameObject, IGameObjectConstructable, ITransform} from '../types/GameObject';
 import {FpsProvider} from './Debug/FpsProvider';
@@ -47,8 +46,6 @@ class GameLoop {
 		this.gameObjectManager = new GameObjectManager({ modules: [], context: this.canvas.Context2D});
 		this.spriteRendererManager = SpriteRendererManager.GetInstance(canvas, this.debug);
 		this.collisionsManager = new CollisionsManager({ modules: [] });
-
-		this.instantiateQueue = new Queue<InstantiateOpts & { resolve: (go: IGameObject) => void }>({data: []});
 
 		if (pauseOnBlur) {
 			global.addEventListener('blur', this.Pause.bind(this));

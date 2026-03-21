@@ -136,69 +136,83 @@ class SpriteRenderer {
 		return this.imageStorage.has(imageId);
 	}
 
-	private RenderElement(graphic: IContextOpts) {
-		if(!graphic) return;
-		const width = graphic.Width;
-		const height = graphic.Height;
-
-		const context = this.mainCanvasContext;
-
-		if(!graphic.parent) return;
-
+	private resolveParentTransform(graphic: IContextOpts, width: number, height: number) {
 		const { disrespectParent } = graphic;
+		return {
+			worldPosition: disrespectParent ? Vector.Zero : graphic.parent!.WorldPosition,
+			scale: disrespectParent ? Vector.One : graphic.parent!.Scale,
+			worldRotation: disrespectParent ? 0 : graphic.parent!.WorldRotation,
+			anchoredX: disrespectParent ? 0 : graphic.parent!.Anchors.x * width,
+			anchoredY: disrespectParent ? 0 : graphic.parent!.Anchors.y * height,
+		};
+	}
 
-		const worldPosition = disrespectParent
-			? Vector.Zero
-			: graphic.parent.WorldPosition;
-		const scale = disrespectParent
-			? Vector.One
-			: graphic.parent.Scale;
-		const worldRotation = disrespectParent
-			? 0
-			: graphic.parent.WorldRotation;
-		const anchoredX = disrespectParent ? 0 : graphic.parent.Anchors.x * width;
-		const anchoredY = disrespectParent ? 0 : graphic.parent.Anchors.y * height;
+	private applyAffineTransform(
+		worldPosition: ICoordinates,
+		scale: ICoordinates,
+		worldRotation: number,
+		anchoredX: number,
+		anchoredY: number,
+	) {
+		const camScaleX = this.contextScale.x;
+		const camScaleY = this.contextScale.y;
+		const centerX = this.canvasCenterX;
+		const centerY = this.canvasCenterY;
 
-		const csx = this.contextScale.x;
-		const csy = this.contextScale.y;
-		const ccx = this.canvasCenterX;
-		const ccy = this.canvasCenterY;
-
-		const tx = worldPosition.x - this.contextPosition.x;
-		const ty = worldPosition.y - this.contextPosition.y;
+		const offsetX = worldPosition.x - this.contextPosition.x;
+		const offsetY = worldPosition.y - this.contextPosition.y;
 
 		const cos = Math.cos(worldRotation);
 		const sin = Math.sin(worldRotation);
 
-		const sx = scale.x;
-		const sy = scale.y;
+		const scaleX = scale.x;
+		const scaleY = scale.y;
 
-		// T(ccx,ccy) * S(csx,csy) * T(-ccx,-ccy) * T(tx,ty) * S(sx,sy) * R(θ) * T(-ax,-ay)
-		const a = csx * sx * cos;
-		const b = csy * sy * sin;
-		const c = -csx * sx * sin;
-		const d = csy * sy * cos;
-		const e = ccx * (1 - csx) + csx * (tx + sx * (-anchoredX * cos + anchoredY * sin));
-		const f = ccy * (1 - csy) + csy * (ty + sy * (-anchoredX * sin - anchoredY * cos));
+		// Combined affine matrix:
+		// T(center) * S(camScale) * T(-center) * T(offset) * S(scale) * R(θ) * T(-anchor)
+		const matA = camScaleX * scaleX * cos;
+		const matB = camScaleY * scaleY * sin;
+		const matC = -camScaleX * scaleX * sin;
+		const matD = camScaleY * scaleY * cos;
+		const matE = centerX * (1 - camScaleX) + camScaleX * (offsetX + scaleX * (-anchoredX * cos + anchoredY * sin));
+		const matF = centerY * (1 - camScaleY) + camScaleY * (offsetY + scaleY * (-anchoredX * sin - anchoredY * cos));
 
-		context.SetTransformRaw(a, b, c, d, e, f);
+		this.mainCanvasContext.SetTransformRaw(matA, matB, matC, matD, matE, matF);
+	}
 
+	private drawGraphicContent(graphic: IContextOpts, width: number, height: number) {
 		if(graphic.contentType === 0) {
 			if(!graphic.image?.isReady) return;
 			const image = this.GetImage(graphic.ImageId || '-1');
 			if(!image) throw new Error(`Image ${graphic.ImageId} not found`);
-			context.DrawImage(graphic, image, 0, 0, width, height);
+			this.mainCanvasContext.DrawImage(graphic, image, 0, 0, width, height);
 		} else {
-			context.Draw(graphic as unknown as GraphicPrimitive<any>, 0,0);
+			this.mainCanvasContext.Draw(graphic as unknown as GraphicPrimitive<any>, 0, 0);
 		}
+	}
 
-		if(this.debug)
-			context
-				.LineWidth(1)
-				.StrokeStyle(`${this.debugStrokeColor}`)
-				.LineDash([])
-				.StrokeRect(anchoredX, anchoredY, 1, 1)
-				.StrokeRect(0, 0, width, height);
+	private drawDebugOverlay(anchoredX: number, anchoredY: number, width: number, height: number) {
+		if(!this.debug) return;
+		this.mainCanvasContext
+			.LineWidth(1)
+			.StrokeStyle(`${this.debugStrokeColor}`)
+			.LineDash([])
+			.StrokeRect(anchoredX, anchoredY, 1, 1)
+			.StrokeRect(0, 0, width, height);
+	}
+
+	private RenderElement(graphic: IContextOpts) {
+		if(!graphic || !graphic.parent) return;
+
+		const width = graphic.Width;
+		const height = graphic.Height;
+
+		const { worldPosition, scale, worldRotation, anchoredX, anchoredY } =
+			this.resolveParentTransform(graphic, width, height);
+
+		this.applyAffineTransform(worldPosition, scale, worldRotation, anchoredX, anchoredY);
+		this.drawGraphicContent(graphic, width, height);
+		this.drawDebugOverlay(anchoredX, anchoredY, width, height);
 	}
 
 	public Render() {

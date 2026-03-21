@@ -1,8 +1,7 @@
 class Bullet extends GameObject {
     constructor(params) {
         super(params);
-        this.direction = params.direction || 1;
-        this.speed = params.speed || 30;
+        this.velocity = params.velocity || new Vector(30, 0);
         this.lifeTime = params.lifeTime || 2000;
         this.age = 0;
     }
@@ -24,7 +23,7 @@ class Bullet extends GameObject {
             gravityScale: 0.0005,
             bounciness: 0, freezeRotation: true,
         });
-        this.rigidBody.Velocity = new Vector(this.direction * this.speed, 0);
+        this.rigidBody.Velocity = this.velocity;
 
         this.collider = new Collider2D({
             shape: new CircleArea(3, Vector.Zero),
