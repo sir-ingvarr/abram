@@ -111,14 +111,16 @@ Open any example's `index.html` in a browser after running `npm run build`.
 
 ## Documentation
 
-Detailed API docs are in the [`docs/`](./docs) folder:
+Full documentation is in the [`docs/`](./docs/index.md) folder:
 
-- [Engine](./docs/engine.md) — initialization and configuration
-- [GameObjects & Transforms](./docs/gameobjects.md) — scene hierarchy and transforms
-- [Modules](./docs/modules.md) — Sprite, Animator, Rigidbody, Collider, TrailRenderer
+- [Getting Started](./docs/getting-started.md) — installation, configuration, first project
+- [Architecture](./docs/architecture.md) — project structure, game loop, coordinate system
+- [GameObjects & Transforms](./docs/gameobjects.md) — scene hierarchy, transforms, directional getters
+- [Modules Overview](./docs/modules.md) — dependency system, creating custom modules
+  - [Sprite](./docs/modules/sprite.md) | [Animator](./docs/modules/animator.md) | [RigidBody](./docs/modules/rigidbody.md) | [Collider2D](./docs/modules/collider.md) | [PhysicsMaterial](./docs/modules/physics-material.md) | [TrailRenderer](./docs/modules/trail-renderer.md) | [Camera](./docs/modules/camera.md)
 - [Particle System](./docs/particles.md) — emitters, lifetime curves, sub-emitters
-- [Math & Utilities](./docs/math.md) — Vector, Point, RGBAColor, Maths, and more
-- [Input](./docs/input.md) — keyboard handling
+- [Math & Utilities](./docs/math.md) — Vector, Point, RGBAColor, Maths, collections
+- [Input & Time](./docs/input.md) — keyboard handling, deltaTime, timeScale
 
 ## License
 

@@ -1,12 +1,15 @@
 import {ExecutableManager} from './ExecutableManager';
 import {IGameObject, IGameObjectConstructable} from '../../types/GameObject';
 import Particle, {ParticleConstructorOptions} from '../Objects/Particle';
+import {BasicObjectsConstructorParams} from '../Objects/BasicObject';
 import {Maths, PolarCoordinates, RGBAColor, Stack, Vector} from '../Classes';
 import Sprite from '../Modules/Sprite';
 import {ICoordinates, Nullable} from '../../types/common';
 import Collider2D from '../Modules/Collider';
-import {IGraphicPrimitive} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
+import {IGraphicPrimitive, PrimitiveShape} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
 import Time from '../Globals/Time';
+import {G_CONSTANT} from '../Modules/Rigidbody';
+
 import SpriteRendererManager from './SpriteRendererManager';
 import ImageWrapper from '../Modules/ImageWrapper';
 import Engine from '../Engine';
@@ -22,7 +25,8 @@ export interface IParticleRb {
 	velocity: Vector,
 }
 
-type PureFunction<T> = (...args: any) => T;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PureFunction<T> = (...args: any[]) => T;
 type ValueOrFunction<T> =
 	| T
 	| PureFunction<T>;
@@ -39,7 +43,7 @@ export type ParticleSystemOptions = {
 	timeLastEmitted?: number;
 	attachedRigidbody?: IParticleRb;
 	renderingStyle?: RenderingStyle,
-	graphic?: ValueOrFunction<ImageWrapper | IGraphicPrimitive<any>>,
+	graphic?: ValueOrFunction<ImageWrapper | IGraphicPrimitive<PrimitiveShape>>,
 	lifeTime?: ValueOrFunction<number>,
 	drag?: ValueOrFunction<number>,
 	emitOverTime?: ValueOrFunction<number>,
@@ -51,7 +55,7 @@ export type ParticleSystemOptions = {
 	initialRotation?: ValueOrFunction<number>,
 	initialColor?: ValueOrFunction<RGBAColor>,
 	initialSize?: ValueOrFunction<number>,
-	particleFollowers?: ValueOrFunction<Array<IGameObjectConstructable<any>>>,
+	particleFollowers?: ValueOrFunction<Array<IGameObjectConstructable<BasicObjectsConstructorParams>>>,
 	colorOverLifeTime?: PureFunction<RGBAColor>,
 	velocityOverLifeTime?: PureFunction<Vector>,
 	rotationOverLifeTime?: PureFunction<number>,
@@ -74,7 +78,7 @@ class ParticleSystem extends ExecutableManager {
 	protected gravityForceScale: ValueOrFunction<number>;
 	protected renderingStyle: RenderingStyle;
 	protected attachedRigidbody?: IParticleRb;
-	protected graphic: Nullable<ValueOrFunction<ImageWrapper | IGraphicPrimitive<any>>>;
+	protected graphic: Nullable<ValueOrFunction<ImageWrapper | IGraphicPrimitive<PrimitiveShape>>>;
 	protected lifeTime: ValueOrFunction<number>;
 	protected drag?: ValueOrFunction<number>;
 	protected initialVelocity: ValueOrFunction<Vector>;
@@ -87,7 +91,7 @@ class ParticleSystem extends ExecutableManager {
 	protected emitEachTimeFrame: ValueOrFunction<number>;
 	protected emitOverDistance: ValueOrFunction<number>;
 	protected emitOverDistanceKeeper: number;
-	protected particleFollowers?: ValueOrFunction<Array<IGameObjectConstructable<any>>>;
+	protected particleFollowers?: ValueOrFunction<Array<IGameObjectConstructable<BasicObjectsConstructorParams>>>;
 	protected lastPointEmitted: Vector;
 	protected timeSinceLastEmitted: number;
 	protected timeSinceLastBurstEmitted: number;
@@ -195,9 +199,10 @@ class ParticleSystem extends ExecutableManager {
 		this.isPlaying = false;
 	}
 
-	protected SetOrExecute<T = any>(val: ValueOrFunction<T>, ...args: any): T {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	protected SetOrExecute<T = unknown>(val: ValueOrFunction<T>, ...args: any[]): T {
 		if(typeof val === 'function') {
-			return (val as (...args: any) => T)(...args);
+			return (val as (...args: unknown[]) => T)(...args);
 		}
 		return val;
 	}
@@ -286,23 +291,38 @@ class ParticleSystem extends ExecutableManager {
 		this.UnregisterModuleById(particle.Id);
 	}
 
+	private ExecutePhysics(particle: Particle) {
+		if(this.velocityOverLifeTime) {
+			const lifetimeFactor = particle.age / particle.lifeTime;
+			particle.velocity.Add(this.velocityOverLifeTime(lifetimeFactor));
+		}
+		const gravityFactor = Vector.MultiplyCoordinates(
+			Time.FixedDeltaTimeSeconds,
+			new Vector(0, G_CONSTANT * particle.gravityScale)
+		);
+		if(particle.gravityScale) particle.velocity.Add(gravityFactor);
+		if(this.drag) particle.velocity.MultiplyCoordinates(Math.exp(-particle.drag * Time.FixedDeltaTimeSeconds));
+	}
+
 	private ExecuteLifeTimeCalculations(particle: Particle) {
 		const lifetimeFactor = particle.age / particle.lifeTime;
 		if(this.colorOverLifeTime) particle.color = this.colorOverLifeTime(particle.initialColor, lifetimeFactor);
 		if(this.rotationOverLifeTime) particle.transform.LocalRotation = this.rotationOverLifeTime(lifetimeFactor);
-		if(this.velocityOverLifeTime) particle.velocity.Add(this.velocityOverLifeTime(lifetimeFactor));
-		const gravityFactor = Vector.MultiplyCoordinates(
-			Time.DeltaTimeSeconds * 100,
-			new Vector(0, 9.8 * particle.gravityScale)
-		);
-		if(particle.gravityScale) particle.velocity.Add(gravityFactor);
-		if(this.drag) particle.velocity.MultiplyCoordinates(Math.exp(-particle.drag * Time.DeltaTimeSeconds));
 		if(this.scaleOverLifeTime) {
 			const scale = this.scaleOverLifeTime(lifetimeFactor);
 			particle.transform.LocalScale = new Vector(
 				particle.initialScale.x * scale.x,
 				particle.initialScale.y *  scale.y
 			);
+		}
+	}
+
+	override FixedUpdate() {
+		for(const [, module] of this.modules) {
+			if(!module.Active) continue;
+			const particle = module as Particle;
+			this.ExecutePhysics(particle);
+			particle.FixedUpdate();
 		}
 	}
 
@@ -339,7 +359,7 @@ class ParticleSystem extends ExecutableManager {
 		return particle;
 	}
 
-	GetParticleInitialProps(graphic: Nullable<ImageWrapper | IGraphicPrimitive<any>>): ParticleConstructorOptions {
+	GetParticleInitialProps(graphic: Nullable<ImageWrapper | IGraphicPrimitive<PrimitiveShape>>): ParticleConstructorOptions {
 		const size = this.SetOrExecute(this.initialSize);
 
 		const layer = this.layer || 1;
@@ -365,7 +385,7 @@ class ParticleSystem extends ExecutableManager {
 				layer
 			});
 		} else {
-			graphic.shape.SetSize(size);
+			if('SetSize' in graphic.shape) graphic.shape.SetSize(size);
 			props.graphic = graphic;
 		}
 		return props;

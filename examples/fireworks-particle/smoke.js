@@ -39,6 +39,11 @@ class Smoke extends GameObject {
         this.transform.LocalPosition = new Point(x, y);
     }
 
+    FixedUpdate() {
+        super.FixedUpdate();
+        this.particleSystem.FixedUpdate();
+    }
+
     Update() {
         super.Update();
         this.particleSystem.Update();

@@ -113,7 +113,11 @@ class Engine {
 	}
 
 	Instantiate<T extends BasicObjectsConstructorParams>(gameObject: IGameObjectConstructable<T>, params: T, parent?: ITransform): Promise<IGameObject> {
-		return this.gameLoopManager.Instantiate({ gameObject, params, parent });
+		return this.gameLoopManager.Instantiate({
+			gameObject: gameObject as unknown as IGameObjectConstructable<BasicObjectsConstructorParams>,
+			params,
+			parent,
+		});
 	}
 
 	async Start () {

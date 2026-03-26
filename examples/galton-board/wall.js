@@ -18,7 +18,10 @@ class Wall extends GameObject {
 		});
 		this.RegisterModule(graphic);
 
-		this.rigidBody = new RigidBody({ isStatic: true, bounciness: 0.3 });
+		this.rigidBody = new RigidBody({
+			isStatic: true,
+			material: new PhysicsMaterial({ friction: 0.8, bounciness: 0.2 }),
+		});
 
 		this.collider = new Collider2D({
 			shape: new OBBShape(this.wallWidth, this.wallHeight),

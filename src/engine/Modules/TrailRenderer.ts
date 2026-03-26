@@ -72,6 +72,9 @@ class TrailRenderer extends Module {
 	private AddSegment(point?: ICoordinates) {
 		if(!this._previousPosition) return;
 		if(!point) point = this._previousPosition;
+		const dx = point.x - this._previousPosition.x;
+		const dy = point.y - this._previousPosition.y;
+		if(dx * dx + dy * dy < 0.001) return;
 		this._widths.push(this._initialWidth);
 		this._colors.push(this._initialColor.Copy());
 		this._graphics.push(
@@ -95,15 +98,9 @@ class TrailRenderer extends Module {
 	}
 
 	private updateExistingSegments() {
-		for(let i = this._graphics.length - 1; i >= 0; i--) {
+		for(let i = 0; i < this._graphics.length; i++) {
 			this._lifetimes[i] += Time.deltaTime;
-			if(this._lifetimes[i] > this._lifeTime) {
-				this._lifetimes.splice(i, 1);
-				this._graphics.splice(i, 1);
-				this._widths.splice(i, 1);
-				this._colors.splice(i, 1);
-				continue;
-			}
+			if(this._lifetimes[i] > this._lifeTime) continue;
 			const lifetimeFactor = this._lifetimes[i] / this._lifeTime;
 			const color = this._colors[i] = this._colorOverTrail(lifetimeFactor, this._initialColor);
 			const width = this._widths[i] = this._widthOverTrail(lifetimeFactor, this._initialWidth);
@@ -112,6 +109,12 @@ class TrailRenderer extends Module {
 			graphic.options.strokeStyle = color.ToHex();
 			graphic.options.lineWidth = width;
 			graphic.Update();
+		}
+		while(this._lifetimes.length && this._lifetimes[0] > this._lifeTime) {
+			this._lifetimes.shift();
+			this._graphics.shift();
+			this._widths.shift();
+			this._colors.shift();
 		}
 	}
 

@@ -80,10 +80,7 @@ class Shape extends GameObject {
 		}
 	}
 
-	Update() {
-		this.bouncinessCooldown -= Time.deltaTime;
-		this.horizontalDir = this.CheckHorizontalInputs();
-		this.verticalDir = this.CheckVerticalInputs();
+	FixedUpdate() {
 		const pos = this.transform.WorldPosition;
 		if(pos.x < (-640)) {
 			this.transform.LocalPosition = new Vector(-639, pos.y);
@@ -108,10 +105,17 @@ class Shape extends GameObject {
 		}
 		this.Jump(shouldStand);
 
-		this.prevHorDir = this.horizontalDir || this.prevHorDir;
 		if(shouldStand) {
 			this.rigidBody.AddForce(Vector.MultiplyCoordinates(1, new Vector(this.horizontalDir, 0)));
 		}
+		super.FixedUpdate();
+	}
+
+	Update() {
+		this.bouncinessCooldown -= Time.deltaTime;
+		this.horizontalDir = this.CheckHorizontalInputs();
+		this.verticalDir = this.CheckVerticalInputs();
+		this.prevHorDir = this.horizontalDir || this.prevHorDir;
 		super.Update();
 	}
 }

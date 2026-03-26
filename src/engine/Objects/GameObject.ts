@@ -19,6 +19,12 @@ class GameObject<T extends BasicObjectsConstructorParams = BasicObjectsConstruct
 		this.childManager.Update();
 	}
 
+	override FixedUpdate() {
+		super.FixedUpdate();
+		this.modulesManager.FixedUpdate();
+		this.childManager.FixedUpdate();
+	}
+
 	override Destroy() {
 		super.Destroy();
 		this.modulesManager.Destroy();
@@ -33,6 +39,14 @@ class GameObject<T extends BasicObjectsConstructorParams = BasicObjectsConstruct
 
 	GetModuleByName(name: string): Nullable<IExecutable> {
 		return this.modulesManager.GetModuleByName(name);
+	}
+
+	GetModule<T extends IExecutable>(classRef: new (...args: any[]) => T): Nullable<T> {
+		return this.modulesManager.GetModule(classRef);
+	}
+
+	GetModules<T extends IExecutable>(classRef: new (...args: any[]) => T): T[] {
+		return this.modulesManager.GetModules(classRef);
 	}
 
 	AppendChild(child: IGameObject): string {

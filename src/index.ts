@@ -17,6 +17,9 @@ import * as GraphicPrimitives from './engine/Canvas/GraphicPrimitives/GraphicPri
 import * as Collision from './engine/Modules/Collider';
 import Collider2D from './engine/Modules/Collider';
 import * as CollisionDetection from './engine/Collision/CollisionDetection';
+import PhysicsMaterial from './engine/Modules/PhysicsMaterial';
+import CollisionsManager from './engine/Managers/CollisionsManager';
+import Debug from './engine/Debug/Debug';
 
 
 export default Engine;
@@ -24,5 +27,5 @@ export {
 	GameObject, InputSystem, Animator, Sprite, CanvasContext2D,
 	Camera, Classes, Time, RigidBody, ParticleSystem, ImageWrapper,
 	GraphicPrimitives, Shapes, Collision, Collider2D, ParticleSystemAssets,
-	TrailRenderer, CollisionDetection,
+	TrailRenderer, CollisionDetection, PhysicsMaterial, CollisionsManager, Debug,
 };

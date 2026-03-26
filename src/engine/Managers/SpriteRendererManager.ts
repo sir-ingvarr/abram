@@ -1,4 +1,4 @@
-import type {Graphic} from './SpriteRenderer';
+import type {IRenderable} from './SpriteRenderer';
 import SpriteRenderer from './SpriteRenderer';
 import CanvasContext2D from '../Canvas/Context2d';
 import Canvas from '../Canvas/Canvas';
@@ -25,7 +25,7 @@ class SpriteRendererManager {
 		return SpriteRendererManager.instance;
 	}
 
-	public AddToRenderQueue(graphic: Graphic) {
+	public AddToRenderQueue(graphic: IRenderable) {
 		this.spriteRenderer.AddToRenderQueue(graphic);
 	}
 

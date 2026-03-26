@@ -3,7 +3,7 @@ import {AnyFunc, Dictionary} from '../../types/common';
 import Module from './Module';
 
 class EventEmitterModule extends Module implements IExecutable {
-	protected eventsListeners: Dictionary<Set<(...args: any) => void>>;
+	protected eventsListeners: Dictionary<Set<AnyFunc>>;
 
 	constructor(params: {name?: string}) {
 		super({ name: params.name || 'EventEmitterModule' });
@@ -11,19 +11,20 @@ class EventEmitterModule extends Module implements IExecutable {
 	}
 
 	On(event: string | number, callback: AnyFunc): void {
-		if(!this.eventsListeners[event]) this.eventsListeners[event] = new Set<(self: IExecutable, ...args: any) => void>();
+		if(!this.eventsListeners[event]) this.eventsListeners[event] = new Set<AnyFunc>();
 		this.eventsListeners[event].add(callback);
 	}
 
 	Once(event: string | number, callback: AnyFunc): void {
-		const wrapper = (...args: any) => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const wrapper = (...args: any[]) => {
 			callback(this, ...args);
 			this.RemoveEventListener(event, wrapper);
 		};
 		this.On(event, wrapper);
 	}
 
-	Emit<T = any>(event: string | number, ...args: Array<T>): void {
+	Emit(event: string | number, ...args: unknown[]): void {
 		const handlers = this.eventsListeners[event];
 		if(!handlers || !handlers.size) return;
 		for(const handler of handlers) {

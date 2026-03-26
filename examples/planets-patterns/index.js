@@ -35,13 +35,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 	const planet6 = await engine.Instantiate(Planet, { radius: 3, rotateRadius: 15, speed: -0.009634, color: new RGBAColor(200, 100, 100), spritePath: './assets/sun.png' }, planet5.transform);
 
 
-	await engine.Instantiate(Lines, { planet1, planet2, limit: 10000 });
-	await engine.Instantiate(Lines, { planet1: planet2, planet2: planet3, limit: 10000 });
-	await engine.Instantiate(Lines, { planet1: planet3, planet2: satellitePlanet3, limit: 10000 });
-	await engine.Instantiate(Lines, { planet1: planet1, planet2: planet3, limit: 10000 });
-	await engine.Instantiate(Lines, { planet1: planet6, planet2: planet4Satellite, limit: 10000 });
-	await engine.Instantiate(Lines, { planet1: planet4Satellite, planet2: planet4, limit: 10000 });
-	await engine.Instantiate(Lines, { planet1: planet6, planet2: planet5, limit: 10000 });
+	await engine.Instantiate(Lines, { planet1, planet2: planet2, limit: 8000, color: new RGBAColor(255, 180, 100, 15) });
+	await engine.Instantiate(Lines, { planet1: planet2, planet2: planet3, limit: 8000, color: new RGBAColor(100, 200, 255, 15) });
+	await engine.Instantiate(Lines, { planet1: planet1, planet2: planet4, limit: 8000, color: new RGBAColor(200, 130, 255, 15) });
 	document.addEventListener('click', async (e) => {
 		await engine.RequestFullScreen();
 	})

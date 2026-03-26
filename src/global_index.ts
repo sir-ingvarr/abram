@@ -3,14 +3,14 @@ import Engine,
 	GraphicPrimitives, Shapes, ImageWrapper, Camera, GameObject,
 	InputSystem, Animator, Sprite, Classes, Time, RigidBody,
 	ParticleSystem, Collision, Collider2D, ParticleSystemAssets, TrailRenderer,
-	CollisionDetection,
+	CollisionDetection, PhysicsMaterial, CollisionsManager, Debug,
 } from './index';
 
 const Abram =  {
 	Engine, GameObject, InputSystem, Animator, Sprite,
 	Classes, Camera, Time, RigidBody, ParticleSystem, ImageWrapper,
 	GraphicPrimitives, Shapes, Collision, Collider2D, ParticleSystemAssets,
-	TrailRenderer, CollisionDetection,
+	TrailRenderer, CollisionDetection, PhysicsMaterial, CollisionsManager, Debug,
 };
 
 Object.assign(global, { Abram });

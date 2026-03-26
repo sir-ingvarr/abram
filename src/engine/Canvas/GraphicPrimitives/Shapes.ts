@@ -224,6 +224,10 @@ export class Circle {
 	get Height() {
 		return this.radius * 2;
 	}
+
+	get Area(): number {
+		return Math.PI * this.radius * this.radius;
+	}
 }
 
 export class CircleArea extends Circle implements IShape {

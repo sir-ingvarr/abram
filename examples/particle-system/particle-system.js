@@ -52,6 +52,11 @@ class ParticleSystemTest extends GameObject {
         });
     }
 
+    FixedUpdate() {
+        super.FixedUpdate();
+        this.particleSystem.FixedUpdate();
+    }
+
     Update() {
         super.Update();
         this.particleSystem.Update();

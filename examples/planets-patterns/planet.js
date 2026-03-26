@@ -62,14 +62,14 @@ class Planet extends GameObject {
 		}));
 	}
 
-	Update() {
-		super.Update();
+	FixedUpdate() {
+		super.FixedUpdate();
 		if(this.angularSpeed < 0) {
-			this.angle += Maths.Clamp(this.angularSpeed * Time.deltaTime,-2*Math.PI, 0);
+			this.angle += Maths.Clamp(this.angularSpeed * Time.fixedDeltaTime,-2*Math.PI, 0);
 		} else {
-			this.angle += Maths.Clamp(this.angularSpeed * Time.deltaTime, 0, 2 * Math.PI);
+			this.angle += Maths.Clamp(this.angularSpeed * Time.fixedDeltaTime, 0, 2 * Math.PI);
 		}
-		this.transform.LocalRotation += this.selfRotationSpeed * Time.deltaTime * this.randomRotationFactor / 10000;
+		this.transform.LocalRotation += this.selfRotationSpeed * Time.fixedDeltaTime * this.randomRotationFactor / 10000;
 		this.transform.LocalPosition = new PolarCoordinates({ r: this.rotateRadius, angle: this.angle })
 			.ToCartesian();
 	}

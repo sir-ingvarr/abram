@@ -3,42 +3,41 @@ import Sprite from '../Modules/Sprite';
 import {
 	GraphicPrimitive,
 	IGraphicPrimitive,
+	PrimitiveShape,
 	PrimitiveType,
 	ShapeDrawMethod,
 } from '../Canvas/GraphicPrimitives/GraphicPrimitive';
-import {ICoordinates, IPoint, Nullable} from '../../types/common';
+import {ICoordinates} from '../../types/common';
 import {CtxOptions} from '../../types/GraphicPrimitives';
-import {RGBAColor, Stack, Vector} from '../Classes';
+import {Stack, Vector} from '../Classes';
+import Debug from '../Debug/Debug';
 import {IStack} from '../../types/Iterators';
 import ImageWrapper from '../Modules/ImageWrapper';
+import {ITransform} from '../../types/GameObject';
 
-export type Graphic = Sprite | IGraphicPrimitive<any>
+export type Graphic = Sprite | IGraphicPrimitive<PrimitiveShape>
 
-export interface IContextOpts {
+export interface IRenderable {
 	Width: number;
 	Height: number;
-	layer: number,
-	disrespectParent?: boolean,
-	contentType: 0 | 1,
-	parent?: {
-		WorldPosition: ICoordinates,
-		WorldRotation: number,
-		Scale: ICoordinates,
-		LocalPosition: ICoordinates,
-		LocalRotation: number,
-		Anchors: IPoint,
-		Parent: Nullable<{ LocalRotation: number }>,
-	},
-	shape?: IGraphicPrimitive<any>,
-	ImageId?: string,
-	image?: ImageWrapper,
+	layer: number;
+	contentType: 0 | 1;
+	disrespectParent?: boolean;
+	parent?: ITransform;
+	ImageId?: string;
+	image?: ImageWrapper;
+	options?: CtxOptions;
+	type?: PrimitiveType;
+	dash?: Array<number>;
+	drawMethod?: ShapeDrawMethod;
+}
+
+export interface IRendererContextSettings {
+	Height?: number;
+	Width?: number;
+	Position?: ICoordinates;
+	Scale?: ICoordinates;
 	debug?: boolean;
-	Position?: ICoordinates,
-	Scale?: ICoordinates,
-	options?: CtxOptions,
-	type?: PrimitiveType,
-	dash?: Array<number>,
-	drawMethod?: ShapeDrawMethod,
 }
 
 class SpriteRenderer {
@@ -48,9 +47,8 @@ class SpriteRenderer {
 	private contextScale: ICoordinates;
 	private canvasCenterX: number;
 	private canvasCenterY: number;
-	private readonly debugStrokeColor: string;
 
-	private renderingStackList: Array<IStack<IContextOpts>> = [];
+	private renderingStackList: Array<IStack<IRenderable>> = [];
 	private readonly mainCanvasContext: CanvasContext2D;
 	private loadList: Map<string, Promise<string>>;
 
@@ -62,22 +60,21 @@ class SpriteRenderer {
 		this.canvasCenterY = context2D.Height / 2;
 		SpriteRenderer.instance = this;
 		this.loadList = new Map<string, Promise<string>>();
-		this.debugStrokeColor = new RGBAColor(0, 120).ToHex();
 	}
 
 	public static GetInstance(context?: CanvasContext2D, debug?: boolean): SpriteRenderer {
 		if(!SpriteRenderer.instance) {
-			if(!context) throw `no instance of ${this.constructor.name} was found. cannot create a new one without CanvasContext2D`;
+			if(!context) throw new Error('no instance of SpriteRenderer was found. cannot create a new one without CanvasContext2D');
 			SpriteRenderer.instance = new SpriteRenderer(context, debug);
 		}
 		return SpriteRenderer.instance;
 	}
 
-	public AddToRenderQueue(graphic: IContextOpts) {
+	public AddToRenderQueue(graphic: IRenderable) {
 		const { layer } = graphic;
 		const layerStack = this.renderingStackList[layer];
 		if(!layerStack) {
-			this.renderingStackList[layer] = new Stack<IContextOpts>({ data: [graphic] });
+			this.renderingStackList[layer] = new Stack<IRenderable>({ data: [graphic] });
 			return;
 		}
 		this.renderingStackList[layer].Push(graphic);
@@ -87,7 +84,7 @@ class SpriteRenderer {
 		return !!this.debug;
 	}
 
-	public SetContextOpts(opts: Partial<IContextOpts>) {
+	public SetContextOpts(opts: IRendererContextSettings) {
 		if(opts.Height) {
 			this.mainCanvasContext.Height = opts.Height;
 			this.canvasCenterY = opts.Height / 2;
@@ -136,7 +133,11 @@ class SpriteRenderer {
 		return this.imageStorage.has(imageId);
 	}
 
-	private resolveParentTransform(graphic: IContextOpts, width: number, height: number) {
+	get Context() {
+		return this.mainCanvasContext;
+	}
+
+	private resolveParentTransform(graphic: IRenderable, width: number, height: number) {
 		const { disrespectParent } = graphic;
 		return {
 			worldPosition: disrespectParent ? Vector.Zero : graphic.parent!.WorldPosition,
@@ -168,8 +169,6 @@ class SpriteRenderer {
 		const scaleX = scale.x;
 		const scaleY = scale.y;
 
-		// Combined affine matrix:
-		// T(center) * S(camScale) * T(-center) * T(offset) * S(scale) * R(θ) * T(-anchor)
 		const matA = camScaleX * scaleX * cos;
 		const matB = camScaleY * scaleY * sin;
 		const matC = -camScaleX * scaleX * sin;
@@ -180,14 +179,16 @@ class SpriteRenderer {
 		this.mainCanvasContext.SetTransformRaw(matA, matB, matC, matD, matE, matF);
 	}
 
-	private drawGraphicContent(graphic: IContextOpts, width: number, height: number) {
+	private drawGraphicContent(graphic: IRenderable, width: number, height: number) {
 		if(graphic.contentType === 0) {
 			if(!graphic.image?.isReady) return;
 			const image = this.GetImage(graphic.ImageId || '-1');
 			if(!image) throw new Error(`Image ${graphic.ImageId} not found`);
-			this.mainCanvasContext.DrawImage(graphic, image, 0, 0, width, height);
+			const contextRespectivePosition = graphic.options?.contextRespectivePosition || false;
+			const initialPos = contextRespectivePosition ? this.mainCanvasContext.Position : {x: 0, y: 0};
+			this.mainCanvasContext.CTX.drawImage(image, initialPos.x, initialPos.y, width, height);
 		} else {
-			this.mainCanvasContext.Draw(graphic as unknown as GraphicPrimitive<any>, 0, 0);
+			this.mainCanvasContext.Draw(graphic as unknown as GraphicPrimitive<PrimitiveShape>, 0, 0);
 		}
 	}
 
@@ -195,13 +196,14 @@ class SpriteRenderer {
 		if(!this.debug) return;
 		this.mainCanvasContext
 			.LineWidth(1)
-			.StrokeStyle(`${this.debugStrokeColor}`)
 			.LineDash([])
+			.StrokeStyle(Debug.Colors.anchorPoint.ToHex())
 			.StrokeRect(anchoredX, anchoredY, 1, 1)
+			.StrokeStyle(Debug.Colors.spriteBounds.ToHex())
 			.StrokeRect(0, 0, width, height);
 	}
 
-	private RenderElement(graphic: IContextOpts) {
+	private RenderElement(graphic: IRenderable) {
 		if(!graphic || !graphic.parent) return;
 
 		const width = graphic.Width;

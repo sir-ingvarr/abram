@@ -1,6 +1,7 @@
 import Canvas from './Canvas/Canvas';
 import {IGameObject, IGameObjectConstructable, ITransform} from '../types/GameObject';
 import {FpsProvider} from './Debug/FpsProvider';
+import {BasicObjectsConstructorParams} from './Objects/BasicObject';
 import GameObject from './Objects/GameObject';
 import {Queue} from './Classes';
 import {GameObjectManager} from './Managers/GameObjectManager';
@@ -8,10 +9,12 @@ import Time from './Globals/Time';
 import SpriteRendererManager from './Managers/SpriteRendererManager';
 import Camera from './Modules/Camera';
 import CollisionsManager from './Managers/CollisionsManager';
+import RigidBody from './Modules/Rigidbody';
+import Debug from './Debug/Debug';
 
 type InstantiateOpts = {
-	gameObject: IGameObjectConstructable<any>,
-	params: any,
+	gameObject: IGameObjectConstructable<BasicObjectsConstructorParams>,
+	params: BasicObjectsConstructorParams,
 	parent?: ITransform,
 }
 
@@ -33,6 +36,7 @@ class GameLoop {
 	private readonly canvas: Canvas;
 	private readonly instantiateQueue: Queue<InstantiateOpts & { resolve: (go: IGameObject) => void }> = new Queue<InstantiateOpts & { resolve: (go: IGameObject) => void }>({data: []});
 	private readonly boundRender: () => void;
+	private fixedTimeAccumulator: number = 0;
 
 	constructor(
 		opts: GameLoopOptions
@@ -41,6 +45,8 @@ class GameLoop {
 			canvas, debug = false, drawFps = false, pauseOnBlur
 		} = opts;
 		this.debug = debug;
+		Debug.Enabled = debug;
+		Debug.SetContext(canvas.Context2D);
 		this.canvas = canvas;
 		this.drawFps = drawFps;
 		this.gameObjectManager = new GameObjectManager({ modules: [], context: this.canvas.Context2D});
@@ -97,6 +103,24 @@ class GameLoop {
 			this.Spawn(element);
 		}
 		Time.FrameRendered();
+
+		// Fixed timestep physics — accumulator runs on real time so FixedUpdate always ticks at 50Hz;
+		// timeScale only affects step size via FixedDeltaTimeSeconds
+		this.fixedTimeAccumulator += Time.unscaledDeltaTime;
+		// Cap accumulator to prevent spiral of death — no more than one frame's worth of catch-up
+		const maxAccumulator = Math.max(Time.fixedDeltaTime * 3, Time.unscaledDeltaTime);
+		this.fixedTimeAccumulator = Math.min(this.fixedTimeAccumulator, maxAccumulator);
+		while(this.fixedTimeAccumulator >= Time.fixedDeltaTime) {
+			this.gameObjectManager.FixedUpdate();
+			this.collisionsManager.FixedUpdate();
+			this.fixedTimeAccumulator -= Time.fixedDeltaTime;
+		}
+
+		// Interpolate physics for smooth rendering
+		const alpha = this.fixedTimeAccumulator / Time.fixedDeltaTime;
+		RigidBody.InterpolateAll(alpha);
+
+		// Rendering
 		this.Canvas.Context2D
 			.InvalidateBoundingBoxCache();
 		this.Canvas.Context2D
@@ -106,16 +130,13 @@ class GameLoop {
 		const camera = Camera.GetInstance({});
 		this.spriteRendererManager.SetCamera(camera.Position, camera.Scale);
 		this.spriteRendererManager.DrawCallsFinished();
-		this.collisionsManager.Update();
+		Debug.Update();
 		if(this.drawFps) {
-			this.canvas.Context2D
-				.Reset()
-				.FillStyle('white')
-				.FillRect(this.canvas.Width - 100, 0, 100, 40)
-				.FillStyle('red')
-				.FillText(`frame time: ${Time.deltaTime}`, this.canvas.Width - 90, 15)
-				.FillText(`FPS: ${Math.floor(this.fpsProvider.FPS)}`, this.canvas.Width - 90, 30);
+			Debug.DrawFps(this.fpsProvider.FPS, Time.deltaTime, this.canvas.Width);
 		}
+
+		// Restore physics positions after rendering
+		RigidBody.RestoreAll();
 	}
 
 	private Spawn(args: InstantiateOpts & { resolve: (go: IGameObject) => void }): void {

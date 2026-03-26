@@ -54,6 +54,10 @@ export class OBBShape {
 		return this.halfHeight * 2;
 	}
 
+	get Area(): number {
+		return this.halfWidth * 2 * this.halfHeight * 2;
+	}
+
 	SetSize(size: number) {
 		this.halfWidth = size / 2;
 		this.halfHeight = size / 2;
@@ -307,6 +311,38 @@ function findSmallestOverlapAxis(
 
 // --- OBB vs OBB ---
 
+function findObbContactPoint(cornersA: Vector[], cornersB: Vector[], normal: Vector): Vector {
+	let bestDot = Infinity;
+	const supportA: Vector[] = [];
+	for (const corner of cornersA) {
+		const dot = Vector.Dot(corner, normal);
+		if (dot < bestDot - 0.001) {
+			bestDot = dot;
+			supportA.length = 0;
+			supportA.push(corner);
+		} else if (Math.abs(dot - bestDot) < 0.001) {
+			supportA.push(corner);
+		}
+	}
+
+	bestDot = -Infinity;
+	const supportB: Vector[] = [];
+	for (const corner of cornersB) {
+		const dot = Vector.Dot(corner, normal);
+		if (dot > bestDot + 0.001) {
+			bestDot = dot;
+			supportB.length = 0;
+			supportB.push(corner);
+		} else if (Math.abs(dot - bestDot) < 0.001) {
+			supportB.push(corner);
+		}
+	}
+
+	const avgX = [...supportA, ...supportB].reduce((s, v) => s + v.x, 0) / (supportA.length + supportB.length);
+	const avgY = [...supportA, ...supportB].reduce((s, v) => s + v.y, 0) / (supportA.length + supportB.length);
+	return new Vector(avgX, avgY);
+}
+
 function obbVsObb(obbA: OBBShape, obbB: OBBShape): CollisionResult | null {
 	const cornersA = obbA.GetCorners();
 	const cornersB = obbB.GetCorners();
@@ -315,8 +351,8 @@ function obbVsObb(obbA: OBBShape, obbB: OBBShape): CollisionResult | null {
 	const result = findSmallestOverlapAxis(separatingAxes, cornersA as Vector[], cornersB as Vector[]);
 	if (result === null) return null;
 
-	let { smallestOverlap, smallestOverlapAxis } = result;
-
+	let { smallestOverlapAxis } = result;
+	const { smallestOverlap } = result;
 	// Ensure normal points from A to B
 	const centerDelta = Vector.Subtract(obbB.Center, obbA.Center);
 	if (Vector.Dot(centerDelta, smallestOverlapAxis) < 0) {
@@ -326,6 +362,6 @@ function obbVsObb(obbA: OBBShape, obbB: OBBShape): CollisionResult | null {
 	return {
 		normal: smallestOverlapAxis,
 		depth: smallestOverlap,
-		contactPoint: Vector.LerpBetween(obbA.Center, obbB.Center, 0.5),
+		contactPoint: findObbContactPoint(cornersA as Vector[], cornersB as Vector[], smallestOverlapAxis),
 	};
 }

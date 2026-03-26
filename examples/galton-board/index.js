@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 		debug: false, drawFps: true,
 		pauseOnBlur: false,
 		bgColor: new RGBAColor(25, 25, 30),
+		fullscreen: true,
 	});
 
 	await engine.RegisterGameScript('./camera-movement.js');
@@ -30,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 	await engine.Instantiate(Dropper, {
 		position: new Vector(-35, -370),
 		dropEvery: 1000,
-		maxBalls: 150,
+		maxBalls: 0,
 		ballSize: 22,
 		spread: 10,
 		instantiate: engine.Instantiate.bind(engine),

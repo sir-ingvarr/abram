@@ -47,11 +47,15 @@ class GoldenSparks extends GameObject {
         });
     }
 
+    FixedUpdate() {
+        super.FixedUpdate();
+        this.particleSystem.FixedUpdate();
+    }
+
     Update() {
         this.lifetime -= Time.deltaTime;
         if(this.lifetime < 0) return this.Destroy();
         super.Update();
         this.particleSystem.Update();
-
     }
 }

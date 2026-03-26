@@ -36,9 +36,9 @@ class Man extends GameObject {
         });
 
         this.rigidBody = new RigidBody({
-            useGravity: true, gravityScale: 0.21, angularDrag: 0.03,
+            useGravity: true, gravityScale: 1, angularDrag: 0.03,
             velocityLimit: new Vector(20, 100),
-            drag: 2, mass: 2, bounciness: 0,
+            drag: 2, mass: 3, bounciness: 0,
             centerOfMass: new Vector(0, 10),
         });
 
@@ -88,7 +88,7 @@ class Man extends GameObject {
             const spawnOffset = Vector.MultiplyCoordinates(40, fireDirection);
             this.instantiate(Bullet, {
                 position: Vector.Add(gunPos, spawnOffset),
-                velocity: Vector.Add(Vector.MultiplyCoordinates(100, fireDirection), this.rigidBody.Velocity),
+                velocity: Vector.Add(Vector.MultiplyCoordinates(8, fireDirection), this.rigidBody.Velocity),
             });
         }
     }
@@ -98,16 +98,12 @@ class Man extends GameObject {
             this.isGrounded = false;
             this.jumped = true;
             this.rigidBody.FreezeRotation = false;
-            this.rigidBody.AddForce(Vector.MultiplyCoordinates(100, Vector.Up).Add(new Vector(this.horizontalDir * 40, 0)));
+            this.rigidBody.AddForce(Vector.MultiplyCoordinates(1000, Vector.Up).Add(new Vector(this.horizontalDir * 100, 0)));
             this.rigidBody.AddTorque(1300);
         }
     }
 
-    Update() {
-        this.horizontalDir = this.CheckHorizontalInputs();
-        this.verticalDir = this.CheckVerticalInputs();
-        const pos = this.transform.WorldPosition;
-
+    FixedUpdate() {
         // Ground detection: check if velocity along Y is near zero and collider is active
         // Skip ground check briefly after jumping so grace period doesn't re-ground us
         if(this.jumped) {
@@ -117,16 +113,36 @@ class Man extends GameObject {
             this.isGrounded = Math.abs(vy) < 0.5 && this.collider.IsColliding;
         }
 
-        if(this.cam) {
-            this.cam.SetPosition(pos);
-            this.cam.SetTargetZoom(this.isGrounded ? 1 : 1.5);
-        }
         if(this.isGrounded) {
             this.rigidBody.Velocity = new Vector(this.rigidBody.Velocity.x, 0);
             this.rigidBody.Torque = 0;
             this.rigidBody.AngularVelocity = 0;
             this.transform.LocalRotation = 0;
             this.rigidBody.FreezeRotation = true;
+        } else {
+            this.rigidBody.FreezeRotation = false;
+        }
+
+        this.Jump();
+
+        if(this.isGrounded) {
+            this.rigidBody.AddForce(Vector.MultiplyCoordinates(50, new Vector(this.horizontalDir, 0)));
+        }
+
+        super.FixedUpdate();
+    }
+
+    Update() {
+        this.horizontalDir = this.CheckHorizontalInputs();
+        this.verticalDir = this.CheckVerticalInputs();
+        const pos = this.transform.WorldPosition;
+
+        if(this.cam) {
+            this.cam.SetPosition(pos);
+            this.cam.SetTargetZoom(this.isGrounded ? 1 : 1.5);
+        }
+
+        if(this.isGrounded) {
             if (!!this.horizontalDir || !!this.verticalDir) {
                 this.animator.SetState('running');
             } else {
@@ -134,21 +150,13 @@ class Man extends GameObject {
             }
         } else {
             this.animator.SetState('jump');
-            this.rigidBody.FreezeRotation = false;
-
         }
 
-        this.Jump();
         this.Shoot();
 
         this.prevHorDir = this.horizontalDir || this.prevHorDir;
-
-
         this.transform.LocalScale = new Vector((this.horizontalDir || this.prevHorDir) * this.size, this.size);
 
-        if(this.isGrounded) {
-            this.rigidBody.AddForce(Vector.MultiplyCoordinates(3, new Vector(this.horizontalDir, 0)));
-        }
         super.Update();
     }
 }
