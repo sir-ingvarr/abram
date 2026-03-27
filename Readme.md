@@ -124,4 +124,4 @@ Full documentation is in the [`docs/`](./docs/index.md) folder:
 
 ## License
 
-ISC
+[MIT](./LICENSE)
