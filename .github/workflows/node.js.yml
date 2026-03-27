@@ -1,24 +1,21 @@
-name: Node.js CI
+name: CI
+
 on:
+  push:
+    branches: ['**']
   pull_request:
-    branches: [ "main" ]
+    branches: ['**']
 
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [14.x, 16.x, 18.x]
-
     steps:
-    - uses: actions/checkout@v3
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm i
-    - run: npm audit
-    - run: npm run build-ts --if-present
-    - run: npm run bundle
-    - run: npm run lint
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+      - run: npm ci
+      - run: npm audit
+      - run: npm run lint
+      - run: npm run build
