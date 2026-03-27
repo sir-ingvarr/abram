@@ -32,6 +32,11 @@ export interface IRenderable {
 	drawMethod?: ShapeDrawMethod;
 }
 
+export interface IUIRenderable {
+	layer: number;
+	Render(ctx: CanvasRenderingContext2D): void;
+}
+
 export interface IRendererContextSettings {
 	Height?: number;
 	Width?: number;
@@ -49,6 +54,7 @@ class SpriteRenderer {
 	private canvasCenterY: number;
 
 	private renderingStackList: Array<IStack<IRenderable>> = [];
+	private uiRenderingStackList: Array<IStack<IUIRenderable>> = [];
 	private readonly mainCanvasContext: CanvasContext2D;
 	private loadList: Map<string, Promise<string>>;
 
@@ -78,6 +84,16 @@ class SpriteRenderer {
 			return;
 		}
 		this.renderingStackList[layer].Push(graphic);
+	}
+
+	public AddToUIRenderQueue(element: IUIRenderable) {
+		const { layer } = element;
+		const layerStack = this.uiRenderingStackList[layer];
+		if(!layerStack) {
+			this.uiRenderingStackList[layer] = new Stack<IUIRenderable>({ data: [element] });
+			return;
+		}
+		this.uiRenderingStackList[layer].Push(element);
 	}
 
 	get Debug(): boolean {
@@ -223,6 +239,25 @@ class SpriteRenderer {
 			if (!layerStack) continue;
 			while (layerStack.Count) {
 				this.RenderElement(layerStack.Pop());
+			}
+		}
+	}
+
+	public ClearQueues() {
+		this.renderingStackList = [];
+		this.uiRenderingStackList = [];
+	}
+
+	public RenderUI() {
+		const ctx = this.mainCanvasContext.CTX;
+		for (let i = 0; i < this.uiRenderingStackList.length; i++) {
+			const layerStack = this.uiRenderingStackList[i];
+			if (!layerStack) continue;
+			while (layerStack.Count) {
+				ctx.save();
+				ctx.resetTransform();
+				layerStack.Pop().Render(ctx);
+				ctx.restore();
 			}
 		}
 	}

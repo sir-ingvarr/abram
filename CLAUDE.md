@@ -29,10 +29,12 @@ npm run pre-commit   # lint → test → build-ts (runs via Husky)
 
 ### Key Singletons
 
-- **Engine** (`src/engine/Engine.ts`) — main entry point, creates canvas, manages game loop, only one instance allowed
+- **Engine** (`src/engine/Engine.ts`) — main entry point, creates canvas, manages game loop, scene registry (`RegisterScene`/`LoadScene`), only one instance allowed
 - **Time** (`src/engine/Globals/Time.ts`) — global deltaTime, unscaledDeltaTime, fixedDeltaTime, totalRuntime, timeScale
 - **Camera** (`src/engine/Modules/Camera.ts`) — viewport management
 - **InputSystem** (`src/engine/Globals/Input.ts`) — keyboard input tracking
+- **CursorInputSystem** (`src/engine/Globals/CursorInput.ts`) — mouse input: canvas/world position, button state, scroll, events
+- **AudioManager** (`src/engine/Audio/AudioManager.ts`) — Web Audio API sound loading/playback with `SoundInstance` handles
 
 ### Lifecycle
 
@@ -61,9 +63,10 @@ Each frame:
 2. Interpolate rigidbody positions for smooth rendering (only bodies with `interpolate: true`)
 3. Clear canvas, draw background
 4. `Update` all GameObjects (visuals, input, animation)
-5. SpriteRenderer batch-renders sprites by layer (z-order)
+5. SpriteRenderer batch-renders sprites by layer (z-order), then renders UI layer array (screen-space, no camera transform)
 6. Restore rigidbody physics positions
-7. Optional FPS display
+7. Clear per-frame input state (CursorInputSystem.FrameCleanup)
+8. Optional FPS display
 
 ### Entry Points
 
@@ -78,6 +81,14 @@ Singleton (`Camera.GetInstance()`). Supports position, zoom via `Scale` (applied
 ### Coordinate System
 
 Screen-space: Y-axis points down. `Vector.Up = (0, -1)` is screen-up, `Vector.Down = (0, 1)` is screen-down. Gravity uses `Vector.Down`. `Transform.Right/Left/Up/Down` getters return rotated+flip-aware directional vectors.
+
+### UI System
+
+Screen-space game objects rendered on a separate layer array, independent of the camera. `UIElement` (`src/engine/Objects/UIElement.ts`) is the base class. Concrete types: `UIText` (text rendering), `UIRect` (rectangles). UI elements are instantiated like normal game objects, use `active` for visibility toggling. Each implements `createRenderable()` returning an `IUIRenderable` with a `Render(ctx)` callback. Custom UI elements extend `UIElement`.
+
+### Audio
+
+`AudioManager` (`src/engine/Audio/AudioManager.ts`) — static class using Web Audio API. `Load(id, url)` preloads into an `AudioBuffer` cache. `Play(id, opts?)` returns a `SoundInstance` handle with volume/loop/playbackRate/stop. Lazy `AudioContext` creation. `MasterVolume` and `StopAll()` for global control.
 
 ### Physics
 

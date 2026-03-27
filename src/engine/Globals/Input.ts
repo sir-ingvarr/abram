@@ -36,6 +36,7 @@ class InputSystem {
 		document.addEventListener('keydown', e => {
 			e.preventDefault();
 			InputSystem.SetPressedKey(e.code);
+			InputSystem.HandleEvents(e.code);
 		});
 		document.addEventListener('keyup', e => {
 			e.preventDefault();

@@ -574,6 +574,12 @@ export class Iterator<T> implements IIterator<T> {
 	get Done(): boolean {
 		return this.done;
 	}
+
+	public Clear(): void {
+		this.data.length = 0;
+		this.index = -1;
+		this.done = false;
+	}
 }
 
 export class List<T> extends Iterator<T> implements IList<T> {

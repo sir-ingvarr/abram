@@ -1,31 +1,4 @@
-document.addEventListener('DOMContentLoaded', async function() {
-    const root = document.getElementById('root');
-    const engine = new Engine(root, { width: 1280, height: 800, debug: false, drawFps: true, pauseOnBlur: false });
-
-    await engine.RegisterGameScript('./camera-movement.js')
-    await engine.RegisterGameScript('./explosion.js');
-    await engine.RegisterGameScript('./smoke.js')
-    await engine.RegisterGameScript('./rocket.js')
-    await engine.RegisterGameScript('./bg.js');
-    await engine.RegisterGameScript('./golden_sparks.js');
-
-    const slider = document.createElement('input');
-    root.appendChild(slider);
-    slider.type = 'range';
-    slider.min = 0;
-    slider.max = 2;
-    slider.step = 0.01;
-    slider.value = 1;
-    slider.addEventListener('click', function(e) {
-        e.stopPropagation();
-    });
-    slider.addEventListener('change', function(e) {
-        const value = parseFloat(e.target.value);
-        Time.timeScale = value;
-    })
-
-    engine.Start();
-
+async function FireworksScene(engine) {
     Time.timeScale = 1;
 
     await engine.Instantiate(CameraMovement, {});
@@ -56,7 +29,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-
     function SpawnTheExplosion(pos) {
         const isColorful = Math.random() < 0.35;
         engine.Instantiate(Explosion, {
@@ -68,7 +40,41 @@ document.addEventListener('DOMContentLoaded', async function() {
             onParticleDestroy: pos => isColorful ? SpawnTheSparks(pos) : null,
         })
     }
+
     await engine.Instantiate(Rocket, { position: Vector.Zero, onParticleDestroy: SpawnTheExplosion, childParticleSystemGO: Smoke });
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    const root = document.getElementById('root');
+    const engine = new Engine(root, { width: 1280, height: 800, debug: false, drawFps: true, pauseOnBlur: false });
+
+    await engine.RegisterGameScript('./camera-movement.js')
+    await engine.RegisterGameScript('./explosion.js');
+    await engine.RegisterGameScript('./smoke.js')
+    await engine.RegisterGameScript('./rocket.js')
+    await engine.RegisterGameScript('./bg.js');
+    await engine.RegisterGameScript('./golden_sparks.js');
+
+    const slider = document.createElement('input');
+    root.appendChild(slider);
+    slider.type = 'range';
+    slider.min = 0;
+    slider.max = 2;
+    slider.step = 0.01;
+    slider.value = 1;
+    slider.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+    slider.addEventListener('change', function(e) {
+        const value = parseFloat(e.target.value);
+        Time.timeScale = value;
+    })
+
+    engine.RegisterScene('fireworks', FireworksScene);
+    engine.Start();
+    await engine.LoadScene('fireworks');
+    InputSystem.AddEventListener('Escape', () => engine.LoadScene('fireworks'));
+
     document.addEventListener('click', async (e) => {
         await engine.RequestFullScreen();
     })

@@ -60,14 +60,6 @@ new OBBShape(width, height)
 - `Area` getter -- `width * height`
 - Supports full rotation -- not axis-aligned
 
-## Supported Collision Pairs
-
-| Pair | Detection Method |
-|------|-----------------|
-| Circle vs Circle | Distance between centers vs sum of radii |
-| Circle vs OBB | Transform to OBB local space, clamp to nearest edge |
-| OBB vs OBB | Separating Axis Theorem on 4 axes |
-
 ## Events
 
 ```js
@@ -84,8 +76,6 @@ collider.On(Collider2DEvent.OnTriggerEnter, (self, other) => { });
 collider.On(Collider2DEvent.OnTriggerExit, (self, other) => { });
 ```
 
-**Grace period:** `Leave` events wait 3 frames before firing. This prevents flickering on resting contacts where position correction briefly separates bodies.
-
 ## Properties
 
 | Property | Type | Description |
@@ -93,15 +83,6 @@ collider.On(Collider2DEvent.OnTriggerExit, (self, other) => { });
 | `IsColliding` | `boolean` (readonly) | `true` if any active contacts exist |
 | `shape` | `ColliderShape` | The collision shape |
 | `connectedRigidbody` | `RigidBody` | The connected physics body |
-
-## Collision Response
-
-When two colliders overlap:
-
-1. **Impulse** -- applied at the contact point, generating both linear velocity change and torque
-2. **Friction** -- tangential impulse from combined `PhysicsMaterial.friction` (geometric mean)
-3. **Position correction** -- separates overlapping bodies (80% per frame, with 0.01 slop)
-4. **Wake** -- sleeping bodies are woken on collision
 
 ## Collision Layers
 
@@ -126,14 +107,7 @@ CollisionsManager.GetLayerCollision(LAYER_PLAYER, LAYER_BULLET); // false
 
 The matrix is symmetric -- `SetLayerCollision(1, 3, false)` also sets `(3, 1)`.
 
-## Density
+## Notes
 
-When the connected RigidBody has a `PhysicsMaterial` with `density`, mass is automatically calculated from the collider shape area when the collider is created:
-
-```
-mass = density * area
-```
-
-## Debug
-
-Collider outlines render when `debug: true` is set on the Engine. Circle colliders show a green circle, OBB colliders show a green rectangle.
+- When the RigidBody has a `PhysicsMaterial` with `density`, mass is auto-calculated from the collider shape area.
+- Collider outlines render when `debug: true` is set on the Engine.

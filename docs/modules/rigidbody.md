@@ -66,39 +66,9 @@ this.RegisterModule(this.rb);
 | `InvertedMass` | `number` (readonly) | `1 / mass` (0 for static) |
 | `PrevPosition` | `ICoordinates` (readonly) | Position from previous physics step |
 
-## Physics Update Order
+## Notes
 
-Runs in `FixedUpdate` at fixed timestep (default 50Hz, 20ms). Skipped for static and sleeping bodies:
-
-1. Check sleep (displacement-based, comparing position to previous step)
-2. Apply gravity: `velocity += gravityScale * 9.82 * Vector.Down * fixedDt`
-3. Calculate velocity from accumulated forces: `velocity += (force / mass) * fixedDt`
-4. Clamp to `velocityLimit` if set
-5. Translate position by `velocity * fixedDt * PixelsPerMeter` (default 100 px/m)
-6. Calculate angular velocity from torque
-7. Apply exponential drag: `velocity *= e^(-drag * fixedDt)`
-
-Velocity is in **meters/second**. Conversion to pixels uses `PhysicsMaterial.PixelsPerMeter`.
-
-## Interpolation
-
-Opt-in per rigidbody via `interpolate: true` (default `false`). When enabled, positions are lerped between the previous and current physics step for smooth rendering. `RigidBody.InterpolateAll(alpha)` and `RigidBody.RestoreAll()` are called automatically by the GameLoop before and after rendering; bodies with `interpolate: false` are skipped.
-
-## Sleep
-
-Bodies auto-sleep after **15 consecutive fixed-update steps** with net displacement below threshold (0.01 px). Sleeping bodies:
-
-- Skip physics updates entirely
-- Are skipped in collision pairs only when both bodies are sleeping
-- Wake automatically on `AddForce`, `AddImpulse`, `AddTorque`
-- Wake on significant penetration correction (> 0.1 px) from another body
-- Wake on non-resting collision impact
-
-## Collision Response
-
-CollisionsManager distinguishes **resting contacts** from **impacts**:
-
-- **Resting**: pair was active in previous frames AND relative velocity along normal < 0.5 m/s. Normal velocity is cancelled, friction is applied to tangential velocity, penetration correction is 100% with no slop.
-- **Impact**: first contact OR high relative velocity. Full impulse with restitution (bounciness), 80% penetration correction with slop.
-
-Penetration correction runs **3 iterative passes** after the main collision pass to resolve competing constraints (e.g. balls squeezed between walls).
+- Physics runs in `FixedUpdate` at 50Hz. Static and sleeping bodies are skipped.
+- Velocity is in **meters/second**. Conversion to pixels uses `PhysicsMaterial.PixelsPerMeter` (default 100).
+- `interpolate: true` lerps positions between physics steps for smoother rendering.
+- Bodies auto-sleep after sustained near-zero movement. They wake on force, impulse, or collision.

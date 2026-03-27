@@ -1,4 +1,4 @@
-import type {IRenderable} from './SpriteRenderer';
+import type {IRenderable, IUIRenderable} from './SpriteRenderer';
 import SpriteRenderer from './SpriteRenderer';
 import CanvasContext2D from '../Canvas/Context2d';
 import Canvas from '../Canvas/Canvas';
@@ -29,6 +29,10 @@ class SpriteRendererManager {
 		this.spriteRenderer.AddToRenderQueue(graphic);
 	}
 
+	public AddToUIRenderQueue(element: IUIRenderable) {
+		this.spriteRenderer.AddToUIRenderQueue(element);
+	}
+
 	get Context() {
 		return this.context;
 	}
@@ -37,8 +41,13 @@ class SpriteRendererManager {
 		this.spriteRenderer.SetContextOpts({Position: position, Scale: scale});
 	}
 
+	public ClearQueues() {
+		this.spriteRenderer.ClearQueues();
+	}
+
 	public DrawCallsFinished() {
 		this.spriteRenderer.Render();
+		this.spriteRenderer.RenderUI();
 	}
 
 }

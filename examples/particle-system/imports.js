@@ -1,5 +1,5 @@
 const {
-    Engine, GameObject, ImageWrapper, Camera, ParticleSystem,
+    Engine, GameObject, InputSystem, ImageWrapper, Camera, ParticleSystem,
     Classes: { Vector, Point, Maths, RGBAColor },
     GraphicPrimitives: { GraphicPrimitive, PrimitiveType, ShapeDrawMethod },
     Shapes: { Circle, Rect },

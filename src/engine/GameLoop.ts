@@ -11,6 +11,8 @@ import Camera from './Modules/Camera';
 import CollisionsManager from './Managers/CollisionsManager';
 import RigidBody from './Modules/Rigidbody';
 import Debug from './Debug/Debug';
+import CursorInputSystem from './Globals/CursorInput';
+import AudioManager from './Audio/AudioManager';
 
 type InstantiateOpts = {
 	gameObject: IGameObjectConstructable<BasicObjectsConstructorParams>,
@@ -137,6 +139,9 @@ class GameLoop {
 
 		// Restore physics positions after rendering
 		RigidBody.RestoreAll();
+
+		// Clear per-frame input state (ButtonDown/ButtonUp/ScrollDelta)
+		CursorInputSystem.FrameCleanup();
 	}
 
 	private Spawn(args: InstantiateOpts & { resolve: (go: IGameObject) => void }): void {
@@ -152,6 +157,40 @@ class GameLoop {
 
 	private AppendGameObject(element: IGameObject) {
 		this.gameObjectManager.RegisterModule(element);
+	}
+
+	ClearScene() {
+		// Discard pending instantiations
+		this.instantiateQueue.Clear();
+
+		// Destroy all game objects (cascades to modules, colliders, rigidbodies)
+		this.gameObjectManager.Destroy();
+
+		// Clear stale collision pair tracking
+		this.collisionsManager.ClearPairs();
+
+		// Reset camera to defaults
+		Camera.GetInstance({}).Reset();
+
+		// Stop all playing audio
+		AudioManager.StopAll();
+
+		// Clear scene-specific mouse event listeners
+		CursorInputSystem.ClearEventListeners();
+
+		// Flush render queues so nothing from the old scene draws
+		this.spriteRendererManager.ClearQueues();
+
+		// Clear debug gizmos
+		Debug.Clear();
+
+		// Reset physics accumulator
+		this.fixedTimeAccumulator = 0;
+
+		// Re-register FPS provider if needed (it was destroyed with the rest)
+		if(this.drawFps) {
+			this.gameObjectManager.RegisterModule(this.fpsProvider);
+		}
 	}
 
 	GetGameObjectById(id: string) {

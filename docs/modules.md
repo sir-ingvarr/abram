@@ -16,6 +16,8 @@ Modules are reusable components that attach to GameObjects via `RegisterModule()
 | PhysicsMaterial | Surface properties (friction, density) | [physics-material.md](./modules/physics-material.md) |
 | TrailRenderer | Motion trail effect | [trail-renderer.md](./modules/trail-renderer.md) |
 | Camera | Viewport control and zoom | [camera.md](./modules/camera.md) |
+| Debug | Visual debug overlay and logging | [debug.md](./modules/debug.md) |
+| AudioManager | Sound loading and playback | [audio.md](./modules/audio.md) |
 
 ## Dependencies & Duplication
 

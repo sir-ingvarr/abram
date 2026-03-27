@@ -41,6 +41,10 @@ class CollisionsManager extends ExecutableManager {
 		return CollisionsManager.collisionMatrix[layerA][layerB];
 	}
 
+	public ClearPairs() {
+		this.activePairs.clear();
+	}
+
 	public static GetInstance(): CollisionsManager {
 		if(!CollisionsManager.instance) {
 			return new CollisionsManager({ modules: [] });

@@ -59,48 +59,24 @@ Gravity uses `Vector.Down`. Transform directional getters (`Right`, `Up`, etc.) 
 
 ## Game Loop
 
-Each frame executes in this order:
+Each frame:
 
-1. **Instantiation queue** -- process deferred `Instantiate` calls
-2. **Time update** -- `Time.FrameRendered()` computes deltaTime
-3. **Bounding box cache invalidation** -- for occlusion culling
-4. **Clear and draw background**
-5. **Update all GameObjects** -- calls `Update()` on each module and child
-6. **Camera sync** -- pass camera position and scale to SpriteRenderer
-7. **Batch render** -- sprites and primitives drawn by layer order
-8. **Collision detection and response** -- impulse, friction, penetration correction
-9. **FPS overlay** -- if `drawFps: true`
+1. Process deferred `Instantiate` calls
+2. Update time (`deltaTime`, `unscaledDeltaTime`)
+3. Run `FixedUpdate` loop (50Hz physics, collisions)
+4. Clear canvas, draw background
+5. Run `Update` on all GameObjects (visuals, input, animation)
+6. Render sprites by layer, then UI layer
+7. FPS overlay (if `drawFps: true`)
 
 ## Module System
 
-Modules attach to GameObjects via `RegisterModule()`. Each follows the `Start` / `Update` / `Destroy` lifecycle.
-
-**Registration flow:**
-
-1. Check `canBeDuplicated` -- reject if duplicate of non-duplicable type
-2. Check `dependencies` -- if missing, module is registered but stays inactive
-3. Register in `ExecutableManager` modules map
-4. Call `PostModuleRegister` -- triggers `Start()` if active
-5. Check pending modules -- activate any whose dependencies are now met
-
-**Type-safe lookup:**
+Modules attach to GameObjects via `RegisterModule()`. Each follows the `Start` / `Update` / `Destroy` lifecycle. Modules can declare dependencies and duplication rules — see [Modules Overview](./modules.md).
 
 ```js
 const rb = gameObject.GetModule(RigidBody);        // RigidBody | null
 const colliders = gameObject.GetModules(Collider2D); // Collider2D[]
 ```
-
-## Rendering Pipeline
-
-`SpriteRenderer.RenderElement` computes a combined affine matrix per graphic:
-
-```
-T(canvasCenter) * S(cameraScale) * T(-canvasCenter) * T(worldOffset) * S(objectScale) * R(rotation) * T(-anchor)
-```
-
-This is computed as raw `setTransform(a,b,c,d,e,f)` -- no DOMMatrix allocation.
-
-Static direction constants (`Vector.Zero`, `Vector.One`, etc.) are `Object.freeze`'d singletons. Use `Vector.ZeroMutable` / `Vector.OneMutable` when you need a modifiable instance.
 
 ## Build
 

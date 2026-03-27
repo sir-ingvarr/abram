@@ -1,10 +1,13 @@
 import {IGameObject, IGameObjectConstructable, ITransform} from '../types/GameObject';
 import {RGBAColor} from './Classes';
 import InputSystem from './Globals/Input';
+import CursorInputSystem from './Globals/CursorInput';
 import {CanvasContext2DAttributes, ColorSpace, Nullable} from '../types/common';
 import Canvas from './Canvas/Canvas';
 import GameLoop from './GameLoop';
 import {BasicObjectsConstructorParams} from './Objects/BasicObject';
+
+export type SceneFunction = (engine: Engine) => void | Promise<void>;
 
 export type EngineConfigOptions = {
 	width: number,
@@ -28,6 +31,7 @@ class Engine {
 	private loadScriptsPromises: Array<Promise<void>>;
 	private canvas: Canvas;
 	private static _instance: Engine;
+	private readonly scenes: Map<string, SceneFunction> = new Map();
 
 	constructor (root: HTMLElement, options: EngineConfigOptions = { width: 800, height: 600 }) {
 		if(Engine._instance) throw new Error('Engine already instantiated, use Engine.Instance');
@@ -125,7 +129,23 @@ class Engine {
 		this.loadScriptsPromises = [];
 		if(!this.canvas) throw new Error('Canvas not set, use CreateCanvas()');
 		if(typeof InputSystem !== 'undefined') InputSystem.SetEventListeners();
+		CursorInputSystem.SetEventListeners(this.canvas.CanvasElement);
 		this.gameLoopManager.Start();
+	}
+
+	RegisterScene(name: string, scene: SceneFunction) {
+		this.scenes.set(name, scene);
+	}
+
+	GetRegisteredScenes(): string[] {
+		return Array.from(this.scenes.keys());
+	}
+
+	async LoadScene(name: string) {
+		const scene = this.scenes.get(name);
+		if(!scene) throw new Error(`Scene "${name}" not registered`);
+		this.gameLoopManager.ClearScene();
+		await scene(this);
 	}
 
 }
