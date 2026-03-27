@@ -77,7 +77,7 @@ export class BoundingBox extends Rect implements IShape {
 		return point.x >= Math.min(this.from.x, this.to.x)
             && point.x <= Math.max(this.from.x, this.to.x)
             && point.y >= Math.min(this.from.y, this.to.y)
-            && point.y >= Math.min(this.from.y, this.to.y);
+            && point.y <= Math.max(this.from.y, this.to.y);
 	}
 
 	GetIntersectionPoints(): Array<ICoordinates> {
@@ -117,13 +117,11 @@ export class SegmentList {
 
 
 	get Width() {
-		return 0;
-		return this.boundingBox.Width;
+		return this.boundingBox?.Width || 0;
 	}
 
 	get Height() {
-		return 0;
-		return this.boundingBox.Height;
+		return this.boundingBox?.Height || 0;
 	}
 
 	set Offset(val: ICoordinates) {
@@ -225,6 +223,10 @@ export class Circle {
 
 	get Height() {
 		return this.radius * 2;
+	}
+
+	get Area(): number {
+		return Math.PI * this.radius * this.radius;
 	}
 }
 

@@ -38,7 +38,7 @@ class Explosion extends GameObject {
                 rotationOverLifeTime: factor => {
                     return Maths.Lerp(0, -10, factor);
                 },
-                initialVelocity: () => new PolarCoordinates({ r: Maths.RandomRange(0, 350),angle: Maths.RandomRange(0, 2*Math.PI) }).ToCartesian().ToVector(),//Vector.Of(Maths.RandomRange(-150, 150), Maths.RandomRange(-150, 150)),
+                initialVelocity: () => new PolarCoordinates({ r: Maths.RandomRange(0, 3.5), angle: Maths.RandomRange(0, 2*Math.PI) }).ToCartesian().ToVector(),
                 initialSize: () => Maths.RandomRange(15, 35),
                 scaleOverLifeTime: factor => ({ x: Maths.Clamp(1 - factor, 0.1, 1.5), y: Maths.Clamp(1 - factor, 0.1, 1.5)}),
                 initialPosition: Vector.Zero,
@@ -49,11 +49,15 @@ class Explosion extends GameObject {
         });
     }
 
+    FixedUpdate() {
+        super.FixedUpdate();
+        this.particleSystem.FixedUpdate();
+    }
+
     Update() {
         this.lifetime -= Time.deltaTime;
         if(this.lifetime < 0) return this.Destroy();
         super.Update();
         this.particleSystem.Update();
-
     }
 }

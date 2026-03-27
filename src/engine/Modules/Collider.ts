@@ -1,16 +1,11 @@
 import Rigidbody from './Rigidbody';
-import {CircleArea, Rect} from '../Canvas/GraphicPrimitives/Shapes';
-import {Point, RGBAColor, Vector} from '../Classes';
+import {CircleArea} from '../Canvas/GraphicPrimitives/Shapes';
+import {Vector} from '../Classes';
 import EventEmitterModule from './EventEmitterModule';
 import CollisionsManager from '../Managers/CollisionsManager';
 import {ICollider2D, ITransform} from '../../types/GameObject';
-import {
-	GraphicPrimitive,
-	PrimitiveType,
-	ShapeDrawMethod,
-} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
-import SpriteRenderer from '../Managers/SpriteRenderer';
 import {ColliderShape, OBBShape} from '../Collision/CollisionDetection';
+import Debug from '../Debug/Debug';
 
 type Collider2DParams = {
     rb: Rigidbody,
@@ -34,12 +29,14 @@ export enum Collider2DType {
 
 
 class Collider2D extends EventEmitterModule implements ICollider2D {
+	static override readonly dependencies = [Rigidbody];
+	static override readonly canBeDuplicated = false;
+
 	public parent: ITransform;
 	public shape: ColliderShape;
 	public connectedRigidbody: Rigidbody;
 	private activeContacts: Set<string> = new Set();
 	private type: Collider2DType;
-	private colliderGraphic: GraphicPrimitive<any>;
 
 
 	constructor(params: Collider2DParams) {
@@ -51,34 +48,29 @@ class Collider2D extends EventEmitterModule implements ICollider2D {
 			type = Collider2DType.Collider,
 			rb,
 		} = params;
+
 		this.shape = shape;
-
-		if (shape instanceof OBBShape) {
-			this.colliderGraphic = new GraphicPrimitive({
-				type: PrimitiveType.Rect,
-				shape: new Rect(
-					new Point(),
-					new Point(shape.halfWidth * 2, shape.halfHeight * 2),
-				),
-				options: { strokeStyle: new RGBAColor(0, 180).ToHex() },
-				layer: 3,
-				drawMethod: ShapeDrawMethod.Stroke,
-				parent: this.parent
-			});
-		} else {
-			this.colliderGraphic = new GraphicPrimitive({
-				type: PrimitiveType.Circle,
-				shape: this.shape as CircleArea,
-				options: { strokeStyle: new RGBAColor(0, 180).ToHex() },
-				layer: 3,
-				drawMethod: ShapeDrawMethod.Stroke,
-				parent: this.parent
-			});
-		}
-
 		this.connectedRigidbody = rb;
 		this.type = type;
+
+		if(rb.material?.density) {
+			rb.ApplyDensityFromArea(shape instanceof OBBShape ? shape.Area : (shape as CircleArea).Area);
+		}
+
 		CollisionsManager.GetInstance().RegisterModule(this);
+	}
+
+	private drawDebugGizmo() {
+		if(!Debug.Enabled) return;
+		if(this.shape instanceof OBBShape) {
+			const corners = this.shape.GetCorners();
+			for(let i = 0; i < 4; i++) {
+				Debug.DrawLine(corners[i], corners[(i + 1) % 4], Debug.Colors.collider);
+			}
+		} else {
+			const circle = this.shape as CircleArea;
+			Debug.DrawCircle(circle.Center, circle.radius, Debug.Colors.collider);
+		}
 	}
 
 	Collide(other: Collider2D) {
@@ -117,9 +109,7 @@ class Collider2D extends EventEmitterModule implements ICollider2D {
 	override Update() {
 		super.Update();
 		this.SyncShape();
-		if(SpriteRenderer.GetInstance().Debug) {
-			SpriteRenderer.GetInstance().AddToRenderQueue(this.colliderGraphic);
-		}
+		this.drawDebugGizmo();
 	}
 
 	get IsColliding() {

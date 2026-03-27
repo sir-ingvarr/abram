@@ -49,11 +49,77 @@ InputSystem.AddEventListener('KeyE', () => {
 | Method | Description |
 |--------|-------------|
 | `KeyPressed(code)` | Returns `true` if the key is currently held down |
-| `AddEventListener(code, handler, once?)` | Register a key press callback |
-| `SetPressedKey(code)` | Mark a key as pressed (called internally) |
-| `RemovePressedKey(code)` | Mark a key as released (called internally) |
-| `HandleEvents(code)` | Fire registered handlers for a key (called internally) |
-| `SetEventListeners()` | Attach `keydown`/`keyup` to `document` (called by `engine.Start()`) |
+| `AddEventListener(code, handler, once?)` | Register a keydown callback. Listeners survive scene transitions. |
+
+## CursorInputSystem
+
+Static class for mouse input on the canvas. Automatically initialized when `engine.Start()` is called. Events are scoped to the canvas element — not the whole document.
+
+### Position
+
+```js
+// Screen-space position relative to canvas top-left (pixels)
+const canvasPos = CursorInputSystem.CanvasPosition;
+
+// World-space position (inverse camera transform, accounts for zoom and pan)
+const worldPos = CursorInputSystem.WorldPosition;
+```
+
+`WorldPosition` is recalculated on access, so it stays correct even when the camera moves between mouse events.
+
+### Button State
+
+```js
+// Held down right now
+if (CursorInputSystem.ButtonHeld(MouseButton.Left)) { ... }
+
+// Pressed this frame only (cleared each frame)
+if (CursorInputSystem.ButtonDown(MouseButton.Left)) { ... }
+
+// Released this frame only (cleared each frame)
+if (CursorInputSystem.ButtonUp(MouseButton.Left)) { ... }
+```
+
+| Button | Value |
+|--------|-------|
+| `MouseButton.Left` | `0` |
+| `MouseButton.Middle` | `1` |
+| `MouseButton.Right` | `2` |
+
+### Scroll
+
+```js
+const scroll = CursorInputSystem.ScrollDelta;  // wheel deltaY, reset each frame
+```
+
+### Event Listeners
+
+```js
+CursorInputSystem.AddEventListener('click', () => {
+    shoot();
+});
+
+CursorInputSystem.AddEventListener('mousemove', () => {
+    const pos = CursorInputSystem.CanvasPosition;
+    updateCrosshair(pos);
+});
+
+// One-time listener
+CursorInputSystem.AddEventListener('mousedown', handler, true);
+
+// Remove listener
+CursorInputSystem.RemoveEventListener('click', handler);
+```
+
+### Available Events
+
+`mousedown`, `mouseup`, `mousemove`, `click`, `dblclick`, `wheel`, `mouseenter`, `mouseleave`
+
+### Notes
+
+- Right-click context menu is suppressed on the canvas
+- All buttons are cleared on `mouseleave` to prevent stuck state
+- `ButtonDown` / `ButtonUp` / `ScrollDelta` are per-frame — automatically cleared by the game loop
 
 ## Time
 
@@ -79,7 +145,12 @@ Time.timeScale = 0.5;
 | Property | Type | Description |
 |----------|------|-------------|
 | `deltaTime` | `number` | Ms since last frame, scaled by `timeScale` |
+| `unscaledDeltaTime` | `number` | Ms since last frame, real wall-clock time |
 | `DeltaTimeSeconds` | `number` | `deltaTime / 1000` |
+| `FixedDeltaTimeSeconds` | `number` | Fixed timestep in seconds, scaled by `timeScale` (`fixedDeltaTime * timeScale / 1000`) |
+| `fixedDeltaTime` | `number` | Fixed timestep in ms (default `20`, i.e. 50Hz) |
 | `totalRuntime` | `number` | Unscaled total runtime in ms |
 | `SineTime` | `number` | `Math.sin(totalRuntime)` |
 | `timeScale` | `number` | Time multiplier (default `1`) |
+
+**timeScale** affects both `deltaTime` (in `Update`) and `FixedDeltaTimeSeconds` (in `FixedUpdate`). `FixedUpdate` always ticks at 50Hz — `timeScale` controls how much happens per tick.

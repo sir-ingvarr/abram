@@ -10,14 +10,17 @@ export type BasicObjectsConstructorParams = ModuleConstructorParams & {
 	scale?: ICoordinates,
 	rotation?: number,
 	rotationDeg?: number,
+	collisionLayer?: number,
 }
 
 abstract class BasicObject extends Module implements IBasicObject {
 	public transform: ITransform;
+	public collisionLayer: number;
 
 	protected constructor(params: BasicObjectsConstructorParams) {
-		const { position = new Vector(), scale = Vector.One, rotation = 0, rotationDeg } = params;
+		const { position = new Vector(), scale = Vector.One, rotation = 0, rotationDeg, collisionLayer = 0 } = params;
 		super(params);
+		this.collisionLayer = collisionLayer;
 		this.transform = new Transform(this, {
 			localPosition: position,
 			localScale: scale,

@@ -1,5 +1,5 @@
 const {
-    Engine, GameObject, RigidBody, Camera, Time,
+    Engine, GameObject, InputSystem, RigidBody, Camera, Time, Debug, PhysicsMaterial,
     Collider2D,
     Classes: { Vector, Point, Maths, RGBAColor },
     GraphicPrimitives: { GraphicPrimitive, PrimitiveType, ShapeDrawMethod },

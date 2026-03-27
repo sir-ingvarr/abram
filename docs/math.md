@@ -12,16 +12,23 @@ const { Vector, Point, Maths, RGBAColor, PolarCoordinates, Segment, Ray, BezierC
 
 Extends `Point`. The primary type for positions, velocities, and directions. Instance methods **mutate** and return `this` for chaining. Static methods are **pure** and return new vectors.
 
-### Static Properties
+### Static Properties (frozen — immutable, zero allocations)
 
-| Property | Value |
-|----------|-------|
-| `Vector.Up` | `(0, 1)` |
-| `Vector.Down` | `(0, -1)` |
-| `Vector.Left` | `(-1, 0)` |
-| `Vector.Right` | `(1, 0)` |
-| `Vector.Zero` | `(0, 0)` |
-| `Vector.One` | `(1, 1)` |
+| Property | Value | Description |
+|----------|-------|-------------|
+| `Vector.Up` | `(0, -1)` | Screen-up (negative Y) |
+| `Vector.Down` | `(0, 1)` | Screen-down (positive Y) |
+| `Vector.Left` | `(-1, 0)` | |
+| `Vector.Right` | `(1, 0)` | |
+| `Vector.Zero` | `(0, 0)` | |
+| `Vector.One` | `(1, 1)` | |
+
+These are `Object.freeze`'d singletons — no allocation on access, but cannot be mutated. Use the mutable variants when you need a modifiable instance:
+
+| Property | Value | Description |
+|----------|-------|-------------|
+| `Vector.ZeroMutable` | `(0, 0)` | New mutable vector each access |
+| `Vector.OneMutable` | `(1, 1)` | New mutable vector each access |
 
 ### Static Methods (pure — never mutate arguments)
 

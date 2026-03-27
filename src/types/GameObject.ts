@@ -11,6 +11,7 @@ interface IWithLifeCycle {
     Start(): void;
     Destroy(): void;
     Update(): void;
+    FixedUpdate(): void;
     get Id(): string;
 }
 
@@ -77,6 +78,7 @@ export interface ITransform extends IScalable {
 
 export interface IBasicObject extends IExecutable, IWithContext {
     transform: ITransform;
+    collisionLayer: number;
     get IsWaitingDestroy(): boolean;
 }
 
@@ -92,6 +94,8 @@ export interface IGameObject extends IBasicObject, IWithContext {
     RegisterModule(module: IExecutable): void;
     RemoveChildById(id: string): void;
     GetModuleByName(name: string): Nullable<IExecutable>;
+    GetModule<T extends IExecutable>(classRef: new (...args: any[]) => T): Nullable<T>;
+    GetModules<T extends IExecutable>(classRef: new (...args: any[]) => T): T[];
     GetChildById(id: string): Nullable<IExecutable>;
 }
 

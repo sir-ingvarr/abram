@@ -27,7 +27,7 @@ class Transform implements ITransform {
 		const {
 			localPosition = Vector.Zero,
 			localScale = Vector.One,
-			localRotation,
+			localRotation = 0,
 			localRotationDegrees,
 			parent = null,
 			anchors = { x: 0.5, y: 0.5 } } = params;
@@ -35,8 +35,10 @@ class Transform implements ITransform {
 		this.parent = parent;
 		this.localPosition = Vector.From(localPosition);
 		this.localScale = Vector.From(localScale);
+		this.localRotation = 0;
+		this.localRotationDeg = 0;
 		if(typeof localRotationDegrees === 'number') this.LocalRotationDeg = localRotationDegrees;
-		else if(typeof localRotation === 'number') this.LocalRotation = localRotation;
+		else if(localRotation !== 0) this.LocalRotation = localRotation;
 		this.anchors = anchors;
 	}
 
@@ -53,6 +55,16 @@ class Transform implements ITransform {
 	}
 
 	set Parent(newParent: Nullable<ITransform>) {
+		if(newParent) {
+			let current: Nullable<ITransform> = newParent;
+			while(current) {
+				if(current === (this as ITransform)) {
+					console.error('Transform: circular parent chain detected, assignment rejected');
+					return;
+				}
+				current = current.Parent;
+			}
+		}
 		this.parent = newParent;
 	}
 
@@ -93,8 +105,16 @@ class Transform implements ITransform {
 	}
 
 	get WorldRotation(): number {
-		if(!this.parent) return this.localRotation;
-		return this.localRotation + this.parent.WorldRotation;
+		let rotation = this.localRotation;
+		let current: Nullable<ITransform> = this.parent;
+		while (current) {
+			const parentScale = current instanceof Transform ? current.localScale : current.LocalScale;
+			const flipX = parentScale.x < 0;
+			const flipY = parentScale.y < 0;
+			rotation = current.LocalRotation + rotation * (flipX !== flipY ? -1 : 1);
+			current = current.Parent;
+		}
+		return rotation;
 	}
 
 	get LocalScale(): Vector {
@@ -140,9 +160,73 @@ class Transform implements ITransform {
 		return this;
 	}
 
+	public Rotate(amountRad: number): ITransform {
+		this.localRotation += amountRad;
+		this.localRotationDeg = this.localRotation / DEG_TO_RAD;
+		return this;
+	}
+
 	public RotateDeg(amount: number): ITransform {
 		this.LocalRotationDeg = this.localRotationDeg + amount;
 		return this;
+	}
+
+	public LookAt(target: ICoordinates): ITransform {
+		const worldPos = this.WorldPosition;
+		this.LocalRotation = Math.atan2(target.y - worldPos.y, target.x - worldPos.x);
+		return this;
+	}
+
+	public TransformPoint(localPoint: ICoordinates): Vector {
+		const cos = Math.cos(this.WorldRotation);
+		const sin = Math.sin(this.WorldRotation);
+		const scale = this.Scale;
+		const worldPos = this.WorldPosition;
+		return new Vector(
+			worldPos.x + (localPoint.x * scale.x * cos - localPoint.y * scale.y * sin),
+			worldPos.y + (localPoint.x * scale.x * sin + localPoint.y * scale.y * cos),
+		);
+	}
+
+	public InverseTransformPoint(worldPoint: ICoordinates): Vector {
+		const cos = Math.cos(-this.WorldRotation);
+		const sin = Math.sin(-this.WorldRotation);
+		const scale = this.Scale;
+		const worldPos = this.WorldPosition;
+		const deltaX = worldPoint.x - worldPos.x;
+		const deltaY = worldPoint.y - worldPos.y;
+		return new Vector(
+			(deltaX * cos - deltaY * sin) / scale.x,
+			(deltaX * sin + deltaY * cos) / scale.y,
+		);
+	}
+
+	get Right(): Vector {
+		const worldRotation = this.WorldRotation;
+		const scale = this.Scale;
+		const signX = scale.x < 0 ? -1 : 1;
+		const signY = scale.y < 0 ? -1 : 1;
+		const direction = new Vector(signX * Math.cos(worldRotation), signY * Math.sin(worldRotation));
+		return direction.Magnitude > 0 ? direction.SetMagnitude(1) : direction;
+	}
+
+	get Left(): Vector {
+		const right = this.Right;
+		return new Vector(-right.x, -right.y);
+	}
+
+	get Up(): Vector {
+		const worldRotation = this.WorldRotation;
+		const scale = this.Scale;
+		const signX = scale.x < 0 ? -1 : 1;
+		const signY = scale.y < 0 ? -1 : 1;
+		const direction = new Vector(-signX * Math.sin(worldRotation), signY * Math.cos(worldRotation));
+		return direction.Magnitude > 0 ? direction.SetMagnitude(1) : direction;
+	}
+
+	get Down(): Vector {
+		const up = this.Up;
+		return new Vector(-up.x, -up.y);
 	}
 
 }

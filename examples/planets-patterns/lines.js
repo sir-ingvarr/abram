@@ -36,7 +36,7 @@ class Lines extends GameObject {
 	Update() {
 		super.Update();
 		this.counter++;
-		if(this.counter < 5) {
+		if(this.counter < 20) {
 			return;
 		}
 		this.counter = 0;

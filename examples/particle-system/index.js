@@ -1,3 +1,17 @@
+async function ParticleScene(engine) {
+    const camera = new CameraMovement({});
+    engine.AppendGameObject(camera);
+
+    const gameObject = new ParticleSystemTest(camera, { position: new Vector(0, -400)});
+    engine.AppendGameObject(gameObject);
+
+    const gameObject2 = new ParticleSystemTest2(camera, { position: new Vector(-640, -0)});
+    engine.AppendGameObject(gameObject2);
+
+    const counter = new ParticleCounter({context: engine.Canvas.Context2D}, [gameObject, gameObject2]);
+    engine.AppendGameObject(counter);
+}
+
 document.addEventListener('DOMContentLoaded', async function() {
     const root = document.getElementById('root');
 
@@ -12,19 +26,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     await engine.RegisterGameScript('./camera-movement.js')
     await engine.RegisterGameScript('./particle-counter.js');
 
-    const camera = new CameraMovement({});
-    engine.AppendGameObject(camera);
-
-    const gameObject = new ParticleSystemTest(camera, { position: new Vector(0, -400)});
-    engine.AppendGameObject(gameObject);
-
-    const gameObject2 = new ParticleSystemTest2(camera, { position: new Vector(-640, -0)});
-    engine.AppendGameObject(gameObject2);
-
-    const counter = new ParticleCounter({context: engine.Canvas.Context2D}, [gameObject, gameObject2]);
-    engine.AppendGameObject(counter);
-
-
+    engine.RegisterScene('particles', ParticleScene);
     engine.Start();
+    await engine.LoadScene('particles');
+    InputSystem.AddEventListener('Escape', () => engine.LoadScene('particles'));
 });
-

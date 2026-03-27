@@ -86,6 +86,12 @@ class Camera {
 		if(height) this.centerY = height / 2;
 	}
 
+	Reset() {
+		this.position = new Vector(0, 0);
+		this.scale = Vector.One;
+		this.confiner = null;
+	}
+
 	static GetInstance(props: CameraConstructorParams) {
 		if(Camera.#instance) return Camera.#instance;
 		const instance = new Camera(props);

@@ -5,7 +5,8 @@ export type Nullable<T> = T | null;
 
 export type Dictionary<V> = { [key: string | number]: V };
 
-export type AnyFunc<T = any> = (...args: any) => T;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type AnyFunc<T = unknown> = (...args: any[]) => T;
 
 export enum ColorSpace {
     SRGB='srgb',

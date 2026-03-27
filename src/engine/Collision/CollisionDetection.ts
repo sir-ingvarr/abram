@@ -54,6 +54,10 @@ export class OBBShape {
 		return this.halfHeight * 2;
 	}
 
+	get Area(): number {
+		return this.halfWidth * 2 * this.halfHeight * 2;
+	}
+
 	SetSize(size: number) {
 		this.halfWidth = size / 2;
 		this.halfHeight = size / 2;
@@ -69,41 +73,45 @@ export class OBBShape {
 	}
 
 	GetCorners(): [Vector, Vector, Vector, Vector] {
-		const cx = this.offset.x;
-		const cy = this.offset.y;
+		const centerX = this.offset.x;
+		const centerY = this.offset.y;
 		const [axisX, axisY] = this.GetAxes();
-		const ex = axisX.x * this.halfWidth;
-		const ey = axisX.y * this.halfWidth;
-		const fx = axisY.x * this.halfHeight;
-		const fy = axisY.y * this.halfHeight;
+		const extentX_x = axisX.x * this.halfWidth;
+		const extentX_y = axisX.y * this.halfWidth;
+		const extentY_x = axisY.x * this.halfHeight;
+		const extentY_y = axisY.y * this.halfHeight;
 		return [
-			new Vector(cx + ex + fx, cy + ey + fy),
-			new Vector(cx + ex - fx, cy + ey - fy),
-			new Vector(cx - ex - fx, cy - ey - fy),
-			new Vector(cx - ex + fx, cy - ey + fy),
+			new Vector(centerX + extentX_x + extentY_x, centerY + extentX_y + extentY_y),
+			new Vector(centerX + extentX_x - extentY_x, centerY + extentX_y - extentY_y),
+			new Vector(centerX - extentX_x - extentY_x, centerY - extentX_y - extentY_y),
+			new Vector(centerX - extentX_x + extentY_x, centerY - extentX_y + extentY_y),
 		];
 	}
 }
 
 export type ColliderShape = CircleArea | OBBShape;
 
+// --- Projection helpers for SAT ---
+
 function projectOnAxis(axis: Vector, points: Vector[]): { min: number, max: number } {
 	let min = Vector.Dot(axis, points[0]);
 	let max = min;
 	for (let i = 1; i < points.length; i++) {
-		const p = Vector.Dot(axis, points[i]);
-		if (p < min) min = p;
-		if (p > max) max = p;
+		const projection = Vector.Dot(axis, points[i]);
+		if (projection < min) min = projection;
+		if (projection > max) max = projection;
 	}
 	return { min, max };
 }
 
 function overlapOnAxis(axis: Vector, cornersA: Vector[], cornersB: Vector[]): number {
-	const a = projectOnAxis(axis, cornersA);
-	const b = projectOnAxis(axis, cornersB);
-	if (a.max < b.min || b.max < a.min) return 0;
-	return Math.min(a.max - b.min, b.max - a.min);
+	const projectionA = projectOnAxis(axis, cornersA);
+	const projectionB = projectOnAxis(axis, cornersB);
+	if (projectionA.max < projectionB.min || projectionB.max < projectionA.min) return 0;
+	return Math.min(projectionA.max - projectionB.min, projectionB.max - projectionA.min);
 }
+
+// --- Dispatcher ---
 
 export function detectCollision(shapeA: ColliderShape, shapeB: ColliderShape): CollisionResult | null {
 	if (shapeA instanceof CircleArea && shapeB instanceof CircleArea) {
@@ -123,131 +131,237 @@ export function detectCollision(shapeA: ColliderShape, shapeB: ColliderShape): C
 	return null;
 }
 
-function circleVsCircle(a: CircleArea, b: CircleArea): CollisionResult | null {
-	const centerA = a.Center;
-	const centerB = b.Center;
-	const dx = centerB.x - centerA.x;
-	const dy = centerB.y - centerA.y;
-	const distSq = dx * dx + dy * dy;
-	const radiusSum = a.radius + b.radius;
+// --- Circle vs Circle ---
 
-	if (distSq > radiusSum * radiusSum) return null;
+function circleVsCircle(circleA: CircleArea, circleB: CircleArea): CollisionResult | null {
+	const centerA = circleA.Center;
+	const centerB = circleB.Center;
+	const deltaX = centerB.x - centerA.x;
+	const deltaY = centerB.y - centerA.y;
+	const distanceSq = deltaX * deltaX + deltaY * deltaY;
+	const radiusSum = circleA.radius + circleB.radius;
 
-	const dist = Math.sqrt(distSq);
-	if (dist === 0) {
+	if (distanceSq > radiusSum * radiusSum) return null;
+
+	const distance = Math.sqrt(distanceSq);
+	if (distance === 0) {
 		return { normal: new Vector(1, 0), depth: radiusSum, contactPoint: new Vector(centerA.x, centerA.y) };
 	}
-	const nx = dx / dist;
-	const ny = dy / dist;
+	const normalX = deltaX / distance;
+	const normalY = deltaY / distance;
 	return {
-		normal: new Vector(nx, ny),
-		depth: radiusSum - dist,
-		contactPoint: new Vector(centerA.x + nx * a.radius, centerA.y + ny * a.radius),
+		normal: new Vector(normalX, normalY),
+		depth: radiusSum - distance,
+		contactPoint: new Vector(centerA.x + normalX * circleA.radius, centerA.y + normalY * circleA.radius),
 	};
 }
+
+// --- Circle vs OBB helpers ---
+
+function transformToObbLocalSpace(
+	circleCenter: ICoordinates,
+	obbCenter: ICoordinates,
+	rotation: number,
+): { localX: number; localY: number } {
+	const deltaX = circleCenter.x - obbCenter.x;
+	const deltaY = circleCenter.y - obbCenter.y;
+	const cosInverse = Math.cos(-rotation);
+	const sinInverse = Math.sin(-rotation);
+	return {
+		localX: deltaX * cosInverse - deltaY * sinInverse,
+		localY: deltaX * sinInverse + deltaY * cosInverse,
+	};
+}
+
+function findClosestPointOnObb(
+	localX: number,
+	localY: number,
+	halfWidth: number,
+	halfHeight: number,
+): { closestX: number; closestY: number } {
+	return {
+		closestX: Math.max(-halfWidth, Math.min(halfWidth, localX)),
+		closestY: Math.max(-halfHeight, Math.min(halfHeight, localY)),
+	};
+}
+
+function calculateInsideCollision(
+	localX: number,
+	localY: number,
+	halfWidth: number,
+	halfHeight: number,
+	circleRadius: number,
+): { localNormal: Vector; depth: number } {
+	const distToRight = halfWidth - localX;
+	const distToLeft = halfWidth + localX;
+	const distToBottom = halfHeight - localY;
+	const distToTop = halfHeight + localY;
+	const minEdgeDist = Math.min(distToRight, distToLeft, distToBottom, distToTop);
+
+	let localNormal: Vector;
+	if (minEdgeDist === distToRight) {
+		localNormal = new Vector(1, 0);
+	} else if (minEdgeDist === distToLeft) {
+		localNormal = new Vector(-1, 0);
+	} else if (minEdgeDist === distToBottom) {
+		localNormal = new Vector(0, 1);
+	} else {
+		localNormal = new Vector(0, -1);
+	}
+
+	return { localNormal, depth: minEdgeDist + circleRadius };
+}
+
+function calculateOutsideCollision(
+	localX: number,
+	localY: number,
+	closestX: number,
+	closestY: number,
+	circleRadius: number,
+): { localNormal: Vector; depth: number } | null {
+	const diffX = localX - closestX;
+	const diffY = localY - closestY;
+	const distanceSq = diffX * diffX + diffY * diffY;
+
+	if (distanceSq > circleRadius * circleRadius) return null;
+
+	const distance = Math.sqrt(distanceSq);
+	if (distance === 0) return null;
+
+	return {
+		localNormal: new Vector(diffX / distance, diffY / distance),
+		depth: circleRadius - distance,
+	};
+}
+
+function transformToWorldSpace(
+	localNormal: Vector,
+	closestX: number,
+	closestY: number,
+	obbCenter: ICoordinates,
+	rotation: number,
+	depth: number,
+): CollisionResult {
+	const cosWorld = Math.cos(rotation);
+	const sinWorld = Math.sin(rotation);
+
+	return {
+		normal: new Vector(
+			localNormal.x * cosWorld - localNormal.y * sinWorld,
+			localNormal.x * sinWorld + localNormal.y * cosWorld,
+		),
+		depth,
+		contactPoint: new Vector(
+			obbCenter.x + closestX * cosWorld - closestY * sinWorld,
+			obbCenter.y + closestX * sinWorld + closestY * cosWorld,
+		),
+	};
+}
+
+// --- Circle vs OBB ---
 
 function circleVsObb(circle: CircleArea, obb: OBBShape): CollisionResult | null {
 	const circleCenter = circle.Center;
 	const obbCenter = obb.Center;
 
-	// Transform circle center into OBB's local space
-	const dx = circleCenter.x - obbCenter.x;
-	const dy = circleCenter.y - obbCenter.y;
-	const cos = Math.cos(-obb.Rotation);
-	const sin = Math.sin(-obb.Rotation);
-	const localX = dx * cos - dy * sin;
-	const localY = dx * sin + dy * cos;
-
-	// Clamp to find closest point on rect edge
-	const closestX = Math.max(-obb.halfWidth, Math.min(obb.halfWidth, localX));
-	const closestY = Math.max(-obb.halfHeight, Math.min(obb.halfHeight, localY));
-
-	let normalLocal: Vector;
-	let depth: number;
+	const { localX, localY } = transformToObbLocalSpace(circleCenter, obbCenter, obb.Rotation);
+	const { closestX, closestY } = findClosestPointOnObb(localX, localY, obb.halfWidth, obb.halfHeight);
 
 	const isInside = closestX === localX && closestY === localY;
 
+	let localNormal: Vector;
+	let depth: number;
+
 	if (isInside) {
-		// Circle center is inside the OBB — push to nearest edge
-		const distToRight = obb.halfWidth - localX;
-		const distToLeft = obb.halfWidth + localX;
-		const distToBottom = obb.halfHeight - localY;
-		const distToTop = obb.halfHeight + localY;
-		const minDist = Math.min(distToRight, distToLeft, distToBottom, distToTop);
-
-		if (minDist === distToRight) {
-			normalLocal = new Vector(1, 0);
-		} else if (minDist === distToLeft) {
-			normalLocal = new Vector(-1, 0);
-		} else if (minDist === distToBottom) {
-			normalLocal = new Vector(0, 1);
-		} else {
-			normalLocal = new Vector(0, -1);
-		}
-		depth = minDist + circle.radius;
+		const result = calculateInsideCollision(localX, localY, obb.halfWidth, obb.halfHeight, circle.radius);
+		localNormal = result.localNormal;
+		depth = result.depth;
 	} else {
-		const diffX = localX - closestX;
-		const diffY = localY - closestY;
-		const distSq = diffX * diffX + diffY * diffY;
-
-		if (distSq > circle.radius * circle.radius) return null;
-
-		const dist = Math.sqrt(distSq);
-		if (dist === 0) return null;
-
-		normalLocal = new Vector(diffX / dist, diffY / dist);
-		depth = circle.radius - dist;
+		const result = calculateOutsideCollision(localX, localY, closestX, closestY, circle.radius);
+		if (result === null) return null;
+		localNormal = result.localNormal;
+		depth = result.depth;
 	}
 
-	// Transform normal and contact point back to world space
-	const cosR = Math.cos(obb.Rotation);
-	const sinR = Math.sin(obb.Rotation);
-
-	return {
-		normal: new Vector(
-			normalLocal.x * cosR - normalLocal.y * sinR,
-			normalLocal.x * sinR + normalLocal.y * cosR,
-		),
-		depth,
-		contactPoint: new Vector(
-			obbCenter.x + closestX * cosR - closestY * sinR,
-			obbCenter.y + closestX * sinR + closestY * cosR,
-		),
-	};
+	return transformToWorldSpace(localNormal, closestX, closestY, obbCenter, obb.Rotation, depth);
 }
 
-function obbVsObb(a: OBBShape, b: OBBShape): CollisionResult | null {
-	const cornersA = a.GetCorners();
-	const cornersB = b.GetCorners();
-	const axesA = a.GetAxes();
-	const axesB = b.GetAxes();
-	const axes = [axesA[0], axesA[1], axesB[0], axesB[1]];
+// --- OBB vs OBB helpers ---
 
-	let minOverlap = Infinity;
-	let minAxis: Vector = axes[0];
+function findSmallestOverlapAxis(
+	separatingAxes: Vector[],
+	cornersA: Vector[],
+	cornersB: Vector[],
+): { smallestOverlap: number; smallestOverlapAxis: Vector } | null {
+	let smallestOverlap = Infinity;
+	let smallestOverlapAxis: Vector = separatingAxes[0];
 
-	for (let i = 0; i < axes.length; i++) {
-		const axis = axes[i];
-		const overlap = overlapOnAxis(axis, cornersA as Vector[], cornersB as Vector[]);
+	for (let i = 0; i < separatingAxes.length; i++) {
+		const axis = separatingAxes[i];
+		const overlap = overlapOnAxis(axis, cornersA, cornersB);
 		if (overlap === 0) return null;
-		if (overlap < minOverlap) {
-			minOverlap = overlap;
-			minAxis = axis;
+		if (overlap < smallestOverlap) {
+			smallestOverlap = overlap;
+			smallestOverlapAxis = axis;
 		}
 	}
 
-	// Ensure normal points from A to B
-	const centerDiff = Vector.Subtract(b.Center, a.Center);
-	if (Vector.Dot(centerDiff, minAxis) < 0) {
-		minAxis = Vector.MultiplyCoordinates(-1, minAxis);
+	return { smallestOverlap, smallestOverlapAxis };
+}
+
+// --- OBB vs OBB ---
+
+function findObbContactPoint(cornersA: Vector[], cornersB: Vector[], normal: Vector): Vector {
+	let bestDot = Infinity;
+	const supportA: Vector[] = [];
+	for (const corner of cornersA) {
+		const dot = Vector.Dot(corner, normal);
+		if (dot < bestDot - 0.001) {
+			bestDot = dot;
+			supportA.length = 0;
+			supportA.push(corner);
+		} else if (Math.abs(dot - bestDot) < 0.001) {
+			supportA.push(corner);
+		}
 	}
 
-	// Contact point: midpoint between centers, offset along normal
-	const centerA = a.Center;
-	const centerB = b.Center;
+	bestDot = -Infinity;
+	const supportB: Vector[] = [];
+	for (const corner of cornersB) {
+		const dot = Vector.Dot(corner, normal);
+		if (dot > bestDot + 0.001) {
+			bestDot = dot;
+			supportB.length = 0;
+			supportB.push(corner);
+		} else if (Math.abs(dot - bestDot) < 0.001) {
+			supportB.push(corner);
+		}
+	}
+
+	const avgX = [...supportA, ...supportB].reduce((s, v) => s + v.x, 0) / (supportA.length + supportB.length);
+	const avgY = [...supportA, ...supportB].reduce((s, v) => s + v.y, 0) / (supportA.length + supportB.length);
+	return new Vector(avgX, avgY);
+}
+
+function obbVsObb(obbA: OBBShape, obbB: OBBShape): CollisionResult | null {
+	const cornersA = obbA.GetCorners();
+	const cornersB = obbB.GetCorners();
+	const separatingAxes = [...obbA.GetAxes(), ...obbB.GetAxes()];
+
+	const result = findSmallestOverlapAxis(separatingAxes, cornersA as Vector[], cornersB as Vector[]);
+	if (result === null) return null;
+
+	let { smallestOverlapAxis } = result;
+	const { smallestOverlap } = result;
+	// Ensure normal points from A to B
+	const centerDelta = Vector.Subtract(obbB.Center, obbA.Center);
+	if (Vector.Dot(centerDelta, smallestOverlapAxis) < 0) {
+		smallestOverlapAxis = Vector.MultiplyCoordinates(-1, smallestOverlapAxis);
+	}
+
 	return {
-		normal: minAxis,
-		depth: minOverlap,
-		contactPoint: Vector.LerpBetween(centerA, centerB, 0.5),
+		normal: smallestOverlapAxis,
+		depth: smallestOverlap,
+		contactPoint: findObbContactPoint(cornersA as Vector[], cornersB as Vector[], smallestOverlapAxis),
 	};
 }

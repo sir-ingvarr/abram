@@ -1,7 +1,7 @@
 class Dropper extends GameObject {
 	constructor(params) {
 		super(params);
-		this.maxBalls = params.maxBalls || 200;
+		this.maxBalls = params.maxBalls || Infinity;
 		this.count = 0;
 		this.timeSinceLastDrop = 0;
 		this.dropEvery = params.dropEvery || 200;
@@ -15,7 +15,7 @@ class Dropper extends GameObject {
 		this.timeSinceLastDrop += Time.deltaTime;
 
 		if(this.timeSinceLastDrop < this.dropEvery) return;
-		if(this.count >= this.maxBalls) return;
+		if(this.maxBalls > 0 && this.count >= this.maxBalls) return;
 
 		this.count++;
 		this.instantiate(Ball, {

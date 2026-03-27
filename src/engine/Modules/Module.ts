@@ -1,6 +1,8 @@
 import {IGameObject, IExecutable} from '../../types/GameObject';
 import CanvasContext2D from '../Canvas/Context2d';
 
+export type ModuleClass = { prototype: Module } & Function;
+
 export type ModuleConstructorParams = {
 	name?: string,
 	active?: boolean,
@@ -12,10 +14,14 @@ abstract class Module implements IExecutable {
 	protected readonly id: string;
 	protected _startExecuted: boolean;
 	protected _isAwaitingDestroy: boolean;
+	protected _pendingDependencies: boolean;
 	public name: string;
 	public active: boolean;
 	public gameObject?: IGameObject;
 	public context?: CanvasContext2D;
+
+	static readonly dependencies: ModuleClass[] = [];
+	static readonly canBeDuplicated: boolean = true;
 
 	protected constructor(params: ModuleConstructorParams) {
 		this.name = params.name || this.constructor.name;
@@ -25,6 +31,7 @@ abstract class Module implements IExecutable {
 		this.id = this.GenerateId(this.name);
 		this._startExecuted = false;
 		this._isAwaitingDestroy = false;
+		this._pendingDependencies = false;
 	}
 
 	get Id() {
@@ -37,6 +44,14 @@ abstract class Module implements IExecutable {
 
 	get IsWaitingDestroy(): boolean {
 		return this._isAwaitingDestroy;
+	}
+
+	get PendingDependencies(): boolean {
+		return this._pendingDependencies;
+	}
+
+	set PendingDependencies(value: boolean) {
+		this._pendingDependencies = value;
 	}
 
 	set Active(value: boolean) {
@@ -67,6 +82,8 @@ abstract class Module implements IExecutable {
 	}
 
 	Update() { return; }
+
+	FixedUpdate() { return; }
 
 	Destroy() {
 		if(this._isAwaitingDestroy) return;

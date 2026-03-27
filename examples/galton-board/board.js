@@ -47,12 +47,16 @@ class GaltonBoard extends GameObject {
 		// Divider walls in the collection bins
 		const binTopCenterY = floorY - binHeight / 2;
 		const binCount = this.columns;
+		const fullWallHeight = floorY - startY + floorThickness;
+		const fullWallCenterY = startY + fullWallHeight / 2;
+
 		for (let i = 0; i <= binCount; i++) {
 			const wallX = startX - this.pegSpacing / 2 + i * this.pegSpacing;
+			const isEdgeWall = i === 0 || i === binCount;
 			this.instantiate(Wall, {
-				position: new Vector(wallX, binTopCenterY),
+				position: new Vector(wallX, isEdgeWall ? fullWallCenterY : binTopCenterY),
 				wallWidth: dividerThickness,
-				wallHeight: binHeight,
+				wallHeight: isEdgeWall ? fullWallHeight : binHeight,
 			});
 		}
 	}

@@ -1,42 +1,44 @@
 {
   "name": "abram",
-  "version": "0.0.1",
-  "description": "advanced browser rendering abstraction module (js game engine)",
+  "version": "0.9.0",
+  "description": "Unity-inspired 2D game engine for browsers. Zero dependencies, Canvas2D rendering.",
+  "keywords": ["game-engine", "2d", "canvas", "typescript", "physics", "gamedev"],
   "main": "build/abram.js",
   "types": "build/index.d.ts",
   "files": [
     "build"
   ],
   "scripts": {
-    "lint": "eslint ./src",
+    "lint": "eslint ./src --fix",
     "test": "exit 0",
     "build-ts": "tsc",
     "clear": "rm -rf ./build",
     "bundle": "webpack",
     "serve": "cd ./examples/particle-system && http-server .",
     "build": "npm run clear && npm run build-ts && npm run bundle",
-    "pre-commit": "npm run lint && npm run test && npm run build-ts"
+    "pre-commit": "npm run lint && npm run test && npm run build-ts",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sir-ingvarr/canvas-engine.git"
+    "url": "git+https://github.com/sir-ingvarr/abram.git"
   },
   "author": "Igor Berezin",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/sir-ingvarr/canvas-engine/issues"
+    "url": "https://github.com/sir-ingvarr/abram/issues"
   },
-  "homepage": "https://github.com/sir-ingvarr/canvas-engine#readme",
+  "homepage": "https://github.com/sir-ingvarr/abram#readme",
   "devDependencies": {
     "@types/node": "^18.15.10",
-    "@typescript-eslint/eslint-plugin": "^5.56.0",
-    "@typescript-eslint/parser": "^5.56.0",
-    "eslint": "^8.36.0",
-    "eslint-plugin-import": "^2.27.5",
+    "@typescript-eslint/eslint-plugin": "^8.57.2",
+    "@typescript-eslint/parser": "^8.57.2",
+    "eslint": "^10.1.0",
     "http-server": "^14.1.1",
     "husky": "^8.0.3",
     "ts-loader": "^9.3.0",
     "typescript": "^5.0.2",
+    "typescript-eslint": "^8.57.2",
     "webpack": "^5.72.0",
     "webpack-cli": "^4.9.2"
   }

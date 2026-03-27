@@ -16,7 +16,10 @@ class Peg extends GameObject {
 			}
 		});
 
-		this.rigidBody = new RigidBody({ isStatic: true, bounciness: 0.5 });
+		this.rigidBody = new RigidBody({
+			isStatic: true,
+			material: new PhysicsMaterial({ friction: 0.7, bounciness: 0.4 }),
+		});
 
 		this.collider = new Collider2D({
 			shape: new CircleArea(this.size / 2, Vector.Zero),

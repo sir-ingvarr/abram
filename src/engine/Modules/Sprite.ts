@@ -4,6 +4,7 @@ import SpriteRendererManager from '../Managers/SpriteRendererManager';
 import ImageWrapper from './ImageWrapper';
 
 class Sprite extends Module {
+	static override readonly canBeDuplicated = false;
 	private width: number;
 	private height: number;
 	public contentType: 0 | 1;

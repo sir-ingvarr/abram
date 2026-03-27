@@ -69,13 +69,12 @@ class TrailRenderer extends Module {
 		return this._colorOverTrail;
 	}
 
-	override Start() {
-		super.Start();
-	}
-
 	private AddSegment(point?: ICoordinates) {
 		if(!this._previousPosition) return;
 		if(!point) point = this._previousPosition;
+		const dx = point.x - this._previousPosition.x;
+		const dy = point.y - this._previousPosition.y;
+		if(dx * dx + dy * dy < 0.001) return;
 		this._widths.push(this._initialWidth);
 		this._colors.push(this._initialColor.Copy());
 		this._graphics.push(
@@ -98,25 +97,28 @@ class TrailRenderer extends Module {
 		this._lifetimes.push(0);
 	}
 
-	override Update() {
-		super.Update();
+	private updateExistingSegments() {
 		for(let i = 0; i < this._graphics.length; i++) {
 			this._lifetimes[i] += Time.deltaTime;
-			if(this._lifetimes[i] > this._lifeTime) {
-				this._lifetimes.splice(i, 1);
-				this._graphics.splice(i, 1);
-				this._widths.splice(i, 1);
-				this._colors.splice(i, 1);
-				continue;
-			}
-			const color = this._colors[i] = this._colorOverTrail(this._lifetimes[i] / this._lifeTime, this._initialColor);
-			const width = this._widths[i] = this._widthOverTrail(this._lifetimes[i] / this._lifeTime, this._initialWidth);
+			if(this._lifetimes[i] > this._lifeTime) continue;
+			const lifetimeFactor = this._lifetimes[i] / this._lifeTime;
+			const color = this._colors[i] = this._colorOverTrail(lifetimeFactor, this._initialColor);
+			const width = this._widths[i] = this._widthOverTrail(lifetimeFactor, this._initialWidth);
 			const graphic = this._graphics[i];
 			if(!graphic) continue;
 			graphic.options.strokeStyle = color.ToHex();
 			graphic.options.lineWidth = width;
 			graphic.Update();
 		}
+		while(this._lifetimes.length && this._lifetimes[0] > this._lifeTime) {
+			this._lifetimes.shift();
+			this._graphics.shift();
+			this._widths.shift();
+			this._colors.shift();
+		}
+	}
+
+	private trySpawnNewSegment() {
 		this._sinceSpawn += Time.deltaTime;
 		if(this._sinceSpawn < this._newSegmentEachMS) return;
 		const parentPosition = this.gameObject?.transform?.WorldPosition;
@@ -129,6 +131,12 @@ class TrailRenderer extends Module {
 		this.AddSegment(parentPosition);
 		this._previousPosition = parentPosition;
 		this._sinceSpawn = 0;
+	}
+
+	override Update() {
+		super.Update();
+		this.updateExistingSegments();
+		this.trySpawnNewSegment();
 	}
 
 }

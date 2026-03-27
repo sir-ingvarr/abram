@@ -7,7 +7,7 @@ interface AnimatorOptions {
 	frameDelay: number;
 	stateMap: { [state: string]: Array<string> };
 	state: string;
-	graphicElement: Sprite;
+	graphicElement?: Sprite;
 	playing?: boolean;
 }
 
@@ -16,11 +16,14 @@ export interface IWithImageId {
 }
 
 class Animator extends Module {
+	static override readonly canBeDuplicated = false;
+	static override readonly dependencies = [Sprite];
+
 	public frameDelay: number;
 	private state: string;
 	private playing: boolean;
 	private readonly stateMap: { [state: string]: Iterator<string> };
-	private controlledGraphic: Sprite;
+	private controlledGraphic?: Sprite;
 	private elapsedTime: number;
 	private currentStateData?: Iterator<string>;
 
@@ -30,7 +33,6 @@ class Animator extends Module {
 			frameDelay = 50, stateMap = { idle: [] },
 			state = 'idle', graphicElement, playing = true
 		} = options;
-		if(!graphicElement) throw new Error('animator requires a graphic element');
 		this.frameDelay = frameDelay;
 		this.elapsedTime = 0;
 		this.state = state;
@@ -39,6 +41,16 @@ class Animator extends Module {
 		this.stateMap = {};
 		this.SetStateMap(stateMap);
 		this.currentStateData = this.stateMap[state];
+	}
+
+	override Start() {
+		super.Start();
+		if(!this.controlledGraphic && this.gameObject) {
+			this.controlledGraphic = this.gameObject.GetModule(Sprite) as Sprite;
+		}
+		if(!this.controlledGraphic) {
+			console.warn(`[Animator] No Sprite found on ${this.gameObject?.name}`);
+		}
 	}
 
 	Stop() {
@@ -64,7 +76,7 @@ class Animator extends Module {
 	}
 
 	UpdateFrame(frames: number) {
-		if(!this.currentStateData) return;
+		if(!this.currentStateData || !this.controlledGraphic) return;
 		for(let i = 0; i < frames; i++) {
 			this.currentStateData.Next;
 		}

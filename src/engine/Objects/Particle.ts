@@ -2,20 +2,19 @@ import BasicObject, {BasicObjectsConstructorParams} from './BasicObject';
 import {ICoordinates, Nullable} from '../../types/common';
 import Sprite from '../Modules/Sprite';
 import Time from '../Globals/Time';
+import PhysicsMaterial from '../Modules/PhysicsMaterial';
 import {Maths, RGBAColor, Vector} from '../Classes';
 import Collider2D, {Collider2DEvent} from '../Modules/Collider';
-// import {CircleArea} from '../Canvas/GraphicPrimitives/Shapes';
-import {GraphicPrimitive, IGraphicPrimitive} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
+import {GraphicPrimitive, IGraphicPrimitive, PrimitiveShape} from '../Canvas/GraphicPrimitives/GraphicPrimitive';
 import SpriteRenderer from '../Managers/SpriteRenderer';
 import {IBasicObject} from '../../types/GameObject';
-// import Rigidbody from '../Modules/Rigidbody';
 
 export interface IFollower {
 	Destroy(): void
 }
 
 export type ParticleConstructorOptions = BasicObjectsConstructorParams & {
-    graphic?: IGraphicPrimitive<any> | Sprite;
+    graphic?: IGraphicPrimitive<PrimitiveShape> | Sprite;
     size?: number;
 	layer: number;
 	drag?: number;
@@ -29,8 +28,7 @@ export type ParticleConstructorOptions = BasicObjectsConstructorParams & {
 }
 
 class Particle extends BasicObject {
-	public graphic: Nullable<IGraphicPrimitive<any> | Sprite>;
-	// private size: number;
+	public graphic: Nullable<IGraphicPrimitive<PrimitiveShape> | Sprite>;
 	public drag: number;
 	public initialScale: ICoordinates;
 	public age: number;
@@ -52,7 +50,7 @@ class Particle extends BasicObject {
 		const {
 			graphic, lifeTime = 10, layer, drag = 0,
 			initialColor = new RGBAColor(), followers,
-			initialVelocity = new Vector(),/* size = 100 ,*/ OnCollide,/* collider,*/ gravityScale = 1
+			initialVelocity = new Vector(), OnCollide, gravityScale = 1
 		} = params;
 		if(graphic) {
 			graphic.layer = layer;
@@ -61,7 +59,6 @@ class Particle extends BasicObject {
 		this._startExecuted = false;
 		this.drag = Maths.Clamp(drag, -1 ,1);
 		this.lifeTime = lifeTime;
-		// this.size = size;
 		this.gravityScale = gravityScale;
 		this.age = 0;
 		this.followers = followers;
@@ -92,10 +89,13 @@ class Particle extends BasicObject {
 		if(this.age > this.lifeTime) return this.Destroy();
 	}
 
+	override FixedUpdate() {
+		this.collider?.FixedUpdate();
+		this.transform.Translate(Vector.MultiplyCoordinates(Time.FixedDeltaTimeSeconds * PhysicsMaterial.PixelsPerMeter, this.velocity));
+	}
+
 	override Update() {
 		this.collider?.Update();
-		this.transform.Translate(Vector.MultiplyCoordinates(Time.deltaTime / 1000, this.velocity));
-
 		if(!this.graphic) return;
 		if(this.graphic instanceof GraphicPrimitive) {
 			this.graphic.options.fillStyle = this.color.ToHex();

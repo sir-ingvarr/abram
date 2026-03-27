@@ -6,7 +6,6 @@ import {
 import {Point, RGBAColor, Segment} from '../Classes';
 import {ICoordinates} from '../../types/common';
 import {BoundingBox, Circle, PolygonalChain, SegmentList} from './GraphicPrimitives/Shapes';
-import {IContextOpts} from '../Managers/SpriteRenderer';
 
 class CanvasContext2D {
 	constructor(
@@ -21,6 +20,7 @@ class CanvasContext2D {
 
 	set Height(val: number) {
 		this.height = val;
+		this.ctx.canvas.height = val;
 	}
 
 	get Height() {
@@ -37,6 +37,7 @@ class CanvasContext2D {
 
 	set Width(val: number) {
 		this.width = val;
+		this.ctx.canvas.width = val;
 	}
 
 	SetSize(width: number, height?: number) {
@@ -314,10 +315,8 @@ class CanvasContext2D {
 		return this;
 	}
 
-	DrawImage(graphic: IContextOpts, imageData: CanvasImageSource, x: number, y: number, w: number, h: number): CanvasContext2D {
-		const contextRespectivePosition = graphic?.options?.contextRespectivePosition || false;
-		const initialPos = contextRespectivePosition ? this.Position : new Point();
-		this.ctx.drawImage(imageData, x + initialPos.x, y + initialPos.y, w, h);
+	DrawImage(imageData: CanvasImageSource, x: number, y: number, w: number, h: number): CanvasContext2D {
+		this.ctx.drawImage(imageData, x, y, w, h);
 		return this;
 	}
 }
