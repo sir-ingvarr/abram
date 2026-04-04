@@ -1,6 +1,6 @@
 {
   "name": "abram-js",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Unity-inspired 2D game engine for browsers. Zero dependencies, Canvas2D rendering.",
   "keywords": ["game-engine", "2d", "canvas", "typescript", "physics", "gamedev"],
   "main": "build/index.js",
