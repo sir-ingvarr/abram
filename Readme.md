@@ -43,11 +43,11 @@ engine.Start();
 ### npm
 
 ```bash
-npm install abram (NOT PUBLISHED YET)
+npm install abram-js
 ```
 
 ```js
-import Engine, { GameObject, Classes } from 'abram';
+import Engine, { GameObject, Classes } from 'abram-js';
 const { Vector, RGBAColor } = Classes;
 ```
 

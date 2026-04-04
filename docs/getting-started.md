@@ -5,11 +5,11 @@
 ### npm
 
 ```bash
-npm install abram
+npm install abram-js
 ```
 
 ```typescript
-import Engine, { GameObject, Classes } from 'abram';
+import Engine, { GameObject, Classes } from 'abram-js';
 const { Vector, RGBAColor } = Classes;
 ```
 

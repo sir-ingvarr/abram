@@ -1,13 +1,17 @@
 {
-  "name": "abram",
+  "name": "abram-js",
   "version": "0.9.0",
   "description": "Unity-inspired 2D game engine for browsers. Zero dependencies, Canvas2D rendering.",
   "keywords": ["game-engine", "2d", "canvas", "typescript", "physics", "gamedev"],
   "main": "build/abram.js",
+  "module": "build/index.js",
   "types": "build/index.d.ts",
   "files": [
     "build"
   ],
+  "engines": {
+    "node": ">=14"
+  },
   "scripts": {
     "lint": "eslint ./src --fix",
     "test": "exit 0",
