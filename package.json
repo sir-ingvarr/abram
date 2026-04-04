@@ -3,11 +3,13 @@
   "version": "0.9.0",
   "description": "Unity-inspired 2D game engine for browsers. Zero dependencies, Canvas2D rendering.",
   "keywords": ["game-engine", "2d", "canvas", "typescript", "physics", "gamedev"],
-  "main": "build/abram.js",
+  "main": "build/index.js",
   "module": "build/index.js",
   "types": "build/index.d.ts",
   "files": [
-    "build"
+    "build/**/*.js",
+    "build/**/*.d.ts",
+    "!build/abram.js"
   ],
   "engines": {
     "node": ">=14"

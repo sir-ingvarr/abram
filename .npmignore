@@ -7,5 +7,7 @@ docs
 tsconfig.json
 webpack.config.js
 logo.png
-Readme.md
 CLAUDE.md
+build/abram.js
+*.js.map
+*.d.ts.map
