@@ -5,10 +5,13 @@ Scenes are setup functions registered by name.
 ## Usage
 
 ```js
-// Define a scene
+// Define a scene — use AppendGameObject for initial setup
 async function GameplayScene(engine) {
-    await engine.Instantiate(Ground, { position: new Vector(640, 790) });
-    await engine.Instantiate(Player, { position: new Vector(640, 700) });
+    const ground = new Ground({ position: new Vector(640, 790) });
+    engine.AppendGameObject(ground);
+
+    const player = new Player({ position: new Vector(640, 700) });
+    engine.AppendGameObject(player);
 }
 
 // Register and load
@@ -24,6 +27,18 @@ Engine.Instance.LoadScene('gameplay');
 ```
 
 Restarting is just reloading the same scene.
+
+## Adding Objects
+
+Use `AppendGameObject` during scene setup to register objects immediately. Use `Instantiate` during gameplay to spawn objects at the start of the next frame (see [Getting Started](./getting-started.md#adding-game-objects) for details).
+
+```js
+// Scene setup — immediate
+engine.AppendGameObject(new Player({ position: new Vector(100, 100) }));
+
+// Runtime spawning — deferred to next frame
+const bullet = await engine.Instantiate(Bullet, { position: spawnPos });
+```
 
 ## API
 

@@ -74,7 +74,9 @@ class Collider2D extends EventEmitterModule implements ICollider2D {
 	}
 
 	Collide(other: Collider2D) {
-		this.activeContacts.add(other.Id);
+		if(!other.IsWaitingDestroy) {
+			this.activeContacts.add(other.Id);
+		}
 		if(this.type === Collider2DType.Collider) {
 			this.Emit(Collider2DEvent.OnCollision2DEnter, this, other);
 		} else {

@@ -115,6 +115,7 @@ class GameLoop {
 		while(this.fixedTimeAccumulator >= Time.fixedDeltaTime) {
 			this.gameObjectManager.FixedUpdate();
 			this.collisionsManager.FixedUpdate();
+			Camera.GetInstance({}).FixedUpdate();
 			this.fixedTimeAccumulator -= Time.fixedDeltaTime;
 		}
 
@@ -130,6 +131,7 @@ class GameLoop {
 			.DrawBg();
 		this.gameObjectManager.Update();
 		const camera = Camera.GetInstance({});
+		camera.Update();
 		this.spriteRendererManager.SetCamera(camera.Position, camera.Scale);
 		this.spriteRendererManager.DrawCallsFinished();
 		Debug.Update();

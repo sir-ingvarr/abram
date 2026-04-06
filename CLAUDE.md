@@ -76,7 +76,7 @@ Each frame:
 
 ### Camera
 
-Singleton (`Camera.GetInstance()`). Supports position, zoom via `Scale` (applied as a centered DOMMatrix scale in SpriteRenderer), and a `BoundingBox`-based confiner. Call `cam.Confine()` once per frame after setting position and scale to apply bounds.
+Singleton (`Camera.GetInstance()`). Supports position, zoom via `Scale` (applied as a centered DOMMatrix scale in SpriteRenderer), and a `BoundingBox`-based confiner. `GetInstance` applies explicitly provided props to an existing instance, so camera can be reconfigured after creation. GameLoop calls `camera.FixedUpdate()` in the fixed timestep loop and `camera.Update()` per frame. `Track(transform, { deadZone, damping, updateMode })` follows a target with a dead zone (max allowed offset from center in world units), damping (lerp-based smooth correction), and update mode (`'update'` for per-frame or `'fixedUpdate'` for 50Hz physics-synced). Tracking runs in whichever mode is selected; confining always runs per-frame in `Update()`.
 
 ### Coordinate System
 

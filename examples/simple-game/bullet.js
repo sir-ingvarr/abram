@@ -4,17 +4,18 @@ class Bullet extends GameObject {
         this.velocity = params.velocity || new Vector(30, 0);
         this.lifeTime = params.lifeTime || 2000;
         this.age = 0;
+        this.collisionLayer = 3;
     }
 
     Start() {
         const graphic = new GraphicPrimitive({
             type: PrimitiveType.Circle,
-            shape: new CircleArea(3, Vector.Zero),
+            shape: new CircleArea(5, Vector.Zero),
             parent: this.transform,
             drawMethod: ShapeDrawMethod.Fill,
             layer: 10,
             options: {
-                fillStyle: new RGBAColor(10, 10, 10).ToHex()
+                fillStyle: new RGBAColor(0, 0, 0).ToHex()
             }
         });
 
@@ -22,11 +23,12 @@ class Bullet extends GameObject {
             useGravity: true, mass: 0.1, drag: 0,
             gravityScale: 0.0005,
             bounciness: 0, freezeRotation: true,
+            interpolate: true
         });
         this.rigidBody.Velocity = this.velocity;
 
         this.collider = new Collider2D({
-            shape: new CircleArea(3, Vector.Zero),
+            shape: new CircleArea(5, Vector.Zero),
             type: Collider2DType.Collider,
             parent: this.transform,
             rb: this.rigidBody,

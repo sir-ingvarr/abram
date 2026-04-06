@@ -55,10 +55,18 @@ class CollisionsManager extends ExecutableManager {
 	override RegisterModule(module: Collider2D): string {
 		super.RegisterModule(module);
 		module.On(Collider2DEvent.Destroy, () => {
-			this.UnregisterModuleById(module.Id);
+			const keysToRemove: string[] = [];
 			for(const key of this.activePairs.keys()) {
-				if(key.includes(module.Id)) this.activePairs.delete(key);
+				if(key.includes(module.Id)) keysToRemove.push(key);
 			}
+			for(const key of keysToRemove) {
+				this.activePairs.delete(key);
+				const [idA, idB] = key.split(':');
+				const otherId = idA === module.Id ? idB : idA;
+				const other = this.modules.get(otherId) as Collider2D | undefined;
+				if(other) other.Leave(module);
+			}
+			this.UnregisterModuleById(module.Id);
 		});
 		return module.Id;
 	}
@@ -175,11 +183,11 @@ class CollisionsManager extends ExecutableManager {
 			this.CollisionResponse(collider1, collider2, result.normal, result.depth, result.contactPoint, isResting);
 			touchedThisFrame.add(pairKey);
 
+			this.activePairs.set(pairKey, 0);
 			if(!isResting) {
 				(collider1 as Collider2D).Collide(collider2 as Collider2D);
 				(collider2 as Collider2D).Collide(collider1 as Collider2D);
 			}
-			this.activePairs.set(pairKey, 0);
 		}
 	}
 
